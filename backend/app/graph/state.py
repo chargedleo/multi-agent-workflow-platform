@@ -1,7 +1,7 @@
 """Shared state definition for LangGraph workflows.
 
 Implements a strongly typed state schema passing data between the Planner,
-Research, and Response agents, designed with extension points for future milestones.
+Research, and Response agents, designed with extension points for persistence and future milestones.
 """
 
 from typing import Annotated, Any, Dict, List, Optional
@@ -12,9 +12,11 @@ from typing_extensions import TypedDict
 class WorkflowState(TypedDict, total=False):
     """Shared state dictionary representing the workflow pipeline execution."""
 
-    # Core Milestone 1 state attributes
+    # Core Milestone 1 & 2 state attributes
     request_id: str
+    run_id: Optional[str]
     user_query: str
+    status: Optional[str]
     plan: Optional[Dict[str, Any]]
     research_results: Optional[Dict[str, Any]]
     intermediate_results: Annotated[List[Dict[str, Any]], operator.add]
@@ -30,11 +32,18 @@ class WorkflowState(TypedDict, total=False):
     approval_status: Optional[str]
 
 
-def create_initial_state(query: str, request_id: str, metadata: Optional[Dict[str, Any]] = None) -> WorkflowState:
-    """Helper to initialize a clean workflow state."""
+def create_initial_state(
+    query: str,
+    request_id: str,
+    run_id: Optional[str] = None,
+    metadata: Optional[Dict[str, Any]] = None,
+) -> WorkflowState:
+    """Helper to initialize a clean workflow state with run_id and request_id."""
     return WorkflowState(
         request_id=request_id,
+        run_id=run_id,
         user_query=query,
+        status="PENDING",
         plan=None,
         research_results=None,
         intermediate_results=[],

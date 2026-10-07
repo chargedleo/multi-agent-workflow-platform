@@ -11,24 +11,33 @@ An enterprise-ready **Multi-Agent AI Workflow Automation Platform** that decompo
 
 ---
 
-## Current Status: Milestone 1 — Project Foundation & Core Agent Workflow
+## Current Status: Milestone 2 — PostgreSQL Persistence & Workflow Run History
 
-**Milestone 1** establishes the extensible monorepo architecture and proves that a real **LangGraph** multi-agent pipeline operates end-to-end:
+**Milestone 2** elevates the multi-agent workflow from ephemeral in-memory execution to a **durable, auditable workflow execution system** backed by asynchronous PostgreSQL persistence and Alembic migrations:
 
 ```text
 User Query
     ↓
-FastAPI REST API
+FastAPI REST API (POST /api/v1/workflows)
     ↓
-LangGraph StateGraph
-    ├── 1. Planner Agent      (Deconstructs query into Goal & Logical Steps)
-    ├── 2. Research Agent     (Reasons over steps, generates findings & assumptions)
-    └── 3. Response Agent     (Synthesizes findings into structured response)
+Database Run Record Created (status: PENDING → RUNNING)
     ↓
-Structured Response (Pydantic validated)
+LangGraph StateGraph Execution
+    ├── 1. Planner Agent      → Step persisted to DB (duration_ms, output plan)
+    ├── 2. Research Agent     → Step persisted to DB (duration_ms, findings)
+    └── 3. Response Agent     → Step persisted to DB (duration_ms, answer)
+    ↓
+Database Run Record Completed (status: COMPLETED, duration_ms, answer, metrics)
+    ↓
+Structured Response with run_id
 ```
 
-The system uses strongly typed, shared state and is designed so additional agents (Document Retrieval, Data Analysis, Validation, Human-in-the-Loop) can be added in later milestones without breaking existing workflows.
+### Persistence Capabilities Introduced in Milestone 2:
+- **Durable Workflow Runs**: Every execution generates a persistent `workflow_runs` record storing `run_id`, `request_id`, query, status (`PENDING`, `RUNNING`, `COMPLETED`, `FAILED`), timestamps, duration, plan, findings, errors, and final response.
+- **Granular Agent Step Tracking**: Every agent execution saves a `workflow_steps` record storing agent name, order, duration in milliseconds, inputs, outputs, and step-level errors.
+- **Run History & Inspection APIs**: `GET /api/v1/workflows` for paginated history and `GET /api/v1/workflows/{run_id}` for full execution breakdown.
+- **Alembic Migrations**: Fully tracked, reversible schema versioning.
+- **Interactive UI History**: React interface updated with recent runs table, status badges, execution timestamps, duration metrics, and an inspection modal.
 
 ---
 
@@ -36,11 +45,11 @@ The system uses strongly typed, shared state and is designed so additional agent
 
 - **Backend**: Python 3.11+, FastAPI, Uvicorn
 - **Orchestration**: LangGraph, LangChain Core
+- **Database & ORM**: PostgreSQL 16, SQLAlchemy 2.x (async), Alembic, asyncpg
 - **Configuration & Validation**: Pydantic v2, Pydantic Settings
-- **Database (Foundation)**: PostgreSQL 16 (via SQLAlchemy & asyncpg)
 - **Frontend**: React 18, Vite
-- **Testing**: pytest, pytest-asyncio, HTTPX
-- **DevOps**: Docker, Docker Compose (multi-stage builds)
+- **Testing**: pytest, pytest-asyncio, HTTPX (30 automated tests)
+- **DevOps**: Docker, Docker Compose (persistent volume for PostgreSQL)
 
 ---
 
@@ -219,6 +228,51 @@ docker compose down
 
 ---
 
+## Database Architecture & Migrations
+
+Milestone 2 introduces durable PostgreSQL persistence using **SQLAlchemy 2.x async ORM** and **Alembic** migrations.
+
+### Tables
+1. **`workflow_runs`**:
+   - `id` (UUID, primary key)
+   - `request_id` (UUID, indexed)
+   - `user_query` (Text)
+   - `status` (VARCHAR, indexed: `PENDING`, `RUNNING`, `COMPLETED`, `FAILED`)
+   - `started_at`, `completed_at`, `created_at`, `updated_at` (TIMESTAMPTZ)
+   - `duration_ms` (BIGINT)
+   - `final_answer` (TEXT)
+   - `key_points` (JSONB)
+   - `confidence` (FLOAT)
+   - `plan`, `research_results` (JSONB)
+   - `errors` (JSONB)
+   - `metadata` (JSONB)
+
+2. **`workflow_steps`**:
+   - `id` (UUID, primary key)
+   - `run_id` (UUID, foreign key referencing `workflow_runs.id` on delete cascade)
+   - `agent_name` (VARCHAR: `planner`, `researcher`, `responder`)
+   - `step_order` (INTEGER, indexed with `run_id`)
+   - `status` (VARCHAR: `PENDING`, `RUNNING`, `COMPLETED`, `FAILED`)
+   - `started_at`, `completed_at`, `created_at` (TIMESTAMPTZ)
+   - `duration_ms` (BIGINT)
+   - `input_data`, `output_data` (JSONB)
+   - `error` (TEXT)
+
+### Running Migrations
+
+```bash
+# Run latest migrations
+alembic upgrade head
+
+# Roll back the most recent migration
+alembic downgrade -1
+
+# Generate a new migration revision
+alembic revision --autogenerate -m "description_of_change"
+```
+
+---
+
 ## API Reference
 
 ### Health Check
@@ -249,7 +303,7 @@ Content-Type: application/json
 **Request Body:**
 ```json
 {
-  "query": "Compare the advantages and disadvantages of PostgreSQL and MongoDB for a startup SaaS application."
+  "query": "Compare PostgreSQL and MongoDB for a startup SaaS application."
 }
 ```
 
@@ -257,7 +311,9 @@ Content-Type: application/json
 ```json
 {
   "request_id": "766ad1ae-0c48-4cb9-b1d5-bc7551066060",
-  "answer": "Based on the analysis of your query: PostgreSQL is strongly recommended as the default database for most SaaS startups due to its robust ACID guarantees, rich indexing, support for JSONB, and mature ecosystem...",
+  "run_id": "045b10c2-d427-4719-bf7e-81a8b669de33",
+  "status": "completed",
+  "answer": "Based on the analysis of your query: PostgreSQL is strongly recommended as the default database for most SaaS startups...",
   "key_points": [
     "PostgreSQL offers superior data integrity, relational constraints, and flexible JSONB querying.",
     "MongoDB provides rapid prototyping for polymorphic documents and out-of-the-box horizontal scaling.",
@@ -268,42 +324,136 @@ Content-Type: application/json
 }
 ```
 
-#### Example cURL Request
+---
+
+### List Recent Workflow Runs
+
+```http
+GET /api/v1/workflows?page=1&page_size=10
+```
+
+**Response (`200 OK`):**
+```json
+{
+  "items": [
+    {
+      "run_id": "045b10c2-d427-4719-bf7e-81a8b669de33",
+      "request_id": "766ad1ae-0c48-4cb9-b1d5-bc7551066060",
+      "query": "Compare PostgreSQL and MongoDB for a startup SaaS application.",
+      "status": "COMPLETED",
+      "started_at": "2026-10-07T12:20:38.668894Z",
+      "completed_at": "2026-10-07T12:20:38.783876Z",
+      "duration_ms": 114
+    }
+  ],
+  "page": 1,
+  "page_size": 10,
+  "total": 1
+}
+```
+
+---
+
+### Get Workflow Run Details with Steps
+
+```http
+GET /api/v1/workflows/{run_id}
+```
+
+**Response (`200 OK`):**
+```json
+{
+  "run_id": "045b10c2-d427-4719-bf7e-81a8b669de33",
+  "request_id": "766ad1ae-0c48-4cb9-b1d5-bc7551066060",
+  "query": "Compare PostgreSQL and MongoDB for a startup SaaS application.",
+  "status": "COMPLETED",
+  "started_at": "2026-10-07T12:20:38.668894Z",
+  "completed_at": "2026-10-07T12:20:38.783876Z",
+  "duration_ms": 114,
+  "final_answer": "Based on the analysis of your query...",
+  "key_points": ["PostgreSQL offers superior data integrity..."],
+  "confidence": 0.95,
+  "errors": [],
+  "steps": [
+    {
+      "id": "e96c449c-aef6-4354-a957-234b655517e5",
+      "agent_name": "planner",
+      "step_order": 1,
+      "status": "COMPLETED",
+      "duration_ms": 22,
+      "output_data": { "goal": "Compare databases", "steps": ["..."] },
+      "error": null
+    },
+    {
+      "id": "c67a1881-af8a-4b20-96fc-8cb6772f6759",
+      "agent_name": "researcher",
+      "step_order": 2,
+      "status": "COMPLETED",
+      "duration_ms": 12,
+      "output_data": { "findings": ["..."] },
+      "error": null
+    },
+    {
+      "id": "8588b3e7-223d-4a20-a4ef-fb9b70c7f1c9",
+      "agent_name": "responder",
+      "step_order": 3,
+      "status": "COMPLETED",
+      "duration_ms": 12,
+      "output_data": { "answer": "...", "confidence": 0.95 },
+      "error": null
+    }
+  ]
+}
+```
+
+#### Example cURL Commands
 
 ```bash
+# Execute a workflow
 curl -X POST http://localhost:8000/api/v1/workflows \
   -H "Content-Type: application/json" \
-  -d '{"query": "Compare PostgreSQL and MongoDB for a startup SaaS application."}'
+  -d '{"query": "Assess Kafka vs RabbitMQ for streaming architecture."}'
+
+# List recent runs
+curl -X GET "http://localhost:8000/api/v1/workflows?page=1&page_size=10"
+
+# Inspect specific run detail
+curl -X GET "http://localhost:8000/api/v1/workflows/045b10c2-d427-4719-bf7e-81a8b669de33"
 ```
 
 ---
 
 ## Running Automated Tests
 
-The test suite covers configuration, schema constraints, health check endpoints, the LLM factory, and the LangGraph workflow. Tests run deterministically without requiring any external paid API keys.
+The test suite covers configuration, schema constraints, health check endpoints, the LLM factory, LangGraph workflow execution, SQLAlchemy persistence models, persistence lifecycle services, and API history endpoints. All 30 tests run deterministically without requiring external paid API keys.
 
 ```bash
-# Run tests with pytest
+# Run full test suite with pytest
 pytest -v
 ```
 
-**Test Coverage Summary:**
+**Test Coverage Summary (30 Passing Tests):**
 - `test_config.py`: Settings defaults, environment overrides, and CORS string parsing.
 - `test_schemas.py`: Pydantic validation of `Plan`, `ResearchResult`, `WorkflowResponse`, and boundary assertions.
 - `test_health.py`: HTTP 200 responses on `/api/v1/health` and `/`.
 - `test_llm.py`: Central LLM abstraction factory and structured mock outputs.
 - `test_workflow.py`: End-to-end LangGraph execution, state transitions (Planner → Researcher → Responder), intermediate step accumulation, and error capturing.
 - `test_api.py`: FastAPI endpoint execution and validation error rejection.
+- `test_persistence_models.py`: SQLAlchemy `WorkflowRun` and `WorkflowStep` creation and one-to-many relationship mapping.
+- `test_workflow_persistence.py`: Service-level workflow run lifecycle (`PENDING` → `RUNNING` → `COMPLETED` / `FAILED`), step recording, and pagination.
+- `test_workflow_execution_persistence.py`: Verifies LangGraph execution writes durable records to PostgreSQL, records agent timing, and tracks agent failure persistence.
+- `test_api_persistence.py`: Integration testing for `POST /workflows` (returns `run_id`), `GET /workflows` (paginated history), and `GET /workflows/{run_id}` (detail inspection & 404 handling).
 
 ---
 
-## Current Scope & Limitations (Milestone 1)
+## Current Scope & Limitations (Milestone 2)
 
-Milestone 1 focuses exclusively on proving the core LangGraph multi-agent pipeline and architectural foundation.
+Milestone 2 establishes full database persistence and run history tracking for multi-agent workflows.
 
 - **Web Search**: The Research Agent currently uses structured LLM reasoning rather than live internet search. (Planned for Milestone 3+).
-- **PostgreSQL Persistence**: The PostgreSQL container starts and connection health checks pass, but workflow runs are held in memory during request execution. (Planned for Milestone 2).
-- **Tool Sandbox**: Function calling, MCP protocol servers, and code sandboxing are not yet enabled. (Planned for Milestone 4).
+- **Vector Search / FAISS**: Semantic document retrieval is deferred to Milestone 3.
+- **Tool Sandbox**: Function calling, MCP protocol servers, and code execution sandboxing will be integrated in Milestone 4.
+- **Human-in-the-Loop**: Approval checkpoints and pauses will build on top of the Milestone 2 persistence models in Milestone 5.
 
 ---
 

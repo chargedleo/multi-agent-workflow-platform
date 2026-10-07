@@ -110,17 +110,98 @@ To prevent tight coupling to a single AI provider, LLM instantiation is managed 
 
 ---
 
-## 5. PostgreSQL Preparation & Persistence Roadmap
+## 5. PostgreSQL Persistence Architecture (Milestone 2)
 
-Milestone 1 establishes the connection pooling foundation using `SQLAlchemy` (with `asyncpg`):
-- `DATABASE_URL` is fully configurable.
-- `GET /api/v1/health` checks live database connectivity.
-- A non-blocking health check verifies connectivity without preventing API startup if the database is temporarily offline.
-- A dedicated Docker volume `workflow_postgres_data` ensures persistent database storage.
+Milestone 2 introduces enterprise persistence for multi-agent workflows, transforming transient LangGraph executions into durable audit trails.
+
+### 5.1 Database Entity-Relationship Diagram
+
+```mermaid
+erDiagram
+    WORKFLOW_RUNS ||--o{ WORKFLOW_STEPS : "contains"
+    
+    WORKFLOW_RUNS {
+        uuid id PK
+        uuid request_id "Indexed"
+        text user_query
+        string status "Indexed: PENDING, RUNNING, COMPLETED, FAILED"
+        timestamptz started_at "Indexed"
+        timestamptz completed_at
+        bigint duration_ms
+        text final_answer
+        jsonb key_points
+        float confidence
+        jsonb plan
+        jsonb research_results
+        jsonb errors
+        jsonb metadata
+        timestamptz created_at "Indexed"
+        timestamptz updated_at
+    }
+
+    WORKFLOW_STEPS {
+        uuid id PK
+        uuid run_id FK "References workflow_runs.id ON DELETE CASCADE"
+        string agent_name "planner, researcher, responder"
+        integer step_order "1, 2, 3"
+        string status "PENDING, RUNNING, COMPLETED, FAILED"
+        timestamptz started_at
+        timestamptz completed_at
+        bigint duration_ms
+        jsonb input_data
+        jsonb output_data
+        text error
+        timestamptz created_at
+    }
+```
+
+### 5.2 Workflow & Step Lifecycle
+
+The execution lifecycle transitions through deterministic states:
+
+```mermaid
+stateDiagram-v2
+    [*] --> PENDING: POST /api/v1/workflows (create_run)
+    PENDING --> RUNNING: start_workflow_run
+    
+    state RUNNING {
+        [*] --> PlannerStep
+        PlannerStep --> ResearcherStep: step complete
+        ResearcherStep --> ResponderStep: step complete
+        ResponderStep --> [*]: step complete
+        
+        PlannerStep --> StepFailed: error
+        ResearcherStep --> StepFailed: error
+        ResponderStep --> StepFailed: error
+    }
+    
+    RUNNING --> COMPLETED: All steps finish successfully
+    RUNNING --> FAILED: Agent exception / step failure
+    StepFailed --> FAILED
+    
+    COMPLETED --> [*]
+    FAILED --> [*]
+```
+
+### 5.3 Architectural Rationale: Separation of LangGraph State vs. DB Persistence
+
+1. **In-Memory LangGraph State (`WorkflowState`)**:
+   - Optimized for ultra-low latency intra-agent message passing and fast functional transitions.
+   - Preserves typed immutability and additive reducers (`operator.add`) during runtime execution.
+   - Contains operational working memory and internal prompts without tying the execution loop to database write patterns.
+
+2. **Durable Database Persistence (`WorkflowRun` & `WorkflowStep`)**:
+   - Provides an asynchronous, queryable audit log accessible across restarts and external services.
+   - Captures wall-clock execution metrics (`duration_ms`), agent latency, error traces, and input/output snapshots.
+   - Enables pagination, history filtering, performance observability, and future replay capabilities.
+
+3. **Transaction Boundary Decoupling**:
+   - Database operations use isolated, short-lived transactions (`get_db_context()`) at step entry and step completion.
+   - **Crucially, database transactions are never held open across external LLM network calls**. Step records are created immediately before invocation and committed, then updated upon completion in a separate transaction.
 
 ---
 
-## 6. Target Future Architecture (Milestones 2 — 6)
+## 6. Target Future Architecture (Milestones 3 — 6)
 
 The diagram below illustrates the target architecture to be incrementally implemented in future milestones:
 
@@ -128,7 +209,7 @@ The diagram below illustrates the target architecture to be incrementally implem
 flowchart TD
     User([User]) --> UI["React Monitoring Dashboard"]
     UI --> API["FastAPI Gateway"]
-    API --> Checkpointer[("PostgreSQL Checkpointer\n(Run History & State Persistence)")]
+    API --> Checkpointer[("PostgreSQL Persistence & History\n(workflow_runs & workflow_steps)")]
     
     subgraph MultiAgentSystem ["Full Multi-Agent Orchestration"]
         direction TB
@@ -164,8 +245,7 @@ flowchart TD
 ```
 
 ### Future Milestone Roadmap:
-- **Milestone 2**: PostgreSQL State Checkpointing, Run History API, and Persistent Workflow Replay.
-- **Milestone 3**: Document Retrieval Agent with FAISS Vector Store and RAG integration.
-- **Milestone 4**: Data Analysis Agent with sandboxed function calling and tool execution.
-- **Milestone 5**: Validation Agent and Human-in-the-Loop (HITL) pause/resume approval gates.
-- **Milestone 6**: Full React dashboard with real-time streaming, run inspection, and workflow management.
+- **Milestone 3**: Document Retrieval Agent with FAISS Vector Store, document ingestion, and chunked vector embeddings.
+- **Milestone 4**: Data Analysis Agent with sandboxed function calling, MCP protocol tools, and code execution.
+- **Milestone 5**: Validation Agent and Human-in-the-Loop (HITL) pause/resume approval gates leveraging persistent run IDs.
+- **Milestone 6**: Advanced monitoring dashboard with streaming execution, run inspection, and agent analytics.

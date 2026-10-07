@@ -53,3 +53,46 @@ export async function executeWorkflow(query) {
 
   return data;
 }
+
+/**
+ * Fetch paginated history of workflow runs.
+ * @param {number} page
+ * @param {number} pageSize
+ * @returns {Promise<{ items: Array, total: number, page: number, page_size: number }>}
+ */
+export async function fetchWorkflowRuns(page = 1, pageSize = 10) {
+  const response = await fetch(`${API_BASE_URL}/workflows?page=${page}&page_size=${pageSize}`, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to load workflow runs (HTTP ${response.status})`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Fetch full details and execution steps for a single workflow run.
+ * @param {string} runId
+ * @returns {Promise<Object>}
+ */
+export async function fetchWorkflowRunDetail(runId) {
+  if (!runId) throw new Error('runId is required');
+
+  const response = await fetch(`${API_BASE_URL}/workflows/${runId}`, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch workflow run detail (HTTP ${response.status})`);
+  }
+
+  return response.json();
+}

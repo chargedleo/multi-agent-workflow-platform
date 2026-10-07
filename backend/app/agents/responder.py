@@ -3,15 +3,18 @@
 Responsible for synthesizing the user query, strategic plan, and research findings
 into an authoritative, structured final response with key executive takeaways
 and a calibrated confidence score.
+Persists execution step lifecycle in PostgreSQL when run_id is provided.
 """
 
 from typing import Any, Dict
 from langchain_core.messages import SystemMessage, HumanMessage
 
 from backend.app.core.logging import format_log_msg, get_logger
+from backend.app.db.session import get_db_context
 from backend.app.graph.state import WorkflowState
 from backend.app.models.schemas import WorkflowResponse
 from backend.app.services.llm import get_llm, invoke_structured
+from backend.app.services.workflow_runs import complete_workflow_step, create_workflow_step, fail_workflow_step
 
 logger = get_logger(__name__)
 
@@ -37,11 +40,31 @@ async def response_agent(state: WorkflowState) -> Dict[str, Any]:
         State update dictionary containing the final_answer and intermediate step.
     """
     request_id = state.get("request_id", "unknown")
+    run_id = state.get("run_id")
     user_query = state.get("user_query", "")
     plan_data = state.get("plan") or {}
     research_data = state.get("research_results") or {}
 
-    logger.info(format_log_msg("Response agent started", request_id))
+    logger.info(format_log_msg(f"Response agent started (run_id: {run_id or 'none'})", request_id))
+
+    step_id = None
+    if run_id:
+        try:
+            async with get_db_context() as session:
+                step = await create_workflow_step(
+                    session=session,
+                    run_id=run_id,
+                    agent_name="responder",
+                    step_order=3,
+                    input_data={
+                        "user_query": user_query,
+                        "plan": plan_data,
+                        "research_results": research_data,
+                    },
+                )
+                step_id = step.id
+        except Exception as db_err:
+            logger.warning(format_log_msg(f"Could not persist responder step start: {db_err}", request_id))
 
     try:
         llm = get_llm()
@@ -76,6 +99,15 @@ async def response_agent(state: WorkflowState) -> Dict[str, Any]:
         if workflow_response.request_id != request_id:
             workflow_response = workflow_response.model_copy(update={"request_id": request_id})
 
+        response_dict = workflow_response.model_dump()
+
+        if step_id:
+            try:
+                async with get_db_context() as session:
+                    await complete_workflow_step(session=session, step_id=step_id, output_data=response_dict)
+            except Exception as db_err:
+                logger.warning(format_log_msg(f"Could not persist responder step completion: {db_err}", request_id))
+
         logger.info(
             format_log_msg(
                 f"Responder completed with confidence {workflow_response.confidence:.2f} "
@@ -85,11 +117,11 @@ async def response_agent(state: WorkflowState) -> Dict[str, Any]:
         )
 
         return {
-            "final_answer": workflow_response.model_dump(),
+            "final_answer": response_dict,
             "intermediate_results": [
                 {
                     "agent": "responder",
-                    "output": workflow_response.model_dump(),
+                    "output": response_dict,
                 }
             ],
         }
@@ -97,6 +129,14 @@ async def response_agent(state: WorkflowState) -> Dict[str, Any]:
     except Exception as exc:
         err_msg = f"Response Agent failed: {str(exc)}"
         logger.error(format_log_msg(err_msg, request_id))
+
+        if step_id:
+            try:
+                async with get_db_context() as session:
+                    await fail_workflow_step(session=session, step_id=step_id, error_message=err_msg)
+            except Exception as db_err:
+                logger.warning(format_log_msg(f"Could not persist responder step failure: {db_err}", request_id))
+
         return {
             "errors": [err_msg],
             "intermediate_results": [{"agent": "responder", "error": err_msg}],

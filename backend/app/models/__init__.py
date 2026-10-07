@@ -7,6 +7,10 @@ from backend.app.models.schemas import (
     WorkflowAPIResponse,
     WorkflowRequest,
     WorkflowResponse,
+    WorkflowRunDetailResponse,
+    WorkflowRunListResponse,
+    WorkflowRunSummary,
+    WorkflowStepDetail,
 )
 
 __all__ = [
@@ -15,5 +19,9 @@ __all__ = [
     "WorkflowResponse",
     "WorkflowRequest",
     "WorkflowAPIResponse",
+    "WorkflowRunSummary",
+    "WorkflowRunListResponse",
+    "WorkflowStepDetail",
+    "WorkflowRunDetailResponse",
     "HealthResponse",
 ]

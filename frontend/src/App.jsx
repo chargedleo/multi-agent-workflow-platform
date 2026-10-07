@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { QueryInput } from './components/QueryInput';
 import { WorkflowResult } from './components/WorkflowResult';
-import { fetchHealth, executeWorkflow } from './services/api';
+import { WorkflowHistory } from './components/WorkflowHistory';
+import { RunDetailModal } from './components/RunDetailModal';
+import { fetchHealth, executeWorkflow, fetchWorkflowRuns, fetchWorkflowRunDetail } from './services/api';
 import './App.css';
 
 export function App() {
@@ -11,7 +13,39 @@ export function App() {
   const [error, setError] = useState(null);
   const [healthInfo, setHealthInfo] = useState({ status: 'checking', database: 'unknown' });
 
-  // Initial health check
+  // History and inspection state
+  const [runs, setRuns] = useState([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [selectedRunDetail, setSelectedRunDetail] = useState(null);
+  const [isDetailLoading, setIsDetailLoading] = useState(false);
+
+  // Load recent workflow runs
+  const loadRuns = useCallback(async () => {
+    setIsLoadingHistory(true);
+    try {
+      const data = await fetchWorkflowRuns(1, 10);
+      setRuns(data.items || []);
+    } catch (err) {
+      console.warn('Failed to load workflow runs:', err);
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  }, []);
+
+  // Inspect run details
+  const handleSelectRun = async (runId) => {
+    setIsDetailLoading(true);
+    try {
+      const detail = await fetchWorkflowRunDetail(runId);
+      setSelectedRunDetail(detail);
+    } catch (err) {
+      setError(`Failed to load details for run ${runId}: ${err.message}`);
+    } finally {
+      setIsDetailLoading(false);
+    }
+  };
+
+  // Initial health check and runs load
   useEffect(() => {
     let isMounted = true;
     async function checkBackend() {
@@ -27,12 +61,13 @@ export function App() {
       }
     }
     checkBackend();
+    loadRuns();
     const interval = setInterval(checkBackend, 30000);
     return () => {
       isMounted = false;
       clearInterval(interval);
     };
-  }, []);
+  }, [loadRuns]);
 
   const handleRunWorkflow = async () => {
     if (!query.trim()) return;
@@ -43,6 +78,8 @@ export function App() {
     try {
       const data = await executeWorkflow(query);
       setResult(data);
+      // Refresh run history to include the new run
+      await loadRuns();
     } catch (err) {
       setError(err.message || 'An error occurred while executing the workflow.');
       setResult(null);
@@ -61,7 +98,7 @@ export function App() {
             <h1 className="header-title">Multi-Agent AI Workflow Automation</h1>
           </div>
           <div className="header-badges">
-            <span className="badge badge-milestone">Milestone 1</span>
+            <span className="badge badge-milestone">Milestone 2 • PostgreSQL Persistence</span>
             <span className={`badge badge-status ${healthInfo.status !== 'healthy' ? 'disconnected' : ''}`}>
               <span className="status-dot"></span>
               API: {healthInfo.status}
@@ -69,8 +106,8 @@ export function App() {
           </div>
         </div>
         <p className="header-subtitle">
-          Autonomous multi-agent orchestration built with LangGraph, FastAPI, and Pydantic.
-          Specialized agents collaborate through shared state to plan, research, and deliver structured insights.
+          Autonomous multi-agent orchestration built with LangGraph, FastAPI, and PostgreSQL persistence.
+          Specialized agents collaborate through shared state to plan, research, and synthesize structured results, with durable lifecycle tracking.
         </p>
       </header>
 
@@ -117,9 +154,30 @@ export function App() {
       {/* Workflow Result */}
       <WorkflowResult result={result} />
 
+      {/* Persistent History Table */}
+      <WorkflowHistory
+        runs={runs}
+        isLoading={isLoadingHistory}
+        onSelectRun={handleSelectRun}
+        onRefresh={loadRuns}
+      />
+
+      {/* Run Detail Modal */}
+      {selectedRunDetail && (
+        <RunDetailModal
+          run={selectedRunDetail}
+          onClose={() => setSelectedRunDetail(null)}
+        />
+      )}
+
+      {/* Loading overlay for run detail */}
+      {isDetailLoading && (
+        <div className="loading-toast">Loading run details...</div>
+      )}
+
       {/* Footer */}
       <footer className="app-footer">
-        Portfolio Platform Architecture — Milestone 1: Project Foundation & Core Agent Workflow
+        Portfolio Platform Architecture — Milestone 2: PostgreSQL Persistence & Workflow Run History
       </footer>
     </div>
   );

@@ -2,15 +2,18 @@
 
 Responsible for reasoning through the generated plan steps, producing structured
 findings, identifying explicit assumptions, and highlighting open questions.
+Persists execution step lifecycle in PostgreSQL when run_id is provided.
 """
 
 from typing import Any, Dict
 from langchain_core.messages import SystemMessage, HumanMessage
 
 from backend.app.core.logging import format_log_msg, get_logger
+from backend.app.db.session import get_db_context
 from backend.app.graph.state import WorkflowState
 from backend.app.models.schemas import ResearchResult
 from backend.app.services.llm import get_llm, invoke_structured
+from backend.app.services.workflow_runs import complete_workflow_step, create_workflow_step, fail_workflow_step
 
 logger = get_logger(__name__)
 
@@ -36,15 +39,39 @@ async def research_agent(state: WorkflowState) -> Dict[str, Any]:
         State update dictionary containing research_results and intermediate step.
     """
     request_id = state.get("request_id", "unknown")
+    run_id = state.get("run_id")
     user_query = state.get("user_query", "")
     plan_data = state.get("plan")
 
-    logger.info(format_log_msg("Research agent started", request_id))
+    logger.info(format_log_msg(f"Research agent started (run_id: {run_id or 'none'})", request_id))
+
+    step_id = None
+    if run_id:
+        try:
+            async with get_db_context() as session:
+                step = await create_workflow_step(
+                    session=session,
+                    run_id=run_id,
+                    agent_name="researcher",
+                    step_order=2,
+                    input_data={"plan": plan_data},
+                )
+                step_id = step.id
+        except Exception as db_err:
+            logger.warning(format_log_msg(f"Could not persist researcher step start: {db_err}", request_id))
 
     # Guard against previous critical errors or missing plan
     if not plan_data:
         err_msg = "Research Agent cannot proceed: No execution plan found in state."
         logger.error(format_log_msg(err_msg, request_id))
+
+        if step_id:
+            try:
+                async with get_db_context() as session:
+                    await fail_workflow_step(session=session, step_id=step_id, error_message=err_msg)
+            except Exception as db_err:
+                logger.warning(format_log_msg(f"Could not persist researcher step failure: {db_err}", request_id))
+
         return {
             "errors": [err_msg],
             "intermediate_results": [{"agent": "researcher", "error": err_msg}],
@@ -70,6 +97,14 @@ async def research_agent(state: WorkflowState) -> Dict[str, Any]:
 
         # Produce validated structured output
         research_result: ResearchResult = await invoke_structured(llm, messages, ResearchResult)
+        research_dict = research_result.model_dump()
+
+        if step_id:
+            try:
+                async with get_db_context() as session:
+                    await complete_workflow_step(session=session, step_id=step_id, output_data=research_dict)
+            except Exception as db_err:
+                logger.warning(format_log_msg(f"Could not persist researcher step completion: {db_err}", request_id))
 
         logger.info(
             format_log_msg(
@@ -81,11 +116,11 @@ async def research_agent(state: WorkflowState) -> Dict[str, Any]:
         )
 
         return {
-            "research_results": research_result.model_dump(),
+            "research_results": research_dict,
             "intermediate_results": [
                 {
                     "agent": "researcher",
-                    "output": research_result.model_dump(),
+                    "output": research_dict,
                 }
             ],
         }
@@ -93,6 +128,14 @@ async def research_agent(state: WorkflowState) -> Dict[str, Any]:
     except Exception as exc:
         err_msg = f"Research Agent failed: {str(exc)}"
         logger.error(format_log_msg(err_msg, request_id))
+
+        if step_id:
+            try:
+                async with get_db_context() as session:
+                    await fail_workflow_step(session=session, step_id=step_id, error_message=err_msg)
+            except Exception as db_err:
+                logger.warning(format_log_msg(f"Could not persist researcher step failure: {db_err}", request_id))
+
         return {
             "errors": [err_msg],
             "intermediate_results": [{"agent": "researcher", "error": err_msg}],

@@ -1,6 +1,7 @@
-"""Pydantic schemas for multi-agent workflows, API payloads, and health checks."""
+"""Pydantic schemas for multi-agent workflows, API payloads, health checks, and run history."""
 
-from typing import List, Optional
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
 
 
@@ -83,13 +84,75 @@ class WorkflowRequest(BaseModel):
 
 
 class WorkflowAPIResponse(BaseModel):
-    """Public API response returned by the workflow endpoint."""
+    """Public API response returned by the workflow execution endpoint."""
 
     request_id: str = Field(..., description="Unique workflow run request ID")
+    run_id: Optional[str] = Field(default=None, description="Database primary key identifier for the persisted run")
+    status: str = Field(default="completed", description="Execution status: completed, failed, running, pending")
     answer: str = Field(..., description="Comprehensive answer synthesized by the agents")
     key_points: List[str] = Field(..., description="Key executive takeaways")
     confidence: float = Field(..., description="Confidence score (0.0 to 1.0)")
-    errors: List[str] = Field(default_factory=list, description="Any warnings or non-fatal errors during execution")
+    errors: List[str] = Field(default_factory=list, description="Any warnings or errors recorded during execution")
+
+
+# -----------------------------------------------------------------------------
+# Milestone 2: Run History & Detail Schemas
+# -----------------------------------------------------------------------------
+
+class WorkflowStepDetail(BaseModel):
+    """Schema representing execution details of an individual agent step."""
+
+    id: str = Field(..., description="Step UUID")
+    agent_name: str = Field(..., description="Agent name: planner, researcher, responder")
+    step_order: int = Field(..., description="Execution sequence number")
+    status: str = Field(..., description="Step status: pending, running, completed, failed")
+    started_at: Optional[datetime] = Field(default=None, description="Step start timestamp")
+    completed_at: Optional[datetime] = Field(default=None, description="Step completion timestamp")
+    duration_ms: Optional[int] = Field(default=None, description="Step execution time in milliseconds")
+    input_data: Optional[Dict[str, Any]] = Field(default=None, description="Input data provided to agent")
+    output_data: Optional[Dict[str, Any]] = Field(default=None, description="Structured output produced by agent")
+    error: Optional[str] = Field(default=None, description="Error details if step failed")
+
+
+class WorkflowRunSummary(BaseModel):
+    """Concise workflow run item for paginated history lists."""
+
+    run_id: str = Field(..., description="Run UUID")
+    request_id: str = Field(..., description="Request UUID")
+    query: str = Field(..., description="User query submitted")
+    status: str = Field(..., description="Workflow status: PENDING, RUNNING, COMPLETED, FAILED")
+    started_at: Optional[datetime] = Field(default=None, description="Workflow started timestamp")
+    completed_at: Optional[datetime] = Field(default=None, description="Workflow completed timestamp")
+    duration_ms: Optional[int] = Field(default=None, description="Execution duration in milliseconds")
+
+
+class WorkflowRunListResponse(BaseModel):
+    """Paginated list response for workflow run history."""
+
+    items: List[WorkflowRunSummary] = Field(..., description="List of recent workflow runs")
+    page: int = Field(..., ge=1, description="Current page number")
+    page_size: int = Field(..., ge=1, description="Page size limit")
+    total: int = Field(..., ge=0, description="Total number of recorded runs")
+
+
+class WorkflowRunDetailResponse(BaseModel):
+    """Comprehensive details of a persisted workflow run including all steps."""
+
+    run_id: str = Field(..., description="Run UUID")
+    request_id: str = Field(..., description="Request UUID")
+    status: str = Field(..., description="Workflow status: PENDING, RUNNING, COMPLETED, FAILED")
+    query: str = Field(..., description="User query")
+    started_at: Optional[datetime] = Field(default=None, description="Workflow started timestamp")
+    completed_at: Optional[datetime] = Field(default=None, description="Workflow completed timestamp")
+    duration_ms: Optional[int] = Field(default=None, description="Total execution duration in milliseconds")
+    plan: Optional[Dict[str, Any]] = Field(default=None, description="Persisted strategic plan")
+    research_results: Optional[Dict[str, Any]] = Field(default=None, description="Persisted research findings")
+    answer: Optional[str] = Field(default=None, description="Persisted final synthesized answer")
+    key_points: Optional[List[str]] = Field(default=None, description="Persisted executive key points")
+    confidence: Optional[float] = Field(default=None, description="Persisted confidence score")
+    errors: List[str] = Field(default_factory=list, description="Errors recorded for the run")
+    metadata: Dict[str, Any] = Field(default_factory=dict, description="Metadata dictionary")
+    steps: List[WorkflowStepDetail] = Field(default_factory=list, description="Ordered agent execution steps")
 
 
 class HealthResponse(BaseModel):
