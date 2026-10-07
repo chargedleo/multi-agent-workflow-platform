@@ -44,8 +44,22 @@ async def response_agent(state: WorkflowState) -> Dict[str, Any]:
     user_query = state.get("user_query", "")
     plan_data = state.get("plan") or {}
     research_data = state.get("research_results") or {}
+    retrieved_docs = state.get("retrieved_documents") or []
 
-    logger.info(format_log_msg(f"Response agent started (run_id: {run_id or 'none'})", request_id))
+    # Format structured source citations from retrieved document chunks
+    sources = [
+        {
+            "document_id": d.get("document_id", ""),
+            "chunk_id": d.get("chunk_id", ""),
+            "filename": d.get("metadata", {}).get("filename") if isinstance(d.get("metadata"), dict) else d.get("filename", ""),
+            "page_number": (d.get("metadata", {}).get("page_number", 1) if isinstance(d.get("metadata"), dict) else d.get("page_number", 1)),
+            "snippet": ((d.get("content") or d.get("text") or "")[:200] + ("..." if len(d.get("content") or d.get("text") or "") > 200 else "")),
+            "similarity_score": d.get("score") if d.get("score") is not None else d.get("similarity_score"),
+        }
+        for d in retrieved_docs
+    ]
+
+    logger.info(format_log_msg(f"Response agent started (run_id: {run_id or 'none'}, citations: {len(sources)})", request_id))
 
     step_id = None
     if run_id:
@@ -55,11 +69,12 @@ async def response_agent(state: WorkflowState) -> Dict[str, Any]:
                     session=session,
                     run_id=run_id,
                     agent_name="responder",
-                    step_order=3,
+                    step_order=4,
                     input_data={
                         "user_query": user_query,
                         "plan": plan_data,
                         "research_results": research_data,
+                        "retrieved_sources_count": len(sources),
                     },
                 )
                 step_id = step.id
@@ -75,13 +90,22 @@ async def response_agent(state: WorkflowState) -> Dict[str, Any]:
         unanswered_str = "\n".join(f"- {u}" for u in research_data.get("unanswered_questions", [])) or "None"
         steps_str = "\n".join(f"- {s}" for s in plan_data.get("steps", [])) or "None"
 
+        sources_prompt = ""
+        if sources:
+            sources_details = "\n".join(
+                f"- [{s['filename']} p.{s['page_number']}]: {s['snippet']}"
+                for s in sources
+            )
+            sources_prompt = f"\n\nRetrieved Reference Sources:\n{sources_details}\nEnsure the answer is accurately grounded in these sources where relevant."
+
         prompt_content = (
             f"User Query:\n{user_query}\n\n"
             f"Strategic Plan Goal:\n{plan_data.get('goal', 'N/A')}\n"
             f"Steps Planned:\n{steps_str}\n\n"
             f"Research Findings:\n{findings_str}\n\n"
             f"Assumptions:\n{assumptions_str}\n\n"
-            f"Unanswered Questions / Nuances:\n{unanswered_str}\n\n"
+            f"Unanswered Questions / Nuances:\n{unanswered_str}"
+            f"{sources_prompt}\n\n"
             f"Workflow Request ID:\n{request_id}\n\n"
             f"Synthesize this into a final response matching the WorkflowResponse schema. "
             f"Include the exact request_id: '{request_id}'."
@@ -95,9 +119,11 @@ async def response_agent(state: WorkflowState) -> Dict[str, Any]:
         # Produce validated structured output
         workflow_response: WorkflowResponse = await invoke_structured(llm, messages, WorkflowResponse)
 
-        # Ensure request_id matches state
-        if workflow_response.request_id != request_id:
-            workflow_response = workflow_response.model_copy(update={"request_id": request_id})
+        # Ensure request_id matches state and sources are populated
+        update_fields = {"request_id": request_id}
+        if sources and not workflow_response.sources:
+            update_fields["sources"] = sources
+        workflow_response = workflow_response.model_copy(update=update_fields)
 
         response_dict = workflow_response.model_dump()
 

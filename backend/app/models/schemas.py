@@ -65,6 +65,10 @@ class WorkflowResponse(BaseModel):
         le=1.0,
         description="Calibrated confidence score between 0.0 and 1.0 reflecting completeness.",
     )
+    sources: List[Dict[str, Any]] = Field(
+        default_factory=list,
+        description="Referenced sources and document citations grounded in retrieval.",
+    )
 
 
 # -----------------------------------------------------------------------------
@@ -92,6 +96,7 @@ class WorkflowAPIResponse(BaseModel):
     answer: str = Field(..., description="Comprehensive answer synthesized by the agents")
     key_points: List[str] = Field(..., description="Key executive takeaways")
     confidence: float = Field(..., description="Confidence score (0.0 to 1.0)")
+    sources: List[Dict[str, Any]] = Field(default_factory=list, description="Referenced sources and document citations")
     errors: List[str] = Field(default_factory=list, description="Any warnings or errors recorded during execution")
 
 
@@ -150,6 +155,7 @@ class WorkflowRunDetailResponse(BaseModel):
     answer: Optional[str] = Field(default=None, description="Persisted final synthesized answer")
     key_points: Optional[List[str]] = Field(default=None, description="Persisted executive key points")
     confidence: Optional[float] = Field(default=None, description="Persisted confidence score")
+    sources: List[Dict[str, Any]] = Field(default_factory=list, description="Referenced sources and document citations")
     errors: List[str] = Field(default_factory=list, description="Errors recorded for the run")
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Metadata dictionary")
     steps: List[WorkflowStepDetail] = Field(default_factory=list, description="Ordered agent execution steps")

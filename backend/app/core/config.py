@@ -44,6 +44,17 @@ class Settings(BaseSettings):
     DB_POOL_SIZE: int = Field(default=5, description="Database connection pool size")
     DB_MAX_OVERFLOW: int = Field(default=10, description="Database max connection overflow")
 
+    # Document & Vector Retrieval Settings (Milestone 3)
+    DOCUMENT_STORAGE_PATH: str = Field(default="./data/documents", description="Filesystem directory for uploaded documents")
+    FAISS_INDEX_PATH: str = Field(default="./data/faiss", description="Filesystem directory for persisted FAISS index")
+    EMBEDDING_PROVIDER: str = Field(default="mock", description="Embedding provider: mock, local, openai")
+    EMBEDDING_MODEL: str = Field(default="sentence-transformers/all-MiniLM-L6-v2", description="Embedding model identifier")
+    EMBEDDING_DIMENSION: int = Field(default=384, description="Embedding vector dimension")
+    CHUNK_SIZE: int = Field(default=1000, description="Target chunk size in characters")
+    CHUNK_OVERLAP: int = Field(default=150, description="Chunk overlap in characters")
+    TOP_K_RETRIEVAL: int = Field(default=5, description="Number of top relevant chunks to retrieve")
+    MAX_DOCUMENT_SIZE_MB: int = Field(default=25, description="Maximum allowed document upload size in megabytes")
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

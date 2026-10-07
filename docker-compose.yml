@@ -33,10 +33,17 @@ services:
       LLM_API_KEY: ${LLM_API_KEY:-}
       LLM_BASE_URL: ${LLM_BASE_URL:-}
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-workflow_db}
+      DOCUMENT_STORAGE_PATH: /app/data/documents
+      FAISS_INDEX_PATH: /app/data/faiss
+      EMBEDDING_PROVIDER: ${EMBEDDING_PROVIDER:-mock}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173}
     ports:
       - "8000:8000"
+    volumes:
+      - ./backend:/app/backend
+      - ./data/documents:/app/data/documents
+      - ./data/faiss:/app/data/faiss
     depends_on:
       postgres:
         condition: service_healthy

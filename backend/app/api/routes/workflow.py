@@ -56,6 +56,7 @@ async def create_workflow_run_endpoint(payload: WorkflowRequest) -> WorkflowAPIR
             answer=final_answer.get("answer", ""),
             key_points=final_answer.get("key_points", []),
             confidence=final_answer.get("confidence", 0.0),
+            sources=final_answer.get("sources", []),
             errors=errors,
         )
 
@@ -141,6 +142,8 @@ async def get_run_detail_endpoint(
         for step in run.steps
     ]
 
+    sources = (run.metadata_json or {}).get("sources", [])
+
     return WorkflowRunDetailResponse(
         run_id=str(run.id),
         request_id=str(run.request_id),
@@ -154,6 +157,7 @@ async def get_run_detail_endpoint(
         answer=run.final_answer,
         key_points=run.key_points,
         confidence=run.confidence,
+        sources=sources,
         errors=run.errors or [],
         metadata=run.metadata_json or {},
         steps=steps,

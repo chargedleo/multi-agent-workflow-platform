@@ -120,10 +120,10 @@ export function RunDetailModal({ run, onClose }) {
           </div>
 
           {/* Final Synthesized Answer */}
-          {run.final_answer && (
+          {(run.final_answer || run.answer) && (
             <div className="detail-section">
               <h4 className="detail-heading">Synthesized Final Answer</h4>
-              <div className="final-answer-box">{run.final_answer}</div>
+              <div className="final-answer-box">{run.final_answer || run.answer}</div>
               {run.key_points && run.key_points.length > 0 && (
                 <div style={{ marginTop: '0.75rem' }}>
                   <strong>Key Points:</strong>
@@ -134,6 +134,30 @@ export function RunDetailModal({ run, onClose }) {
                   </ul>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Sources and citations if present */}
+          {((run.sources && run.sources.length > 0) || (run.metadata?.sources && run.metadata.sources.length > 0)) && (
+            <div className="detail-section">
+              <h4 className="detail-heading">Retrieved Document Citations</h4>
+              <div className="sources-grid">
+                {(run.sources || run.metadata?.sources || []).map((src, idx) => (
+                  <div key={idx} className="source-card">
+                    <div className="source-card-header">
+                      <span className="source-icon">📄</span>
+                      <strong className="source-doc-name">{src.filename || 'Document'}</strong>
+                      {src.page_number && <span className="source-page-badge">Page {src.page_number}</span>}
+                      {src.similarity_score != null && (
+                        <span className="source-score-badge">
+                          Score: {(src.similarity_score * 100).toFixed(1)}%
+                        </span>
+                      )}
+                    </div>
+                    {src.snippet && <p className="source-snippet">"{src.snippet}"</p>}
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>

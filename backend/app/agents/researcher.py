@@ -42,6 +42,7 @@ async def research_agent(state: WorkflowState) -> Dict[str, Any]:
     run_id = state.get("run_id")
     user_query = state.get("user_query", "")
     plan_data = state.get("plan")
+    retrieved_docs = state.get("retrieved_documents") or []
 
     logger.info(format_log_msg(f"Research agent started (run_id: {run_id or 'none'})", request_id))
 
@@ -53,8 +54,8 @@ async def research_agent(state: WorkflowState) -> Dict[str, Any]:
                     session=session,
                     run_id=run_id,
                     agent_name="researcher",
-                    step_order=2,
-                    input_data={"plan": plan_data},
+                    step_order=3,
+                    input_data={"plan": plan_data, "retrieved_chunks_count": len(retrieved_docs)},
                 )
                 step_id = step.id
         except Exception as db_err:
@@ -84,10 +85,19 @@ async def research_agent(state: WorkflowState) -> Dict[str, Any]:
 
         plan_summary = f"Goal: {goal}\nSteps:\n" + "\n".join(f"{idx+1}. {step}" for idx, step in enumerate(steps))
 
+        retrieved_context = ""
+        if retrieved_docs:
+            chunks_formatted = "\n---\n".join(
+                f"[Document: {doc.get('metadata', {}).get('filename') or doc.get('filename', 'Unknown')} | Page {doc.get('metadata', {}).get('page_number') or doc.get('page_number', '1')}]\n{doc.get('content') or doc.get('text', '')}"
+                for doc in retrieved_docs
+            )
+            retrieved_context = f"\n\nRetrieved Relevant Document Passages:\n{chunks_formatted}"
+
         prompt_content = (
             f"User Query:\n{user_query}\n\n"
-            f"Strategic Plan to Research:\n{plan_summary}\n\n"
-            f"Perform structured reasoning across the planned steps and deliver comprehensive research results."
+            f"Strategic Plan to Research:\n{plan_summary}"
+            f"{retrieved_context}\n\n"
+            f"Perform structured reasoning across the planned steps, integrating any retrieved document evidence, and deliver comprehensive research results."
         )
 
         messages = [

@@ -3,7 +3,7 @@ import React from 'react';
 export function WorkflowResult({ result }) {
   if (!result) return null;
 
-  const { request_id, answer, key_points, confidence, errors } = result;
+  const { request_id, answer, key_points, confidence, sources, errors } = result;
   const confidencePercent = Math.round((confidence || 0) * 100);
 
   return (
@@ -50,6 +50,39 @@ export function WorkflowResult({ result }) {
               <div key={idx} className="key-point-item">
                 <span className="key-point-bullet">•</span>
                 <span>{point}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {sources && sources.length > 0 && (
+        <div className="sources-section">
+          <div className="section-label">
+            Grounding Evidence & Citations ({sources.length})
+          </div>
+          <div className="sources-grid">
+            {sources.map((src, idx) => (
+              <div key={idx} className="source-card">
+                <div className="source-card-header">
+                  <div className="source-title-group">
+                    <span className="source-icon">📄</span>
+                    <strong className="source-doc-name">{src.filename || 'Document'}</strong>
+                    {src.page_number && (
+                      <span className="source-page-badge">Page {src.page_number}</span>
+                    )}
+                  </div>
+                  {src.similarity_score != null && (
+                    <span className="source-score-badge">
+                      Similarity: {(src.similarity_score * 100).toFixed(1)}%
+                    </span>
+                  )}
+                </div>
+                {src.snippet && (
+                  <p className="source-snippet">
+                    "{src.snippet}"
+                  </p>
+                )}
               </div>
             ))}
           </div>

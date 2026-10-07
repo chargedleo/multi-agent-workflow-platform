@@ -96,3 +96,72 @@ export async function fetchWorkflowRunDetail(runId) {
 
   return response.json();
 }
+
+/**
+ * Upload a document (PDF, TXT, MD) to the knowledge base for FAISS indexing.
+ * @param {File} file
+ * @returns {Promise<{ document_id: string, filename: string, status: string, page_count: number, chunk_count: number }>}
+ */
+export async function uploadDocument(file) {
+  if (!file) throw new Error('File is required');
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await fetch(`${API_BASE_URL}/documents`, {
+    method: 'POST',
+    body: formData,
+  });
+
+  const data = await response.json().catch(() => null);
+  if (!response.ok) {
+    const errorMsg = data?.detail || `Upload failed with HTTP ${response.status}`;
+    throw new Error(errorMsg);
+  }
+
+  return data;
+}
+
+/**
+ * Fetch paginated list of ingested documents.
+ * @param {number} page
+ * @param {number} pageSize
+ * @returns {Promise<{ items: Array, total: number, page: number, page_size: number }>}
+ */
+export async function fetchDocuments(page = 1, pageSize = 20) {
+  const response = await fetch(`${API_BASE_URL}/documents?page=${page}&page_size=${pageSize}`, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch documents (HTTP ${response.status})`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Delete a document and its indexed vectors.
+ * @param {string} documentId
+ * @returns {Promise<{ status: string, document_id: string }>}
+ */
+export async function deleteDocument(documentId) {
+  if (!documentId) throw new Error('documentId is required');
+
+  const response = await fetch(`${API_BASE_URL}/documents/${documentId}`, {
+    method: 'DELETE',
+    headers: {
+      'Accept': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to delete document (HTTP ${response.status})`);
+  }
+
+  return response.json();
+}
+

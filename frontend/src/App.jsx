@@ -3,7 +3,14 @@ import { QueryInput } from './components/QueryInput';
 import { WorkflowResult } from './components/WorkflowResult';
 import { WorkflowHistory } from './components/WorkflowHistory';
 import { RunDetailModal } from './components/RunDetailModal';
-import { fetchHealth, executeWorkflow, fetchWorkflowRuns, fetchWorkflowRunDetail } from './services/api';
+import { DocumentManager } from './components/DocumentManager';
+import {
+  fetchHealth,
+  executeWorkflow,
+  fetchWorkflowRuns,
+  fetchWorkflowRunDetail,
+  fetchDocuments,
+} from './services/api';
 import './App.css';
 
 export function App() {
@@ -19,6 +26,10 @@ export function App() {
   const [selectedRunDetail, setSelectedRunDetail] = useState(null);
   const [isDetailLoading, setIsDetailLoading] = useState(false);
 
+  // Documents state
+  const [documents, setDocuments] = useState([]);
+  const [isLoadingDocs, setIsLoadingDocs] = useState(false);
+
   // Load recent workflow runs
   const loadRuns = useCallback(async () => {
     setIsLoadingHistory(true);
@@ -29,6 +40,19 @@ export function App() {
       console.warn('Failed to load workflow runs:', err);
     } finally {
       setIsLoadingHistory(false);
+    }
+  }, []);
+
+  // Load ingested documents
+  const loadDocuments = useCallback(async () => {
+    setIsLoadingDocs(true);
+    try {
+      const data = await fetchDocuments(1, 50);
+      setDocuments(data.items || []);
+    } catch (err) {
+      console.warn('Failed to load documents:', err);
+    } finally {
+      setIsLoadingDocs(false);
     }
   }, []);
 
@@ -45,7 +69,7 @@ export function App() {
     }
   };
 
-  // Initial health check and runs load
+  // Initial health check, runs load, and documents load
   useEffect(() => {
     let isMounted = true;
     async function checkBackend() {
@@ -62,12 +86,13 @@ export function App() {
     }
     checkBackend();
     loadRuns();
+    loadDocuments();
     const interval = setInterval(checkBackend, 30000);
     return () => {
       isMounted = false;
       clearInterval(interval);
     };
-  }, [loadRuns]);
+  }, [loadRuns, loadDocuments]);
 
   const handleRunWorkflow = async () => {
     if (!query.trim()) return;
@@ -98,7 +123,7 @@ export function App() {
             <h1 className="header-title">Multi-Agent AI Workflow Automation</h1>
           </div>
           <div className="header-badges">
-            <span className="badge badge-milestone">Milestone 2 • PostgreSQL Persistence</span>
+            <span className="badge badge-milestone">Milestone 3 • Document Ingestion & FAISS Vector Search</span>
             <span className={`badge badge-status ${healthInfo.status !== 'healthy' ? 'disconnected' : ''}`}>
               <span className="status-dot"></span>
               API: {healthInfo.status}
@@ -106,8 +131,8 @@ export function App() {
           </div>
         </div>
         <p className="header-subtitle">
-          Autonomous multi-agent orchestration built with LangGraph, FastAPI, and PostgreSQL persistence.
-          Specialized agents collaborate through shared state to plan, research, and synthesize structured results, with durable lifecycle tracking.
+          Autonomous multi-agent orchestration built with LangGraph, FastAPI, PostgreSQL persistence, and FAISS vector intelligence.
+          Planner, Retrieval, Research, and Response agents collaborate with document grounding to produce high-confidence cited solutions.
         </p>
       </header>
 
@@ -116,6 +141,11 @@ export function App() {
         <div className={`pipeline-node ${isLoading ? 'active' : result ? 'completed' : ''}`}>
           <span className="pipeline-icon">📋</span>
           <span>Planner Agent</span>
+        </div>
+        <span className="pipeline-arrow">→</span>
+        <div className={`pipeline-node ${isLoading ? 'active' : result ? 'completed' : ''}`}>
+          <span className="pipeline-icon">📚</span>
+          <span>Document Retrieval</span>
         </div>
         <span className="pipeline-arrow">→</span>
         <div className={`pipeline-node ${isLoading ? 'active' : result ? 'completed' : ''}`}>
@@ -130,7 +160,7 @@ export function App() {
         <span className="pipeline-arrow">→</span>
         <div className={`pipeline-node ${result ? 'completed' : ''}`}>
           <span className="pipeline-icon">📊</span>
-          <span>Structured Output</span>
+          <span>Grounded Output</span>
         </div>
       </div>
 
@@ -153,6 +183,13 @@ export function App() {
 
       {/* Workflow Result */}
       <WorkflowResult result={result} />
+
+      {/* Document Knowledge Base Manager */}
+      <DocumentManager
+        documents={documents}
+        isLoading={isLoadingDocs}
+        onRefresh={loadDocuments}
+      />
 
       {/* Persistent History Table */}
       <WorkflowHistory
@@ -177,7 +214,7 @@ export function App() {
 
       {/* Footer */}
       <footer className="app-footer">
-        Portfolio Platform Architecture — Milestone 2: PostgreSQL Persistence & Workflow Run History
+        Portfolio Platform Architecture — Milestone 3: Document Ingestion, FAISS Vector Search & Document Retrieval Agent
       </footer>
     </div>
   );

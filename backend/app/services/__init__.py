@@ -8,7 +8,7 @@ from backend.app.services.database import (
     get_db_context,
     get_session_factory,
 )
-from backend.app.services.llm import get_llm, invoke_structured
+from backend.app.services.retrieval import RetrievalService
 from backend.app.services.workflow_runs import (
     complete_workflow_run,
     complete_workflow_step,
@@ -25,6 +25,7 @@ from backend.app.services.workflow_runs import (
 __all__ = [
     "get_llm",
     "invoke_structured",
+    "RetrievalService",
     "get_async_engine",
     "get_session_factory",
     "get_db",

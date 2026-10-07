@@ -9,6 +9,7 @@ from typing import Any, Dict, Optional
 import uuid
 from langgraph.graph import StateGraph, START, END
 
+from backend.app.agents.document_retrieval import document_retrieval_agent
 from backend.app.agents.planner import plan_agent
 from backend.app.agents.researcher import research_agent
 from backend.app.agents.responder import response_agent
@@ -31,12 +32,14 @@ def build_workflow_graph() -> Any:
 
     # Register agent nodes
     graph_builder.add_node("planner", plan_agent)
+    graph_builder.add_node("document_retrieval", document_retrieval_agent)
     graph_builder.add_node("researcher", research_agent)
     graph_builder.add_node("responder", response_agent)
 
-    # Define linear execution edges
+    # Define linear execution edges: Planner -> Document Retrieval -> Researcher -> Responder
     graph_builder.add_edge(START, "planner")
-    graph_builder.add_edge("planner", "researcher")
+    graph_builder.add_edge("planner", "document_retrieval")
+    graph_builder.add_edge("document_retrieval", "researcher")
     graph_builder.add_edge("researcher", "responder")
     graph_builder.add_edge("responder", END)
 
@@ -138,6 +141,7 @@ async def run_workflow(
                             plan=final_state.get("plan"),
                             research_results=final_state.get("research_results"),
                             errors=errors,
+                            sources=final_answer.get("sources", []),
                         )
                 except Exception as db_err:
                     logger.warning(format_log_msg(f"Could not persist completed run: {db_err}", req_id))
