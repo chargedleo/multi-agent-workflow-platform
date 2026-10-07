@@ -3,7 +3,7 @@ import React from 'react';
 export function WorkflowResult({ result }) {
   if (!result) return null;
 
-  const { request_id, answer, key_points, confidence, sources, errors } = result;
+  const { request_id, answer, key_points, confidence, sources, analysis_results, errors } = result;
   const confidencePercent = Math.round((confidence || 0) * 100);
 
   return (
@@ -53,6 +53,96 @@ export function WorkflowResult({ result }) {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Quantitative Data Analysis Section */}
+      {analysis_results && analysis_results.status === 'completed' && (
+        <div className="analysis-section">
+          <div className="analysis-header">
+            <div className="section-label" style={{ marginBottom: 0 }}>
+              Quantitative Data Analysis (MCP Verified)
+            </div>
+            <div className="analysis-badges">
+              <span className="badge badge-tech">
+                Tool: {analysis_results.tool_name || 'analyze_dataset'}
+              </span>
+              <span className="badge badge-tech">
+                Dataset: {analysis_results.dataset}
+              </span>
+              <span className="badge badge-tech">
+                Op: {analysis_results.operation}
+              </span>
+              {analysis_results.execution_time_ms != null && (
+                <span className="badge badge-tech">
+                  {typeof analysis_results.execution_time_ms === 'number'
+                    ? `${analysis_results.execution_time_ms.toFixed(1)} ms`
+                    : `${analysis_results.execution_time_ms} ms`}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {analysis_results.summary && (
+            <div className="analysis-summary-box">
+              <span className="analysis-icon">📊</span>
+              <span>{analysis_results.summary}</span>
+            </div>
+          )}
+
+          {analysis_results.metrics && Object.keys(analysis_results.metrics).length > 0 && (
+            <div className="analysis-metrics-grid">
+              {Object.entries(analysis_results.metrics).map(([key, val]) => (
+                <div key={key} className="analysis-metric-card">
+                  <div className="analysis-metric-label">{key.replace(/_/g, ' ').toUpperCase()}</div>
+                  <div className="analysis-metric-value">
+                    {typeof val === 'number'
+                      ? val.toLocaleString(undefined, { maximumFractionDigits: 2 })
+                      : String(val)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {analysis_results.rows && analysis_results.rows.length > 0 && (
+            <div className="analysis-table-container">
+              <table className="analysis-table">
+                <thead>
+                  <tr>
+                    {(analysis_results.columns && analysis_results.columns.length > 0
+                      ? analysis_results.columns
+                      : Object.keys(analysis_results.rows[0])
+                    ).map((col) => (
+                      <th key={col}>{col.replace(/_/g, ' ')}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {analysis_results.rows.map((row, idx) => (
+                    <tr key={idx}>
+                      {(analysis_results.columns && analysis_results.columns.length > 0
+                        ? analysis_results.columns
+                        : Object.keys(row)
+                      ).map((col) => (
+                        <td key={col}>
+                          {typeof row[col] === 'number'
+                            ? row[col].toLocaleString(undefined, { maximumFractionDigits: 2 })
+                            : String(row[col] ?? '')}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {analysis_results && analysis_results.status === 'failed' && (
+        <div className="error-banner" style={{ marginTop: '1rem' }}>
+          <strong>Data Analysis Notice:</strong> {analysis_results.error || 'Structured data analysis failed.'}
         </div>
       )}
 

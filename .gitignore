@@ -57,5 +57,8 @@ Thumbs.db
 *.sqlite3
 *.db
 postgres_data/
-data/
+data/*
+!data/sample/
+!data/sample/**
+
 

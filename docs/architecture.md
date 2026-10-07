@@ -201,9 +201,66 @@ stateDiagram-v2
 
 ---
 
-## 6. Target Future Architecture (Milestones 3 — 6)
+---
 
-The diagram below illustrates the target architecture to be incrementally implemented in future milestones:
+## 6. Milestone 4 Architecture: Data Analysis Agent & MCP Tool Layer
+
+Milestone 4 incorporates structured quantitative reasoning into the platform through an official Model Context Protocol (MCP 2.x) tool layer and a dedicated **Data Analysis Agent**:
+
+```mermaid
+flowchart TD
+    User([User Query]) --> API["FastAPI REST API"]
+    API --> InitRun[("workflow_runs Record\n(PENDING -> RUNNING)")]
+    
+    subgraph LG ["LangGraph Multi-Agent Orchestration"]
+        direction TB
+        Planner["1. Planner Agent\n(Deconstructs query into Goal & Actionable Steps)"]
+        Retriever["2. Document Retrieval Agent\n(FAISS vector search & chunk citation)"]
+        DataAnalysis["3. Data Analysis Agent\n(LLM Decision -> MCP Tool Execution)"]
+        Researcher["4. Research Agent\n(Synthesizes plan, documents, and data metrics)"]
+        Responder["5. Response Agent\n(Structured final answer with citations & metrics)"]
+        
+        Planner --> Retriever
+        Retriever --> DataAnalysis
+        DataAnalysis --> Researcher
+        Researcher --> Responder
+    end
+    
+    subgraph MCPLayer ["Model Context Protocol (MCP) Server Layer"]
+        MCPServer["Official MCPServer ('workflow-data-analysis')"]
+        Tool1["analyze_dataset\n(Safe aggregations, filter, sort, group_by, top_n)"]
+        Tool2["get_dataset_schema\n(Inspect columns, types, and sample data)"]
+        Tool3["query_postgres\n(Allowlisted SQL queries over analytics_orders)"]
+        
+        MCPServer --> Tool1
+        MCPServer --> Tool2
+        MCPServer --> Tool3
+    end
+    
+    subgraph DataStorage ["Approved Data Stores"]
+        CSV[("orders.csv\n(20 deterministic rows)")]
+        PG[("PostgreSQL 16\n(analytics_orders table)")]
+    end
+    
+    InitRun --> Planner
+    DataAnalysis -->|invoke_mcp_tool| MCPServer
+    Tool1 & Tool2 --> CSV
+    Tool3 --> PG
+    Responder --> FinalRun[("workflow_runs Record\n(COMPLETED, analysis_results persisted)")]
+    FinalRun --> Response["Structured API Response"]
+```
+
+### 6.1 Security & Control Boundary
+- **Zero Arbitrary Execution**: Strict elimination of `eval()`, `exec()`, or dynamic code compilation.
+- **Strict Allowlists**: Dataset allowlist (`orders.csv`), table allowlist (`analytics_orders`), and column allowlists.
+- **SQL Injection Defense**: All database queries are constructed using SQLAlchemy parameterized expressions; unapproved column names, non-SELECT statements, and injection keywords (`DROP`, `DELETE`, `UNION`, `UPDATE`) are rejected before execution.
+- **Standardized MCP Interface**: Integrates the official Python `mcp` 2.x SDK with typed JSON schemas and structured outputs.
+
+---
+
+## 7. Target Future Architecture (Milestones 5 — 6)
+
+The diagram below illustrates the target architecture for remaining milestones:
 
 ```mermaid
 flowchart TD
@@ -213,20 +270,18 @@ flowchart TD
     
     subgraph MultiAgentSystem ["Full Multi-Agent Orchestration"]
         direction TB
-        PlannerAgent["Planner Agent"]
-        
-        subgraph ParallelExecution ["Specialized Investigation Agents"]
-            ResearchAgent["Research Agent\n(Web & External Search)"]
-            DocAgent["Document Retrieval Agent\n(FAISS Vector Store)"]
-            DataAgent["Data Analysis Agent\n(Python Sandbox / Code Execution)"]
-        end
-        
-        ValidationAgent["Validation & Critique Agent"]
+        PlannerAgent["1. Planner Agent"]
+        DocAgent["2. Document Retrieval Agent\n(FAISS Vector Store)"]
+        DataAgent["3. Data Analysis Agent\n(MCP Tool Layer)"]
+        ResearchAgent["4. Research Agent\n(Synthesis & Deep Analysis)"]
+        ValidationAgent["5. Validation & Critique Agent"]
         HITL{"Human-in-the-Loop\nApproval Gate"}
-        ResponseAgent["Response Agent"]
+        ResponseAgent["6. Response Agent"]
         
-        PlannerAgent --> ParallelExecution
-        ParallelExecution --> ValidationAgent
+        PlannerAgent --> DocAgent
+        DocAgent --> DataAgent
+        DataAgent --> ResearchAgent
+        ResearchAgent --> ValidationAgent
         ValidationAgent -->|Needs Approval| HITL
         ValidationAgent -->|Approved| ResponseAgent
         HITL -->|Approved| ResponseAgent
@@ -235,17 +290,9 @@ flowchart TD
 
     API --> MultiAgentSystem
     MultiAgentSystem -.-> Checkpointer
-    
-    subgraph ExternalTools ["Tool Integration & MCP Layer"]
-        FAISS[("FAISS Vector DB")]
-        MCP["MCP Protocol Servers"]
-        DocAgent -.-> FAISS
-        ResearchAgent -.-> MCP
-    end
 ```
 
 ### Future Milestone Roadmap:
-- **Milestone 3**: Document Retrieval Agent with FAISS Vector Store, document ingestion, and chunked vector embeddings.
-- **Milestone 4**: Data Analysis Agent with sandboxed function calling, MCP protocol tools, and code execution.
 - **Milestone 5**: Validation Agent and Human-in-the-Loop (HITL) pause/resume approval gates leveraging persistent run IDs.
 - **Milestone 6**: Advanced monitoring dashboard with streaming execution, run inspection, and agent analytics.
+

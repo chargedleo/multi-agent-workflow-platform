@@ -137,6 +137,41 @@ export function RunDetailModal({ run, onClose }) {
             </div>
           )}
 
+          {/* Quantitative Data Analysis if present */}
+          {((run.analysis_results && run.analysis_results.status === 'completed') || (run.metadata?.analysis_results && run.metadata.analysis_results.status === 'completed')) && (() => {
+            const analysis = run.analysis_results || run.metadata.analysis_results;
+            return (
+              <div className="detail-section">
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                  <h4 className="detail-heading" style={{ marginBottom: 0 }}>Data Analysis Results (MCP)</h4>
+                  <div className="analysis-badges">
+                    <span className="badge badge-tech">Tool: {analysis.tool_name || 'analyze_dataset'}</span>
+                    <span className="badge badge-tech">Dataset: {analysis.dataset}</span>
+                    <span className="badge badge-tech">Op: {analysis.operation}</span>
+                  </div>
+                </div>
+                {analysis.summary && (
+                  <div className="analysis-summary-box" style={{ marginBottom: '0.75rem' }}>
+                    <span className="analysis-icon">📊</span>
+                    <span>{analysis.summary}</span>
+                  </div>
+                )}
+                {analysis.metrics && Object.keys(analysis.metrics).length > 0 && (
+                  <div className="analysis-metrics-grid" style={{ marginBottom: '0.75rem' }}>
+                    {Object.entries(analysis.metrics).map(([k, v]) => (
+                      <div key={k} className="analysis-metric-card">
+                        <div className="analysis-metric-label">{k.replace(/_/g, ' ').toUpperCase()}</div>
+                        <div className="analysis-metric-value">
+                          {typeof v === 'number' ? v.toLocaleString(undefined, { maximumFractionDigits: 2 }) : String(v)}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
           {/* Sources and citations if present */}
           {((run.sources && run.sources.length > 0) || (run.metadata?.sources && run.metadata.sources.length > 0)) && (
             <div className="detail-section">

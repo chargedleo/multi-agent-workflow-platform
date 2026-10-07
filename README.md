@@ -7,13 +7,13 @@
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat&logo=docker&logoColor=white)](https://docker.com)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-An enterprise-ready **Multi-Agent AI Workflow Automation Platform** that decomposes complex business and technical queries into collaborative, specialized AI agent workflows orchestrating via **LangGraph**, **FastAPI**, **PostgreSQL**, and **FAISS Vector Search**.
+An enterprise-ready **Multi-Agent AI Workflow Automation Platform** that decomposes complex business and technical queries into collaborative, specialized AI agent workflows orchestrating via **LangGraph**, **FastAPI**, **PostgreSQL**, **FAISS Vector Search**, and **Model Context Protocol (MCP)** tools.
 
 ---
 
-## Current Status: Milestone 3 — Document Ingestion, FAISS Vector Search & Retrieval Agent
+## Current Status: Milestone 4 — Data Analysis Agent & MCP Tools
 
-**Milestone 3** introduces a production-ready **Document Intelligence and Semantic Retrieval (RAG)** system integrated directly into the LangGraph multi-agent pipeline and PostgreSQL persistence layer:
+**Milestone 4** introduces a production-grade **Data Analysis Agent** and an official **Model Context Protocol (MCP 2.x)** tool layer, enabling verified quantitative reasoning and structured data computation without hallucination or unsafe code execution:
 
 ```text
 User Query
@@ -22,32 +22,40 @@ FastAPI REST API (POST /api/v1/workflows)
     ↓
 Database Run Record Created (status: PENDING → RUNNING)
     ↓
-LangGraph StateGraph Execution
+LangGraph StateGraph Execution (5 Collaborative Agents)
     ├── 1. Planner Agent            → Extract goals & sequential plan
     ├── 2. Document Retrieval Agent → Query FAISS vector index & retrieve matching chunks
-    ├── 3. Research Agent           → Synthesize plan with retrieved document evidence
-    └── 4. Response Agent           → Grounded answer with structured source citations
+    ├── 3. Data Analysis Agent      → Decide requirement & invoke approved MCP analytical tools
+    ├── 4. Research Agent           → Synthesize plan, documents, and verified numerical figures
+    └── 5. Response Agent           → Final executive response with citations & metric tables
     ↓
-Database Run Record Completed (status: COMPLETED, sources persisted, duration_ms)
+Database Run Record Completed (status: COMPLETED, analysis_results persisted, duration_ms)
     ↓
-Structured Response with run_id & Source Citations
+Structured API Response (with Grounded Citations & Quantitative Metrics)
 ```
 
-### Capabilities Introduced in Milestone 3:
-- **Multi-Format Document Ingestion**: Upload and parse PDF (via PyMuPDF), Markdown, and plain text files with preserved page provenance.
-- **SHA-256 Duplicate Detection**: Content-addressed checksums avoid duplicate processing and storage while preserving vector synchronization.
-- **Configurable Chunking**: `DocumentSplitter` splits extracted text with configurable chunk size and overlap while tracking start/end offsets and page numbers.
-- **FAISS Vector Index**: Thread-safe vector store backed by FAISS (with exact NumPy IndexFlatIP fallback for standalone offline environments), persisting both `index.faiss` and `metadata.json` to disk.
-- **Document Retrieval Agent**: New LangGraph node between Planner and Researcher, searching the vector store for semantic context based on the user query and plan goals.
-- **Grounded Citations**: Downstream Researcher and Responder agents reference retrieved chunks, outputting structured source citations (`document_id`, `filename`, `page_number`, `similarity_score`, `snippet`).
-- **REST APIs for Documents**:
-  - `POST /api/v1/documents` (upload & index)
-  - `GET /api/v1/documents` (paginated list)
-  - `GET /api/v1/documents/{id}` (document details & chunk counts)
-  - `DELETE /api/v1/documents/{id}` (complete purge from PostgreSQL, disk, and FAISS)
-- **FAISS Index Rebuild CLI**: `python -m backend.app.documents.rebuild_index` reconstructs the entire vector index from PostgreSQL chunks.
-- **Interactive Document Management UI**: React dashboard provides drag-and-drop document uploads, status tracking, vector deletion, and rendered source citations in workflow results.
-- **Comprehensive Test Coverage**: 42 automated tests covering loaders, chunking, embeddings, vector indexing, retrieval agents, and document APIs.
+### Capabilities Introduced in Milestone 4:
+- **Official MCP 2.x Tool Layer**: Built with `MCPServer("workflow-data-analysis")` from the official Python `mcp` SDK, exposing standardized typed tools.
+- **Approved Analytical Tools**:
+  - `analyze_dataset`: Safe aggregations, filtering, sorting, grouping, and Top-N queries over approved CSV datasets.
+  - `get_dataset_schema`: Schema inspection, data types, and record count inspection.
+  - `query_postgres`: Controlled, parameterized relational queries over the allowlisted `analytics_orders` PostgreSQL table.
+- **Strict Security & Sandboxing Controls**:
+  - **Zero Arbitrary Execution**: Complete prohibition of `eval()`, `exec()`, or dynamic shell/code execution.
+  - **Dataset Allowlists**: Enforces approved dataset path boundaries (`data/sample/orders.csv`) with strict path traversal rejection.
+  - **SQL Injection Prevention**: Relational queries constructed via SQLAlchemy parameterized expressions; unapproved column names and injection keywords (`DROP`, `DELETE`, `UNION`, `UPDATE`) are rejected.
+- **Synthetic Orders Dataset & PostgreSQL Table**:
+  - Seeded 20 deterministic records across regions (`North`, `South`, `East`, `West`), products, quantities, unit prices, and revenues (`total_revenue: $177,650.00`).
+  - Alembic migration `003_analytics_dataset.py` managing `analytics_orders` schema.
+- **REST APIs for Analytics**:
+  - `GET /api/v1/analytics/datasets`: List available approved datasets and their schema descriptors.
+  - `POST /api/v1/workflows`: Returns unified response containing both grounded citations and `analysis_results`.
+  - `GET /api/v1/workflows/{run_id}`: Returns full 5-step execution audit trace with analytical metrics.
+- **Enhanced React UI**:
+  - 5-Agent pipeline visualizer (Planner → Retrieval → Data Analysis → Research → Response).
+  - Quantitative analysis cards displaying dataset, operation, tool, execution time, summary, metric cards, and verified tabular results.
+  - Run detail modal inspecting analytical step inputs/outputs.
+- **Comprehensive Test Suite**: **78 automated tests** passing on both host environment and containerized Docker backend.
 
 ---
 
@@ -55,12 +63,13 @@ Structured Response with run_id & Source Citations
 
 - **Backend**: Python 3.11+, FastAPI, Uvicorn
 - **Orchestration**: LangGraph, LangChain Core
-- **Vector Search & RAG**: FAISS, NumPy IndexFlatIP, PyMuPDF (fitz), custom semantic embeddings
+- **MCP Tool Layer**: Model Context Protocol (`mcp` 2.x `MCPServer`)
+- **Vector Search & RAG**: FAISS (native 1.15.1), NumPy IndexFlatIP fallback, PyMuPDF (fitz)
 - **Database & ORM**: PostgreSQL 16, SQLAlchemy 2.x (async), Alembic, asyncpg
 - **Configuration & Validation**: Pydantic v2, Pydantic Settings
 - **Frontend**: React 18, Vite
-- **Testing**: pytest, pytest-asyncio, HTTPX (42 automated tests)
-- **DevOps**: Docker, Docker Compose (persistent volumes for PostgreSQL, documents, and FAISS)
+- **Testing**: pytest, pytest-asyncio, HTTPX (78 automated tests)
+- **DevOps**: Docker, Docker Compose (volumes for PostgreSQL, documents, FAISS, and sample data)
 
 ---
 

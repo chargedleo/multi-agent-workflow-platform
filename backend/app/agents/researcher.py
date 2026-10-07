@@ -43,6 +43,7 @@ async def research_agent(state: WorkflowState) -> Dict[str, Any]:
     user_query = state.get("user_query", "")
     plan_data = state.get("plan")
     retrieved_docs = state.get("retrieved_documents") or []
+    analysis_results = state.get("analysis_results")
 
     logger.info(format_log_msg(f"Research agent started (run_id: {run_id or 'none'})", request_id))
 
@@ -54,8 +55,12 @@ async def research_agent(state: WorkflowState) -> Dict[str, Any]:
                     session=session,
                     run_id=run_id,
                     agent_name="researcher",
-                    step_order=3,
-                    input_data={"plan": plan_data, "retrieved_chunks_count": len(retrieved_docs)},
+                    step_order=4,
+                    input_data={
+                        "plan": plan_data,
+                        "retrieved_chunks_count": len(retrieved_docs),
+                        "has_analysis": bool(analysis_results and analysis_results.get("status") == "completed"),
+                    },
                 )
                 step_id = step.id
         except Exception as db_err:
@@ -93,11 +98,30 @@ async def research_agent(state: WorkflowState) -> Dict[str, Any]:
             )
             retrieved_context = f"\n\nRetrieved Relevant Document Passages:\n{chunks_formatted}"
 
+        analysis_context = ""
+        if analysis_results and analysis_results.get("status") == "completed":
+            summary_str = analysis_results.get("summary", "")
+            metrics_str = ", ".join(f"{k}: {v}" for k, v in analysis_results.get("metrics", {}).items())
+            rows_str = ""
+            if analysis_results.get("rows"):
+                rows_str = "\n".join(str(r) for r in analysis_results.get("rows")[:5])
+            analysis_context = (
+                f"\n\nStructured Data Analysis Results (Grounded Tool Execution):\n"
+                f"- Tool Used: {analysis_results.get('tool_name')}\n"
+                f"- Dataset: {analysis_results.get('dataset')}\n"
+                f"- Operation: {analysis_results.get('operation')}\n"
+                f"- Analysis Summary: {summary_str}\n"
+                f"- Computed Metrics: {metrics_str}\n"
+                f"{f'- Sample Records:' + chr(10) + rows_str if rows_str else ''}\n"
+                "Note: Integrate these exact computed analytical results. Do not contradict or fabricate values."
+            )
+
         prompt_content = (
             f"User Query:\n{user_query}\n\n"
             f"Strategic Plan to Research:\n{plan_summary}"
-            f"{retrieved_context}\n\n"
-            f"Perform structured reasoning across the planned steps, integrating any retrieved document evidence, and deliver comprehensive research results."
+            f"{retrieved_context}"
+            f"{analysis_context}\n\n"
+            f"Perform structured reasoning across the planned steps, integrating any retrieved document evidence and quantitative analysis results, and deliver comprehensive research results."
         )
 
         messages = [

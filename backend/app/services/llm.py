@@ -59,9 +59,86 @@ class MockChatModel(BaseChatModel):
                 if isinstance(input_val, str):
                     query_str = input_val
                 elif isinstance(input_val, list):
-                    query_str = " ".join(getattr(m, "content", str(m)) for m in input_val)
+                    human_msgs = [m for m in input_val if getattr(m, "type", "") == "human" or getattr(m, "__class__", "").__name__ == "HumanMessage"]
+                    if human_msgs:
+                        query_str = " ".join(getattr(m, "content", str(m)) for m in human_msgs)
+                    else:
+                        query_str = " ".join(getattr(m, "content", str(m)) for m in input_val)
                 elif isinstance(input_val, dict):
                     query_str = str(input_val)
+
+                # Extract pure user query text if structured prompt wrapper was used
+                if "User Query:" in query_str:
+                    user_text = query_str.split("User Query:")[1].split("\n\n")[0].strip()
+                else:
+                    user_text = query_str
+
+                if self.target_schema.__name__ == "AnalysisDecision":
+                    u_lower = user_text.lower()
+                    is_analytical = any(k in u_lower for k in [
+                        "order", "revenue", "sales", "dataset", "average",
+                        "top 5", "top", "how many", "sum", "region", "analytics_orders",
+                        "profit", "stats", "statistics", "unit_price", "quantity"
+                    ])
+
+                    # Exclude general conceptual questions even if they contain generic words
+                    if not is_analytical or ("compare" in u_lower and "architecture" in u_lower and not any(k in u_lower for k in ["order", "revenue", "sales", "dataset", "average", "top"])):
+                        return self.target_schema(
+                            analysis_required=False,
+                            reasoning="Query is conceptual or document-based; structured quantitative data analysis is not required.",
+                        )
+
+                    op = "count"
+                    cols = None
+                    group_by = None
+                    limit = None
+                    sort_by = None
+                    sort_order = "desc"
+                    tool = "analyze_dataset"
+                    dataset = "orders"
+
+                    if "query postgres" in u_lower or "analytics_orders" in u_lower:
+                        tool = "query_postgres"
+                        dataset = "analytics_orders"
+                        cols = ["region", "revenue"]
+                    elif "profit" in u_lower:
+                        op = "sum"
+                        cols = ["profit"]
+                    elif "top" in u_lower:
+                        op = "top_n"
+                        limit = 5
+                        sort_by = "revenue"
+                        sort_order = "desc"
+                        cols = ["revenue"]
+                    elif "region" in u_lower or "group" in u_lower:
+                        op = "group_by"
+                        group_by = ["region"]
+                        cols = ["revenue"]
+                    elif "average" in u_lower or "mean" in u_lower:
+                        op = "mean"
+                        cols = ["revenue"]
+                    elif "how many" in u_lower or "count" in u_lower:
+                        op = "count"
+                        cols = None
+                    elif "stats" in u_lower or "descriptive" in u_lower:
+                        op = "descriptive_stats"
+                        cols = ["revenue"]
+                    else:
+                        op = "sum"
+                        cols = ["revenue"]
+
+                    return self.target_schema(
+                        analysis_required=True,
+                        reasoning=f"Structured analytical request detected. Executing {op} on dataset {dataset}.",
+                        tool_name=tool,
+                        dataset=dataset,
+                        operation=op,
+                        columns=cols,
+                        group_by=group_by,
+                        sort_by=sort_by,
+                        sort_order=sort_order,
+                        limit=limit,
+                    )
 
                 if issubclass(self.target_schema, Plan):
                     return self.target_schema(
@@ -75,12 +152,15 @@ class MockChatModel(BaseChatModel):
                     )
 
                 if issubclass(self.target_schema, ResearchResult):
+                    findings = [
+                        "Relational databases provide strong ACID consistency and strict relational schemas ideal for transactional integrity.",
+                        "Document databases offer flexible schemas and horizontal partitioning suitable for high-ingestion, unstructured datasets.",
+                        "Operational complexity is lower with managed relational offerings when queries require complex joins and aggregations.",
+                    ]
+                    if "analysis" in query_str.lower() or "revenue" in query_str.lower():
+                        findings.append("Structured data analysis was executed successfully and computed exact deterministic metrics.")
                     return self.target_schema(
-                        findings=[
-                            "Relational databases provide strong ACID consistency and strict relational schemas ideal for transactional integrity.",
-                            "Document databases offer flexible schemas and horizontal partitioning suitable for high-ingestion, unstructured datasets.",
-                            "Operational complexity is lower with managed relational offerings when queries require complex joins and aggregations.",
-                        ],
+                        findings=findings,
                         assumptions=[
                             "Assumes a modern cloud hosting environment with standard managed infrastructure.",
                             "Assumes typical early-to-mid stage startup scalability requirements.",
@@ -92,20 +172,27 @@ class MockChatModel(BaseChatModel):
                     )
 
                 if issubclass(self.target_schema, WorkflowResponse):
+                    has_analysis = "analysis summary:" in query_str.lower() or "data analysis" in query_str.lower()
+                    answer_text = (
+                        f"Based on the analysis of your query '{query_str[:80]}...': "
+                        "PostgreSQL is strongly recommended as the default database for most SaaS startups due to "
+                        "its robust ACID guarantees, rich indexing, support for JSONB, and mature ecosystem. "
+                        "MongoDB is beneficial if your data model is strictly hierarchical, schema-free, "
+                        "or requires rapid horizontal sharding across distributed clusters."
+                    )
+                    key_pts = [
+                        "PostgreSQL offers superior data integrity, relational constraints, and flexible JSONB querying.",
+                        "MongoDB provides rapid prototyping for polymorphic documents and out-of-the-box horizontal scaling.",
+                        "For a SaaS startup, starting with PostgreSQL reduces early schema technical debt.",
+                    ]
+                    if has_analysis:
+                        answer_text += " Furthermore, quantitative dataset analysis was successfully conducted across the approved data sources."
+                        key_pts.append("Structured data analysis metrics were deterministically verified against approved datasets.")
+
                     return self.target_schema(
                         request_id=kwargs.get("request_id", "mock-req-001"),
-                        answer=(
-                            f"Based on the analysis of your query '{query_str[:80]}...': "
-                            "PostgreSQL is strongly recommended as the default database for most SaaS startups due to "
-                            "its robust ACID guarantees, rich indexing, support for JSONB, and mature ecosystem. "
-                            "MongoDB is beneficial if your data model is strictly hierarchical, schema-free, "
-                            "or requires rapid horizontal sharding across distributed clusters."
-                        ),
-                        key_points=[
-                            "PostgreSQL offers superior data integrity, relational constraints, and flexible JSONB querying.",
-                            "MongoDB provides rapid prototyping for polymorphic documents and out-of-the-box horizontal scaling.",
-                            "For a SaaS startup, starting with PostgreSQL reduces early schema technical debt.",
-                        ],
+                        answer=answer_text,
+                        key_points=key_pts,
                         confidence=0.95,
                     )
 

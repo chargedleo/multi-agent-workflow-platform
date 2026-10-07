@@ -69,6 +69,10 @@ class WorkflowResponse(BaseModel):
         default_factory=list,
         description="Referenced sources and document citations grounded in retrieval.",
     )
+    analysis_results: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="Structured quantitative data analysis results from approved tools.",
+    )
 
 
 # -----------------------------------------------------------------------------
@@ -97,6 +101,7 @@ class WorkflowAPIResponse(BaseModel):
     key_points: List[str] = Field(..., description="Key executive takeaways")
     confidence: float = Field(..., description="Confidence score (0.0 to 1.0)")
     sources: List[Dict[str, Any]] = Field(default_factory=list, description="Referenced sources and document citations")
+    analysis_results: Optional[Dict[str, Any]] = Field(default=None, description="Quantitative data analysis results")
     errors: List[str] = Field(default_factory=list, description="Any warnings or errors recorded during execution")
 
 
@@ -156,6 +161,7 @@ class WorkflowRunDetailResponse(BaseModel):
     key_points: Optional[List[str]] = Field(default=None, description="Persisted executive key points")
     confidence: Optional[float] = Field(default=None, description="Persisted confidence score")
     sources: List[Dict[str, Any]] = Field(default_factory=list, description="Referenced sources and document citations")
+    analysis_results: Optional[Dict[str, Any]] = Field(default=None, description="Persisted data analysis results")
     errors: List[str] = Field(default_factory=list, description="Errors recorded for the run")
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Metadata dictionary")
     steps: List[WorkflowStepDetail] = Field(default_factory=list, description="Ordered agent execution steps")

@@ -8,6 +8,7 @@ from typing import AsyncGenerator
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from backend.app.api.routes.analytics import router as analytics_router
 from backend.app.api.routes.documents import router as documents_router
 from backend.app.api.routes.health import router as health_router
 from backend.app.api.routes.workflow import router as workflow_router
@@ -66,6 +67,7 @@ def create_app() -> FastAPI:
     app.include_router(health_router, prefix=api_v1_prefix)
     app.include_router(workflow_router, prefix=api_v1_prefix)
     app.include_router(documents_router, prefix=api_v1_prefix)
+    app.include_router(analytics_router, prefix=api_v1_prefix)
 
     @app.get("/", tags=["Root"])
     async def root():

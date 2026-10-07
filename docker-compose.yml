@@ -44,6 +44,7 @@ services:
       - ./backend:/app/backend
       - ./data/documents:/app/data/documents
       - ./data/faiss:/app/data/faiss
+      - ./data/sample:/app/data/sample
     depends_on:
       postgres:
         condition: service_healthy

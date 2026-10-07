@@ -271,6 +271,11 @@ class FAISSVectorStore:
 
                 if HAS_FAISS and index_file.exists():
                     self._index = faiss.read_index(str(index_file))
+                elif HAS_FAISS and npy_index_file.exists():
+                    vectors = np.load(str(npy_index_file))
+                    self._index = faiss.IndexFlatIP(self.dimension)
+                    if vectors.shape[0] > 0:
+                        self._index.add(vectors.astype(np.float32))
                 elif npy_index_file.exists():
                     vectors = np.load(str(npy_index_file))
                     self._index = _NumpyIndexFlatIP(self.dimension)

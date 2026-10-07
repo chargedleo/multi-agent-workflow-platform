@@ -1,0 +1,21 @@
+order_id,order_date,customer,region,product,category,quantity,unit_price,revenue
+ORD-1001,2026-01-15,Acme Corp,North,Cloud Suite,Software,5,1200.0,6000.0
+ORD-1002,2026-01-18,Stark Industries,West,Analytics Pro,Software,10,850.0,8500.0
+ORD-1003,2026-01-20,Wayne Enterprises,South,Database Plus,Software,4,1500.0,6000.0
+ORD-1004,2026-01-22,Cyberdyne Systems,East,Security Shield,Software,8,950.0,7600.0
+ORD-1005,2026-02-01,Umbrella Corp,West,Cloud Suite,Software,12,1200.0,14400.0
+ORD-1006,2026-02-05,Oscorp,North,Support Enterprise,Services,2,2500.0,5000.0
+ORD-1007,2026-02-10,Initech,South,Analytics Pro,Software,6,850.0,5100.0
+ORD-1008,2026-02-14,Hooli,West,Database Plus,Software,15,1500.0,22500.0
+ORD-1009,2026-02-18,Massive Dynamic,East,Workflow Starter,Software,20,300.0,6000.0
+ORD-1010,2026-02-25,Pied Piper,West,Security Shield,Software,7,950.0,6650.0
+ORD-1011,2026-03-02,Globex Corp,North,Cloud Suite,Software,8,1200.0,9600.0
+ORD-1012,2026-03-08,Soylent Corp,South,Support Enterprise,Services,3,2500.0,7500.0
+ORD-1013,2026-03-12,Dunder Mifflin,East,Analytics Pro,Software,5,850.0,4250.0
+ORD-1014,2026-03-15,Wonka Industries,West,Cloud Suite,Software,10,1200.0,12000.0
+ORD-1015,2026-03-20,Vandelay Industries,North,Database Plus,Software,6,1500.0,9000.0
+ORD-1016,2026-03-22,Aperture Science,South,Security Shield,Software,9,950.0,8550.0
+ORD-1017,2026-03-25,Tyrell Corp,East,Support Enterprise,Services,4,2500.0,10000.0
+ORD-1018,2026-03-28,Cyberdyne Systems,West,Workflow Starter,Software,25,300.0,7500.0
+ORD-1019,2026-03-30,Stark Industries,North,Security Shield,Software,10,950.0,9500.0
+ORD-1020,2026-03-31,Acme Corp,South,Database Plus,Software,8,1500.0,12000.0

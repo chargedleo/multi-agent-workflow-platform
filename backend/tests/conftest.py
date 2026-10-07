@@ -15,7 +15,12 @@ if str(REPO_ROOT) not in sys.path:
 # Set test environment
 os.environ["APP_ENV"] = "test"
 os.environ["LLM_PROVIDER"] = "mock"
-os.environ["DATABASE_URL"] = "postgresql+asyncpg://postgres:postgres@localhost:5432/test_db"
+if "TEST_DATABASE_URL" in os.environ:
+    os.environ["DATABASE_URL"] = os.environ["TEST_DATABASE_URL"]
+elif Path("/.dockerenv").exists():
+    os.environ["DATABASE_URL"] = "postgresql+asyncpg://postgres:postgres@postgres:5432/test_db"
+else:
+    os.environ["DATABASE_URL"] = "postgresql+asyncpg://postgres:postgres@localhost:5432/test_db"
 
 from backend.app.core.config import get_settings
 from backend.app.db.base import Base
@@ -38,10 +43,23 @@ def reset_settings():
 
 @pytest.fixture(scope="session", autouse=True)
 async def setup_test_db():
-    """Ensure database schema is created once for the test session."""
+    """Ensure database schema is created and analytics dataset is seeded for the test session."""
     engine = get_async_engine()
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        
+        # Check and seed analytics_orders if empty
+        from sqlalchemy import func, select, insert
+        import uuid
+        from backend.app.db.models.analytics_order import AnalyticsOrder
+        from backend.app.analysis.service import DataAnalysisService
+        
+        cnt = (await conn.execute(select(func.count()).select_from(AnalyticsOrder))).scalar()
+        if cnt == 0:
+            rows, _ = DataAnalysisService._load_dataset("orders")
+            orders_to_insert = [{**row, "id": uuid.uuid4()} for row in rows]
+            await conn.execute(insert(AnalyticsOrder), orders_to_insert)
+
     yield
     await close_database_connection()
 

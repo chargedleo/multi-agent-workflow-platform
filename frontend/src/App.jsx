@@ -123,7 +123,7 @@ export function App() {
             <h1 className="header-title">Multi-Agent AI Workflow Automation</h1>
           </div>
           <div className="header-badges">
-            <span className="badge badge-milestone">Milestone 3 • Document Ingestion & FAISS Vector Search</span>
+            <span className="badge badge-milestone">Milestone 4 • Data Analysis Agent & MCP Tools</span>
             <span className={`badge badge-status ${healthInfo.status !== 'healthy' ? 'disconnected' : ''}`}>
               <span className="status-dot"></span>
               API: {healthInfo.status}
@@ -131,8 +131,8 @@ export function App() {
           </div>
         </div>
         <p className="header-subtitle">
-          Autonomous multi-agent orchestration built with LangGraph, FastAPI, PostgreSQL persistence, and FAISS vector intelligence.
-          Planner, Retrieval, Research, and Response agents collaborate with document grounding to produce high-confidence cited solutions.
+          Autonomous multi-agent orchestration built with LangGraph, FastAPI, PostgreSQL persistence, FAISS vector intelligence, and MCP data analysis tools.
+          Planner, Retrieval, Data Analysis, Research, and Response agents collaborate to synthesize grounded answers with verified numerical computation.
         </p>
       </header>
 
@@ -149,6 +149,11 @@ export function App() {
         </div>
         <span className="pipeline-arrow">→</span>
         <div className={`pipeline-node ${isLoading ? 'active' : result ? 'completed' : ''}`}>
+          <span className="pipeline-icon">📈</span>
+          <span>Data Analysis Agent</span>
+        </div>
+        <span className="pipeline-arrow">→</span>
+        <div className={`pipeline-node ${isLoading ? 'active' : result ? 'completed' : ''}`}>
           <span className="pipeline-icon">🔍</span>
           <span>Research Agent</span>
         </div>
@@ -160,7 +165,7 @@ export function App() {
         <span className="pipeline-arrow">→</span>
         <div className={`pipeline-node ${result ? 'completed' : ''}`}>
           <span className="pipeline-icon">📊</span>
-          <span>Grounded Output</span>
+          <span>Verified Output</span>
         </div>
       </div>
 
@@ -214,7 +219,7 @@ export function App() {
 
       {/* Footer */}
       <footer className="app-footer">
-        Portfolio Platform Architecture — Milestone 3: Document Ingestion, FAISS Vector Search & Document Retrieval Agent
+        Portfolio Platform Architecture — Milestone 4: Data Analysis Agent & MCP Tool Layer
       </footer>
     </div>
   );

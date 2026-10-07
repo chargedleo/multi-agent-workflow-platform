@@ -77,6 +77,7 @@ async def complete_workflow_run(
     research_results: Optional[Dict[str, Any]] = None,
     errors: Optional[List[str]] = None,
     sources: Optional[List[Dict[str, Any]]] = None,
+    analysis_results: Optional[Dict[str, Any]] = None,
 ) -> Optional[WorkflowRun]:
     """Transition a workflow run to COMPLETED and record outputs and duration."""
     run_uuid = _to_uuid(run_id)
@@ -100,9 +101,12 @@ async def complete_workflow_run(
         run.research_results = research_results
     if errors is not None:
         run.errors = errors
-    if sources is not None:
+    if sources is not None or analysis_results is not None:
         meta = dict(run.metadata_json or {})
-        meta["sources"] = sources
+        if sources is not None:
+            meta["sources"] = sources
+        if analysis_results is not None:
+            meta["analysis_results"] = analysis_results
         run.metadata_json = meta
 
     await session.commit()

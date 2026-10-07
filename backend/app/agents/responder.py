@@ -45,6 +45,7 @@ async def response_agent(state: WorkflowState) -> Dict[str, Any]:
     plan_data = state.get("plan") or {}
     research_data = state.get("research_results") or {}
     retrieved_docs = state.get("retrieved_documents") or []
+    analysis_results = state.get("analysis_results")
 
     # Format structured source citations from retrieved document chunks
     sources = [
@@ -69,12 +70,13 @@ async def response_agent(state: WorkflowState) -> Dict[str, Any]:
                     session=session,
                     run_id=run_id,
                     agent_name="responder",
-                    step_order=4,
+                    step_order=5,
                     input_data={
                         "user_query": user_query,
                         "plan": plan_data,
                         "research_results": research_data,
                         "retrieved_sources_count": len(sources),
+                        "has_analysis": bool(analysis_results and analysis_results.get("status") == "completed"),
                     },
                 )
                 step_id = step.id
@@ -98,6 +100,24 @@ async def response_agent(state: WorkflowState) -> Dict[str, Any]:
             )
             sources_prompt = f"\n\nRetrieved Reference Sources:\n{sources_details}\nEnsure the answer is accurately grounded in these sources where relevant."
 
+        analysis_prompt = ""
+        if analysis_results and analysis_results.get("status") == "completed":
+            summary_str = analysis_results.get("summary", "")
+            metrics_str = ", ".join(f"{k}: {v}" for k, v in analysis_results.get("metrics", {}).items())
+            rows_str = ""
+            if analysis_results.get("rows"):
+                rows_str = "\n".join(str(r) for r in analysis_results.get("rows")[:5])
+            analysis_prompt = (
+                f"\n\nDeterministic Data Analysis Findings:\n"
+                f"- Tool: {analysis_results.get('tool_name')}\n"
+                f"- Dataset: {analysis_results.get('dataset')}\n"
+                f"- Operation: {analysis_results.get('operation')}\n"
+                f"- Summary: {summary_str}\n"
+                f"- Computed Metrics: {metrics_str}\n"
+                f"{f'- Sample Records:' + chr(10) + rows_str if rows_str else ''}\n"
+                "Ground your answer in these exact data analysis findings without inventing numbers."
+            )
+
         prompt_content = (
             f"User Query:\n{user_query}\n\n"
             f"Strategic Plan Goal:\n{plan_data.get('goal', 'N/A')}\n"
@@ -105,7 +125,8 @@ async def response_agent(state: WorkflowState) -> Dict[str, Any]:
             f"Research Findings:\n{findings_str}\n\n"
             f"Assumptions:\n{assumptions_str}\n\n"
             f"Unanswered Questions / Nuances:\n{unanswered_str}"
-            f"{sources_prompt}\n\n"
+            f"{sources_prompt}"
+            f"{analysis_prompt}\n\n"
             f"Workflow Request ID:\n{request_id}\n\n"
             f"Synthesize this into a final response matching the WorkflowResponse schema. "
             f"Include the exact request_id: '{request_id}'."
@@ -119,12 +140,23 @@ async def response_agent(state: WorkflowState) -> Dict[str, Any]:
         # Produce validated structured output
         workflow_response: WorkflowResponse = await invoke_structured(llm, messages, WorkflowResponse)
 
-        # Ensure request_id matches state and sources are populated
+        # Ensure request_id matches state and sources/analysis are populated
         update_fields = {"request_id": request_id}
         if sources and not workflow_response.sources:
             update_fields["sources"] = sources
-        workflow_response = workflow_response.model_copy(update=update_fields)
 
+        if analysis_results and analysis_results.get("status") == "completed":
+            update_fields["analysis_results"] = analysis_results
+            summary_text = analysis_results.get("summary", "")
+            # Ensure final answer contains exact analytical summary if not already present
+            if summary_text and summary_text not in workflow_response.answer:
+                metrics_fmt = ", ".join(f"{k}: {v}" for k, v in analysis_results.get("metrics", {}).items())
+                analysis_body = f"\n\nData Analysis Findings ({analysis_results.get('dataset')} | {analysis_results.get('operation')}):\n{summary_text}"
+                if metrics_fmt:
+                    analysis_body += f"\nKey Metrics: {metrics_fmt}"
+                update_fields["answer"] = workflow_response.answer + analysis_body
+
+        workflow_response = workflow_response.model_copy(update=update_fields)
         response_dict = workflow_response.model_dump()
 
         if step_id:

@@ -9,6 +9,7 @@ from typing import Any, Dict, Optional
 import uuid
 from langgraph.graph import StateGraph, START, END
 
+from backend.app.agents.data_analysis import data_analysis_agent
 from backend.app.agents.document_retrieval import document_retrieval_agent
 from backend.app.agents.planner import plan_agent
 from backend.app.agents.researcher import research_agent
@@ -33,13 +34,15 @@ def build_workflow_graph() -> Any:
     # Register agent nodes
     graph_builder.add_node("planner", plan_agent)
     graph_builder.add_node("document_retrieval", document_retrieval_agent)
+    graph_builder.add_node("data_analysis", data_analysis_agent)
     graph_builder.add_node("researcher", research_agent)
     graph_builder.add_node("responder", response_agent)
 
-    # Define linear execution edges: Planner -> Document Retrieval -> Researcher -> Responder
+    # Define linear execution edges: Planner -> Document Retrieval -> Data Analysis -> Researcher -> Responder
     graph_builder.add_edge(START, "planner")
     graph_builder.add_edge("planner", "document_retrieval")
-    graph_builder.add_edge("document_retrieval", "researcher")
+    graph_builder.add_edge("document_retrieval", "data_analysis")
+    graph_builder.add_edge("data_analysis", "researcher")
     graph_builder.add_edge("researcher", "responder")
     graph_builder.add_edge("responder", END)
 
@@ -142,6 +145,7 @@ async def run_workflow(
                             research_results=final_state.get("research_results"),
                             errors=errors,
                             sources=final_answer.get("sources", []),
+                            analysis_results=final_state.get("analysis_results") or final_answer.get("analysis_results"),
                         )
                 except Exception as db_err:
                     logger.warning(format_log_msg(f"Could not persist completed run: {db_err}", req_id))

@@ -49,6 +49,7 @@ async def create_workflow_run_endpoint(payload: WorkflowRequest) -> WorkflowAPIR
                 detail=f"Workflow failed to complete: {error_details}",
             )
 
+        analysis_data = final_state.get("analysis_results") or final_answer.get("analysis_results")
         return WorkflowAPIResponse(
             request_id=request_id,
             run_id=run_id,
@@ -57,6 +58,7 @@ async def create_workflow_run_endpoint(payload: WorkflowRequest) -> WorkflowAPIR
             key_points=final_answer.get("key_points", []),
             confidence=final_answer.get("confidence", 0.0),
             sources=final_answer.get("sources", []),
+            analysis_results=analysis_data,
             errors=errors,
         )
 
@@ -143,6 +145,7 @@ async def get_run_detail_endpoint(
     ]
 
     sources = (run.metadata_json or {}).get("sources", [])
+    analysis_results = (run.metadata_json or {}).get("analysis_results")
 
     return WorkflowRunDetailResponse(
         run_id=str(run.id),
@@ -158,6 +161,7 @@ async def get_run_detail_endpoint(
         key_points=run.key_points,
         confidence=run.confidence,
         sources=sources,
+        analysis_results=analysis_results,
         errors=run.errors or [],
         metadata=run.metadata_json or {},
         steps=steps,
