@@ -102,6 +102,9 @@ class WorkflowAPIResponse(BaseModel):
     confidence: float = Field(..., description="Confidence score (0.0 to 1.0)")
     sources: List[Dict[str, Any]] = Field(default_factory=list, description="Referenced sources and document citations")
     analysis_results: Optional[Dict[str, Any]] = Field(default=None, description="Quantitative data analysis results")
+    validation: Optional[Dict[str, Any]] = Field(default=None, description="Guardrails and validation evaluation results")
+    validation_status: Optional[str] = Field(default=None, description="Validation status: PASS, FAIL, RECOVERABLE, BLOCKED")
+    validation_score: Optional[float] = Field(default=None, description="Validation score (0.0 to 1.0)")
     errors: List[str] = Field(default_factory=list, description="Any warnings or errors recorded during execution")
 
 
@@ -162,6 +165,9 @@ class WorkflowRunDetailResponse(BaseModel):
     confidence: Optional[float] = Field(default=None, description="Persisted confidence score")
     sources: List[Dict[str, Any]] = Field(default_factory=list, description="Referenced sources and document citations")
     analysis_results: Optional[Dict[str, Any]] = Field(default=None, description="Persisted data analysis results")
+    validation: Optional[Dict[str, Any]] = Field(default=None, description="Guardrails and validation evaluation results")
+    validation_status: Optional[str] = Field(default=None, description="Validation status: PASS, FAIL, RECOVERABLE, BLOCKED")
+    validation_score: Optional[float] = Field(default=None, description="Validation score (0.0 to 1.0)")
     errors: List[str] = Field(default_factory=list, description="Errors recorded for the run")
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Metadata dictionary")
     steps: List[WorkflowStepDetail] = Field(default_factory=list, description="Ordered agent execution steps")

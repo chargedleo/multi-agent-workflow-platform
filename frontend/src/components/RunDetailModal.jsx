@@ -47,6 +47,16 @@ export function RunDetailModal({ run, onClose }) {
               </div>
             </div>
             <div className="metric-box">
+              <div className="metric-title">Validation</div>
+              <div className="metric-value">
+                {run.validation_status ? (
+                  <span className={`status-badge status-${run.validation_status.toLowerCase()}`}>
+                    {run.validation_status} {run.validation_score != null ? `(${Math.round(run.validation_score * 100)}%)` : ''}
+                  </span>
+                ) : 'N/A'}
+              </div>
+            </div>
+            <div className="metric-box">
               <div className="metric-title">Steps Executed</div>
               <div className="metric-value">{run.steps ? run.steps.length : 0}</div>
             </div>
@@ -166,6 +176,57 @@ export function RunDetailModal({ run, onClose }) {
                         </div>
                       </div>
                     ))}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
+          {/* Validation Guardrails if present */}
+          {((run.validation) || (run.metadata?.validation)) && (() => {
+            const val = run.validation || run.metadata.validation;
+            return (
+              <div className="detail-section">
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                  <h4 className="detail-heading" style={{ marginBottom: 0 }}>Validation Guardrails</h4>
+                  <div className="validation-badges">
+                    <span className={`badge badge-val-${(val.status || 'pass').toLowerCase()}`}>
+                      Status: {val.status}
+                    </span>
+                    {val.score != null && (
+                      <span className="badge badge-tech">
+                        Score: {Math.round(val.score * 100)}%
+                      </span>
+                    )}
+                    {val.checked_items != null && (
+                      <span className="badge badge-tech">
+                        Checks: {val.checked_items - (val.failed_items || 0)}/{val.checked_items} Passed
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {val.issues && val.issues.length > 0 ? (
+                  <div className="validation-issues-list">
+                    {val.issues.map((iss, idx) => (
+                      <div key={idx} className={`validation-issue-item severity-${(iss.severity || 'info').toLowerCase()}`}>
+                        <div className="issue-header">
+                          <span className={`severity-tag severity-${(iss.severity || 'info').toLowerCase()}`}>
+                            {iss.severity}
+                          </span>
+                          <span className="issue-code">{iss.code}</span>
+                          <span className="issue-category">[{iss.category}]</span>
+                          {iss.recoverable && <span className="recoverable-tag">Auto-Recoverable</span>}
+                        </div>
+                        <div className="issue-message">{iss.message}</div>
+                        {iss.evidence && <div className="issue-evidence">Evidence: <code>{iss.evidence}</code></div>}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="validation-clean-box">
+                    <span className="validation-clean-icon">✅</span>
+                    <span>All automated guardrails passed: Response schema, numerical consistency, citation provenance, tool outputs, and claim assertions verified.</span>
                   </div>
                 )}
               </div>

@@ -78,6 +78,7 @@ async def complete_workflow_run(
     errors: Optional[List[str]] = None,
     sources: Optional[List[Dict[str, Any]]] = None,
     analysis_results: Optional[Dict[str, Any]] = None,
+    validation_results: Optional[Dict[str, Any]] = None,
 ) -> Optional[WorkflowRun]:
     """Transition a workflow run to COMPLETED and record outputs and duration."""
     run_uuid = _to_uuid(run_id)
@@ -101,12 +102,20 @@ async def complete_workflow_run(
         run.research_results = research_results
     if errors is not None:
         run.errors = errors
-    if sources is not None or analysis_results is not None:
+
+    if validation_results is not None:
+        run.validation_status = validation_results.get("status")
+        run.validation_score = validation_results.get("score")
+
+    if sources is not None or analysis_results is not None or validation_results is not None:
         meta = dict(run.metadata_json or {})
         if sources is not None:
             meta["sources"] = sources
         if analysis_results is not None:
             meta["analysis_results"] = analysis_results
+        if validation_results is not None:
+            meta["validation"] = validation_results
+            meta["validation_results"] = validation_results
         run.metadata_json = meta
 
     await session.commit()
@@ -127,6 +136,7 @@ async def fail_workflow_run(
     final_answer: Optional[str] = None,
     plan: Optional[Dict[str, Any]] = None,
     research_results: Optional[Dict[str, Any]] = None,
+    validation_results: Optional[Dict[str, Any]] = None,
 ) -> Optional[WorkflowRun]:
     """Transition a workflow run to FAILED and record error details."""
     run_uuid = _to_uuid(run_id)
@@ -148,6 +158,14 @@ async def fail_workflow_run(
         run.plan = plan
     if research_results:
         run.research_results = research_results
+
+    if validation_results is not None:
+        run.validation_status = validation_results.get("status")
+        run.validation_score = validation_results.get("score")
+        meta = dict(run.metadata_json or {})
+        meta["validation"] = validation_results
+        meta["validation_results"] = validation_results
+        run.metadata_json = meta
 
     await session.commit()
     await session.refresh(run)

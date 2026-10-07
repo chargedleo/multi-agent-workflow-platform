@@ -55,6 +55,11 @@ class Settings(BaseSettings):
     TOP_K_RETRIEVAL: int = Field(default=5, description="Number of top relevant chunks to retrieve")
     MAX_DOCUMENT_SIZE_MB: int = Field(default=25, description="Maximum allowed document upload size in megabytes")
 
+    # Validation & Guardrails Settings (Milestone 5)
+    VALIDATION_ENABLED: bool = Field(default=True, description="Enable workflow validation and guardrails layer")
+    MAX_VALIDATION_ATTEMPTS: int = Field(default=2, ge=1, le=5, description="Maximum validation/correction attempts before terminating")
+    VALIDATION_SCORE_THRESHOLD: float = Field(default=0.8, ge=0.0, le=1.0, description="Minimum validation score threshold to pass")
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

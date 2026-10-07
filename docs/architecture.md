@@ -258,41 +258,58 @@ flowchart TD
 
 ---
 
-## 7. Target Future Architecture (Milestones 5 — 6)
+## 7. Milestone 5 Architecture: Validation Guardrails & Agent Correction Loop
 
-The diagram below illustrates the target architecture for remaining milestones:
+Milestone 5 implements a robust guardrail validation system and an automated, bounded agent correction loop:
 
 ```mermaid
 flowchart TD
-    User([User]) --> UI["React Monitoring Dashboard"]
-    UI --> API["FastAPI Gateway"]
-    API --> Checkpointer[("PostgreSQL Persistence & History\n(workflow_runs & workflow_steps)")]
+    User([User]) --> API["FastAPI Gateway"]
+    API --> InitRun[("workflow_runs Record\n(PENDING → RUNNING)")]
     
-    subgraph MultiAgentSystem ["Full Multi-Agent Orchestration"]
+    subgraph MultiAgentSystem ["Multi-Agent Execution & Guardrail Pipeline"]
         direction TB
-        PlannerAgent["1. Planner Agent"]
-        DocAgent["2. Document Retrieval Agent\n(FAISS Vector Store)"]
-        DataAgent["3. Data Analysis Agent\n(MCP Tool Layer)"]
-        ResearchAgent["4. Research Agent\n(Synthesis & Deep Analysis)"]
-        ValidationAgent["5. Validation & Critique Agent"]
-        HITL{"Human-in-the-Loop\nApproval Gate"}
-        ResponseAgent["6. Response Agent"]
+        Planner["1. Planner Agent"]
+        DocRetrieval["2. Document Retrieval Agent\n(FAISS Vector Store)"]
+        DataAnalysis["3. Data Analysis Agent\n(MCP Tool Layer)"]
+        Research["4. Research Agent"]
+        Responder["5. Response Agent"]
+        Validator{"6. Validation Guardrails\n(Schema, Math, Provenance, Claims)"}
         
-        PlannerAgent --> DocAgent
-        DocAgent --> DataAgent
-        DataAgent --> ResearchAgent
-        ResearchAgent --> ValidationAgent
-        ValidationAgent -->|Needs Approval| HITL
-        ValidationAgent -->|Approved| ResponseAgent
-        HITL -->|Approved| ResponseAgent
-        HITL -->|Rejected / Revised| PlannerAgent
+        Planner --> DocRetrieval
+        DocRetrieval --> DataAnalysis
+        DataAnalysis --> Research
+        Research --> Responder
+        Responder --> Validator
+        
+        Validator -->|PASS| EndSuccess([Workflow Complete])
+        Validator -->|RECOVERABLE\n(attempt < 2)| Responder
+        Validator -->|FAIL / BLOCKED\n(or max attempts reached)| EndFail([Workflow Terminated / Failed])
     end
 
-    API --> MultiAgentSystem
-    MultiAgentSystem -.-> Checkpointer
+    InitRun --> Planner
+    EndSuccess --> FinalRunSuccess[("workflow_runs Record\n(COMPLETED, validation_status: PASS)")]
+    EndFail --> FinalRunFail[("workflow_runs Record\n(FAILED, validation_status: FAIL)")]
+    FinalRunSuccess --> ResponseSuccess["Structured API Response"]
+    FinalRunFail --> ResponseFail["Error Audit Response"]
 ```
 
-### Future Milestone Roadmap:
-- **Milestone 5**: Validation Agent and Human-in-the-Loop (HITL) pause/resume approval gates leveraging persistent run IDs.
-- **Milestone 6**: Advanced monitoring dashboard with streaming execution, run inspection, and agent analytics.
+### 7.1 Modular Deterministic Validators
+1. **Response Schema Validator** (`validate_response_schema`): Validates non-empty synthesized responses, required executive takeaways, calibrated confidence `[0.0, 1.0]`, and request ID parity.
+2. **Citation Provenance Validator** (`validate_citations`): Ensures all citations link to actual documents and chunks retrieved during the run, flagging fabricated documents.
+3. **Numerical Consistency Validator** (`validate_analysis_results`): Validates math consistency (`count >= 0`, `sum / count == mean`, `min <= mean <= max`, group row sum reconciliation).
+4. **Tool Output Validator** (`validate_tool_outputs`): Verifies invocations match registered MCP tools, checks parameter types, and detects masked failures.
+5. **Claim Verification Validator** (`validate_claims_and_numbers`): Extracts numerical and financial claims from synthesized text and matches them against verified analysis metrics and retrieved source documents to prevent hallucinated numbers.
+
+### 7.2 Correction Loop Mechanics
+- **Actionable Feedback**: When recoverable issues are identified, the validation engine packages structured feedback instructions and injects them directly into the Response Agent prompt.
+- **Bounded Attempts**: Strict `MAX_VALIDATION_ATTEMPTS = 2` hard limit prevents infinite execution cycles.
+- **Durable Traceability**: Every validation evaluation is recorded as a discrete step in `workflow_steps` (e.g. step order 6 on attempt 1, step order 8 on attempt 2) and stored in `metadata_json["validation"]`.
+
+---
+
+## 8. Target Future Architecture (Milestone 6)
+
+The upcoming milestone will introduce:
+- **Milestone 6**: Human-in-the-Loop (HITL) approval gates, live streaming execution with server-sent events (SSE), interactive run inspection, and visual agent analytics.
 

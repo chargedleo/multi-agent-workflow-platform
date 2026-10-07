@@ -48,6 +48,11 @@ async def setup_test_db():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
         
+        # Ensure validation columns exist if table was previously created
+        from sqlalchemy import text
+        await conn.execute(text("ALTER TABLE workflow_runs ADD COLUMN IF NOT EXISTS validation_status VARCHAR(32);"))
+        await conn.execute(text("ALTER TABLE workflow_runs ADD COLUMN IF NOT EXISTS validation_score FLOAT;"))
+        
         # Check and seed analytics_orders if empty
         from sqlalchemy import func, select, insert
         import uuid

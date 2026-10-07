@@ -62,6 +62,9 @@ async def response_agent(state: WorkflowState) -> Dict[str, Any]:
 
     logger.info(format_log_msg(f"Response agent started (run_id: {run_id or 'none'}, citations: {len(sources)})", request_id))
 
+    current_attempt = state.get("validation_attempt") or 0
+    step_order = 5 if current_attempt == 0 else (5 + 2 * current_attempt)
+
     step_id = None
     if run_id:
         try:
@@ -70,13 +73,14 @@ async def response_agent(state: WorkflowState) -> Dict[str, Any]:
                     session=session,
                     run_id=run_id,
                     agent_name="responder",
-                    step_order=5,
+                    step_order=step_order,
                     input_data={
                         "user_query": user_query,
                         "plan": plan_data,
                         "research_results": research_data,
                         "retrieved_sources_count": len(sources),
                         "has_analysis": bool(analysis_results and analysis_results.get("status") == "completed"),
+                        "correction_attempt": current_attempt,
                     },
                 )
                 step_id = step.id
@@ -118,6 +122,20 @@ async def response_agent(state: WorkflowState) -> Dict[str, Any]:
                 "Ground your answer in these exact data analysis findings without inventing numbers."
             )
 
+        validation_feedback = ""
+        validation_issues = state.get("validation_issues") or []
+        if validation_issues:
+            issues_details = "\n".join(
+                f"- [{i.get('severity', 'ERROR')}] {i.get('message', '')} (Evidence: {i.get('evidence', 'N/A')})"
+                for i in validation_issues
+            )
+            validation_feedback = (
+                f"\n\nCRITICAL VALIDATION FEEDBACK:\n"
+                f"A previous response attempt failed guardrails with the following issues:\n"
+                f"{issues_details}\n"
+                f"You MUST revise your answer to resolve all issues. Adhere strictly to the verified evidence figures."
+            )
+
         prompt_content = (
             f"User Query:\n{user_query}\n\n"
             f"Strategic Plan Goal:\n{plan_data.get('goal', 'N/A')}\n"
@@ -126,7 +144,8 @@ async def response_agent(state: WorkflowState) -> Dict[str, Any]:
             f"Assumptions:\n{assumptions_str}\n\n"
             f"Unanswered Questions / Nuances:\n{unanswered_str}"
             f"{sources_prompt}"
-            f"{analysis_prompt}\n\n"
+            f"{analysis_prompt}"
+            f"{validation_feedback}\n\n"
             f"Workflow Request ID:\n{request_id}\n\n"
             f"Synthesize this into a final response matching the WorkflowResponse schema. "
             f"Include the exact request_id: '{request_id}'."

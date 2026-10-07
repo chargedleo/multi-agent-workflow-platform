@@ -27,13 +27,14 @@ async def test_post_workflow_returns_run_id_and_persists(async_client: AsyncClie
     assert detail_res.status_code == 200
     detail_data = detail_res.json()
     assert detail_data["run_id"] == run_id
-    assert len(detail_data["steps"]) == 5
+    assert len(detail_data["steps"]) >= 5
     agent_names = [s["agent_name"] for s in detail_data["steps"]]
     assert "planner" in agent_names
     assert "document_retrieval" in agent_names
     assert "data_analysis" in agent_names
     assert "researcher" in agent_names
     assert "responder" in agent_names
+    assert "validation" in agent_names
 
 
 @pytest.mark.asyncio

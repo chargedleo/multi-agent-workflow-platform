@@ -3,7 +3,7 @@ import React from 'react';
 export function WorkflowResult({ result }) {
   if (!result) return null;
 
-  const { request_id, answer, key_points, confidence, sources, analysis_results, errors } = result;
+  const { request_id, answer, key_points, confidence, sources, analysis_results, validation, errors } = result;
   const confidencePercent = Math.round((confidence || 0) * 100);
 
   return (
@@ -143,6 +143,61 @@ export function WorkflowResult({ result }) {
       {analysis_results && analysis_results.status === 'failed' && (
         <div className="error-banner" style={{ marginTop: '1rem' }}>
           <strong>Data Analysis Notice:</strong> {analysis_results.error || 'Structured data analysis failed.'}
+        </div>
+      )}
+
+      {/* Validation Guardrails Section */}
+      {validation && (
+        <div className="validation-section">
+          <div className="validation-header">
+            <div className="section-label" style={{ marginBottom: 0 }}>
+              Validation Guardrails Evaluation
+            </div>
+            <div className="validation-badges">
+              <span className={`badge badge-val-${(validation.status || 'pass').toLowerCase()}`}>
+                Status: {validation.status}
+              </span>
+              {validation.score != null && (
+                <span className="badge badge-tech">
+                  Score: {Math.round(validation.score * 100)}%
+                </span>
+              )}
+              {validation.checked_items != null && (
+                <span className="badge badge-tech">
+                  Checks: {validation.checked_items - (validation.failed_items || 0)}/{validation.checked_items} Passed
+                </span>
+              )}
+              {validation.validation_duration_ms != null && (
+                <span className="badge badge-tech">
+                  {validation.validation_duration_ms.toFixed(1)} ms
+                </span>
+              )}
+            </div>
+          </div>
+
+          {validation.issues && validation.issues.length > 0 ? (
+            <div className="validation-issues-list">
+              {validation.issues.map((iss, idx) => (
+                <div key={idx} className={`validation-issue-item severity-${(iss.severity || 'info').toLowerCase()}`}>
+                  <div className="issue-header">
+                    <span className={`severity-tag severity-${(iss.severity || 'info').toLowerCase()}`}>
+                      {iss.severity}
+                    </span>
+                    <span className="issue-code">{iss.code}</span>
+                    <span className="issue-category">[{iss.category}]</span>
+                    {iss.recoverable && <span className="recoverable-tag">Auto-Recoverable</span>}
+                  </div>
+                  <div className="issue-message">{iss.message}</div>
+                  {iss.evidence && <div className="issue-evidence">Evidence: <code>{iss.evidence}</code></div>}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="validation-clean-box">
+              <span className="validation-clean-icon">✅</span>
+              <span>All automated guardrails passed: Response schema, numerical consistency, citation provenance, tool outputs, and claim assertions verified.</span>
+            </div>
+          )}
         </div>
       )}
 

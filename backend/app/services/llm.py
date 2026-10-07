@@ -173,6 +173,48 @@ class MockChatModel(BaseChatModel):
 
                 if issubclass(self.target_schema, WorkflowResponse):
                     has_analysis = "analysis summary:" in query_str.lower() or "data analysis" in query_str.lower()
+                    has_validation_feedback = "critical validation feedback" in query_str.lower()
+
+                    # Synthetic test scenario: incorrect revenue that corrects on retry
+                    if "synthetic_incorrect_revenue" in query_str.lower():
+                        if not has_validation_feedback:
+                            answer_text = "Analysis completed. The total revenue is $190,000 across all orders."
+                        else:
+                            answer_text = "Analysis revised with verified evidence. The total revenue is $177,650 across all orders."
+                        return self.target_schema(
+                            request_id=kwargs.get("request_id", "mock-req-001"),
+                            answer=answer_text,
+                            key_points=["Revenue figure verified against approved analytical records."],
+                            confidence=0.95,
+                        )
+
+                    # Synthetic test scenario: permanently invalid figure
+                    if "synthetic_permanent_invalid" in query_str.lower():
+                        return self.target_schema(
+                            request_id=kwargs.get("request_id", "mock-req-001"),
+                            answer="The total revenue is $999,999 across all orders.",
+                            key_points=["Permanently unverified figure asserted."],
+                            confidence=0.95,
+                        )
+
+                    # Synthetic test scenario: fabricated citation
+                    if "synthetic_fabricated_citation" in query_str.lower():
+                        return self.target_schema(
+                            request_id=kwargs.get("request_id", "mock-req-001"),
+                            answer="According to fabricated specifications, architecture details are available.",
+                            key_points=["Referencing fabricated citation."],
+                            confidence=0.95,
+                            sources=[
+                                {
+                                    "document_id": "fabricated-doc-id-does-not-exist",
+                                    "chunk_id": "fabricated-chunk-id-does-not-exist",
+                                    "filename": "fabricated_spec.pdf",
+                                    "page_number": 99,
+                                    "snippet": "Fabricated content snippet.",
+                                }
+                            ],
+                        )
+
                     answer_text = (
                         f"Based on the analysis of your query '{query_str[:80]}...': "
                         "PostgreSQL is strongly recommended as the default database for most SaaS startups due to "

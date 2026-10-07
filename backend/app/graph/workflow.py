@@ -14,6 +14,8 @@ from backend.app.agents.document_retrieval import document_retrieval_agent
 from backend.app.agents.planner import plan_agent
 from backend.app.agents.researcher import research_agent
 from backend.app.agents.responder import response_agent
+from backend.app.agents.validation import validation_agent
+from backend.app.core.config import get_settings
 from backend.app.core.logging import format_log_msg, get_logger
 from backend.app.db.session import get_db_context
 from backend.app.graph.state import WorkflowState, create_initial_state
@@ -28,7 +30,7 @@ logger = get_logger(__name__)
 
 
 def build_workflow_graph() -> Any:
-    """Build and compile the LangGraph multi-agent StateGraph."""
+    """Build and compile the LangGraph multi-agent StateGraph with validation guardrails."""
     graph_builder = StateGraph(WorkflowState)
 
     # Register agent nodes
@@ -37,14 +39,46 @@ def build_workflow_graph() -> Any:
     graph_builder.add_node("data_analysis", data_analysis_agent)
     graph_builder.add_node("researcher", research_agent)
     graph_builder.add_node("responder", response_agent)
+    graph_builder.add_node("validation", validation_agent)
 
-    # Define linear execution edges: Planner -> Document Retrieval -> Data Analysis -> Researcher -> Responder
+    # Define linear execution edges leading to validation
     graph_builder.add_edge(START, "planner")
     graph_builder.add_edge("planner", "document_retrieval")
     graph_builder.add_edge("document_retrieval", "data_analysis")
     graph_builder.add_edge("data_analysis", "researcher")
     graph_builder.add_edge("researcher", "responder")
-    graph_builder.add_edge("responder", END)
+    graph_builder.add_edge("responder", "validation")
+
+    # Conditional router from validation: recoverable failures cycle back to responder
+    def validation_router(state: WorkflowState) -> str:
+        settings = get_settings()
+        if not settings.VALIDATION_ENABLED:
+            return END
+
+        val_res = state.get("validation_results") or {}
+        status = val_res.get("status")
+        attempt = state.get("validation_attempt", 1)
+        max_attempts = settings.MAX_VALIDATION_ATTEMPTS
+
+        if status == "RECOVERABLE" and attempt < max_attempts:
+            logger.info(
+                format_log_msg(
+                    f"Validation router directing state to responder for correction (attempt {attempt}/{max_attempts})",
+                    state.get("request_id", "unknown"),
+                )
+            )
+            return "responder"
+
+        return END
+
+    graph_builder.add_conditional_edges(
+        "validation",
+        validation_router,
+        {
+            "responder": "responder",
+            END: END,
+        },
+    )
 
     # Compile the graph
     return graph_builder.compile()
@@ -107,12 +141,17 @@ async def run_workflow(
 
         final_answer = final_state.get("final_answer")
         errors = final_state.get("errors", [])
+        val_res = final_state.get("validation_results") or {}
+        val_status = val_res.get("status")
 
-        if errors or not final_answer:
+        if errors or not final_answer or val_status in ("FAIL", "BLOCKED"):
             final_state["status"] = "FAILED"
+            fail_reasons = list(errors)
+            if val_status in ("FAIL", "BLOCKED"):
+                fail_reasons.append(f"Validation Guardrails: {val_status}")
             logger.warning(
                 format_log_msg(
-                    f"Workflow completed with {len(errors)} error(s): {', '.join(errors)}",
+                    f"Workflow completed with failure (validation: {val_status}, {len(errors)} error(s)): {', '.join(fail_reasons)}",
                     req_id,
                 )
             )
@@ -122,16 +161,17 @@ async def run_workflow(
                         await fail_workflow_run(
                             session=session,
                             run_id=active_run_id,
-                            errors=errors,
+                            errors=fail_reasons,
                             final_answer=final_answer.get("answer") if final_answer else None,
                             plan=final_state.get("plan"),
                             research_results=final_state.get("research_results"),
+                            validation_results=val_res,
                         )
                 except Exception as db_err:
                     logger.warning(format_log_msg(f"Could not persist failed run status: {db_err}", req_id))
         else:
             final_state["status"] = "COMPLETED"
-            logger.info(format_log_msg("Workflow completed successfully", req_id))
+            logger.info(format_log_msg("Workflow completed successfully with guardrails passed", req_id))
             if active_run_id:
                 try:
                     async with get_db_context() as session:
@@ -146,6 +186,7 @@ async def run_workflow(
                             errors=errors,
                             sources=final_answer.get("sources", []),
                             analysis_results=final_state.get("analysis_results") or final_answer.get("analysis_results"),
+                            validation_results=val_res,
                         )
                 except Exception as db_err:
                     logger.warning(format_log_msg(f"Could not persist completed run: {db_err}", req_id))

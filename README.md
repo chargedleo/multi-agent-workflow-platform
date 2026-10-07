@@ -11,9 +11,9 @@ An enterprise-ready **Multi-Agent AI Workflow Automation Platform** that decompo
 
 ---
 
-## Current Status: Milestone 4 — Data Analysis Agent & MCP Tools
+## Current Status: Milestone 5 — Validation Guardrails & Agent Correction Loop
 
-**Milestone 4** introduces a production-grade **Data Analysis Agent** and an official **Model Context Protocol (MCP 2.x)** tool layer, enabling verified quantitative reasoning and structured data computation without hallucination or unsafe code execution:
+**Milestone 5** introduces a robust, production-grade **Validation & Guardrails Layer** with a bounded agent correction loop. The system validates agent outputs, MCP tool outputs, citation provenance, numerical calculations, and factual assertions before the workflow is allowed to complete:
 
 ```text
 User Query
@@ -22,40 +22,42 @@ FastAPI REST API (POST /api/v1/workflows)
     ↓
 Database Run Record Created (status: PENDING → RUNNING)
     ↓
-LangGraph StateGraph Execution (5 Collaborative Agents)
+LangGraph StateGraph Execution (6 Collaborative Agents)
     ├── 1. Planner Agent            → Extract goals & sequential plan
     ├── 2. Document Retrieval Agent → Query FAISS vector index & retrieve matching chunks
     ├── 3. Data Analysis Agent      → Decide requirement & invoke approved MCP analytical tools
     ├── 4. Research Agent           → Synthesize plan, documents, and verified numerical figures
-    └── 5. Response Agent           → Final executive response with citations & metric tables
+    ├── 5. Response Agent           → Synthesize executive response with citations & metric tables
+    └── 6. Validation Agent         → Guardrail checks across schema, citations, math, tools, & claims
+            ├── PASS                → Complete workflow (status: COMPLETED, validation_status: PASS)
+            ├── RECOVERABLE         → Route back to Response Agent with actionable feedback (max 2 attempts)
+            └── FAIL / BLOCKED      → Terminate safely with violation audit (status: FAILED)
     ↓
-Database Run Record Completed (status: COMPLETED, analysis_results persisted, duration_ms)
+Database Run Record Completed (validation_status, validation_score, duration_ms)
     ↓
-Structured API Response (with Grounded Citations & Quantitative Metrics)
+Structured API Response (with Grounded Citations, Quantitative Metrics, & Validation Audit)
 ```
 
-### Capabilities Introduced in Milestone 4:
-- **Official MCP 2.x Tool Layer**: Built with `MCPServer("workflow-data-analysis")` from the official Python `mcp` SDK, exposing standardized typed tools.
-- **Approved Analytical Tools**:
-  - `analyze_dataset`: Safe aggregations, filtering, sorting, grouping, and Top-N queries over approved CSV datasets.
-  - `get_dataset_schema`: Schema inspection, data types, and record count inspection.
-  - `query_postgres`: Controlled, parameterized relational queries over the allowlisted `analytics_orders` PostgreSQL table.
-- **Strict Security & Sandboxing Controls**:
-  - **Zero Arbitrary Execution**: Complete prohibition of `eval()`, `exec()`, or dynamic shell/code execution.
-  - **Dataset Allowlists**: Enforces approved dataset path boundaries (`data/sample/orders.csv`) with strict path traversal rejection.
-  - **SQL Injection Prevention**: Relational queries constructed via SQLAlchemy parameterized expressions; unapproved column names and injection keywords (`DROP`, `DELETE`, `UNION`, `UPDATE`) are rejected.
-- **Synthetic Orders Dataset & PostgreSQL Table**:
-  - Seeded 20 deterministic records across regions (`North`, `South`, `East`, `West`), products, quantities, unit prices, and revenues (`total_revenue: $177,650.00`).
-  - Alembic migration `003_analytics_dataset.py` managing `analytics_orders` schema.
-- **REST APIs for Analytics**:
-  - `GET /api/v1/analytics/datasets`: List available approved datasets and their schema descriptors.
-  - `POST /api/v1/workflows`: Returns unified response containing both grounded citations and `analysis_results`.
-  - `GET /api/v1/workflows/{run_id}`: Returns full 5-step execution audit trace with analytical metrics.
-- **Enhanced React UI**:
-  - 5-Agent pipeline visualizer (Planner → Retrieval → Data Analysis → Research → Response).
-  - Quantitative analysis cards displaying dataset, operation, tool, execution time, summary, metric cards, and verified tabular results.
-  - Run detail modal inspecting analytical step inputs/outputs.
-- **Comprehensive Test Suite**: **78 automated tests** passing on both host environment and containerized Docker backend.
+### Capabilities Introduced in Milestone 5:
+- **Comprehensive Validation Agent & Node**: Governs final workflow completion via LangGraph conditional routing (`validation_router`).
+- **Modular Deterministic Validators**:
+  - `response_schema`: Enforces non-empty answer bodies, structured key takeaways, calibrated confidence bounds `[0.0, 1.0]`, and matching request identifiers.
+  - `citation`: Provenance checks against retrieved documents, preventing fabricated filenames or hallucinated chunk IDs.
+  - `analysis`: Mathematical consistency checks (`count >= 0`, `sum / count == mean`, `min <= mean <= max`, group rows reconciliation to total sum, top-N limit validation).
+  - `tool_output`: Validates allowlisted MCP tool names, prevents unapproved tool calls, and detects masked execution failures.
+  - `claim`: Compares numerical and currency claims in synthesized answers against verified analysis metrics and retrieved source documents to prevent hallucinated figures.
+- **Bounded Dynamic Correction Loop**:
+  - Automatically feeds validation feedback into the Response Agent on recoverable issues.
+  - Hard limit of `MAX_VALIDATION_ATTEMPTS = 2` ensures termination with zero infinite loops.
+- **Durable Database Persistence & Auditing**:
+  - Alembic migration `004_workflow_validation.py` adds `validation_status` and `validation_score` columns to `workflow_runs`.
+  - All validation attempts and issues stored in `metadata_json["validation"]`.
+  - Validation steps tracked with timing and status in `workflow_steps`.
+- **Enhanced Frontend UI**:
+  - Milestone 5 badge and updated 6-node visual pipeline.
+  - Dedicated Validation Guardrails inspection card displaying status badge, score percentage, passed checks count, duration, and structured issue tags.
+  - Run detail modal with validation metrics and issue audit.
+- **Comprehensive Test Suite**: **100 automated tests** passing across host environment and Docker backend.
 
 ---
 

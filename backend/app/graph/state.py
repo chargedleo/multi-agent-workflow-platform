@@ -28,6 +28,9 @@ class WorkflowState(TypedDict, total=False):
     retrieved_documents: Optional[List[Dict[str, Any]]]
     analysis_results: Optional[Dict[str, Any]]
     validation_results: Optional[Dict[str, Any]]
+    validation_attempt: Optional[int]
+    validation_issues: Optional[List[Dict[str, Any]]]
+    validation_history: Optional[List[Dict[str, Any]]]
     tool_calls: Optional[List[Dict[str, Any]]]
     approval_status: Optional[str]
 
@@ -53,6 +56,9 @@ def create_initial_state(
         retrieved_documents=None,
         analysis_results=None,
         validation_results=None,
+        validation_attempt=0,
+        validation_issues=[],
+        validation_history=[],
         tool_calls=None,
         approval_status=None,
     )

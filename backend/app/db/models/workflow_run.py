@@ -57,6 +57,10 @@ class WorkflowRun(Base):
     research_results: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON_TYPE, nullable=True)
     errors: Mapped[List[str]] = mapped_column(JSON_TYPE, default=list)
 
+    # Validation & Guardrails status (Milestone 5)
+    validation_status: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
+    validation_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+
     # Generic metadata mapping
     metadata_json: Mapped[Dict[str, Any]] = mapped_column(
         "metadata",

@@ -123,7 +123,7 @@ export function App() {
             <h1 className="header-title">Multi-Agent AI Workflow Automation</h1>
           </div>
           <div className="header-badges">
-            <span className="badge badge-milestone">Milestone 4 • Data Analysis Agent & MCP Tools</span>
+            <span className="badge badge-milestone">Milestone 5 • Validation Guardrails & Agent Correction</span>
             <span className={`badge badge-status ${healthInfo.status !== 'healthy' ? 'disconnected' : ''}`}>
               <span className="status-dot"></span>
               API: {healthInfo.status}
@@ -131,8 +131,8 @@ export function App() {
           </div>
         </div>
         <p className="header-subtitle">
-          Autonomous multi-agent orchestration built with LangGraph, FastAPI, PostgreSQL persistence, FAISS vector intelligence, and MCP data analysis tools.
-          Planner, Retrieval, Data Analysis, Research, and Response agents collaborate to synthesize grounded answers with verified numerical computation.
+          Autonomous multi-agent orchestration built with LangGraph, FastAPI, PostgreSQL persistence, FAISS vector intelligence, MCP data analysis tools, and robust validation guardrails.
+          Planner, Retrieval, Data Analysis, Research, Response, and Validation agents collaborate to synthesize grounded answers with verified numerical computation and bounded correction loops.
         </p>
       </header>
 
@@ -161,6 +161,11 @@ export function App() {
         <div className={`pipeline-node ${isLoading ? 'active' : result ? 'completed' : ''}`}>
           <span className="pipeline-icon">✨</span>
           <span>Response Agent</span>
+        </div>
+        <span className="pipeline-arrow">→</span>
+        <div className={`pipeline-node ${isLoading ? 'active' : result ? 'completed' : ''}`}>
+          <span className="pipeline-icon">🛡️</span>
+          <span>Validation Guardrails</span>
         </div>
         <span className="pipeline-arrow">→</span>
         <div className={`pipeline-node ${result ? 'completed' : ''}`}>
@@ -219,7 +224,7 @@ export function App() {
 
       {/* Footer */}
       <footer className="app-footer">
-        Portfolio Platform Architecture — Milestone 4: Data Analysis Agent & MCP Tool Layer
+        Portfolio Platform Architecture — Milestone 5: Validation Guardrails & Agent Correction Loop
       </footer>
     </div>
   );

@@ -50,6 +50,10 @@ async def create_workflow_run_endpoint(payload: WorkflowRequest) -> WorkflowAPIR
             )
 
         analysis_data = final_state.get("analysis_results") or final_answer.get("analysis_results")
+        validation_data = final_state.get("validation_results")
+        val_status = validation_data.get("status") if isinstance(validation_data, dict) else None
+        val_score = validation_data.get("score") if isinstance(validation_data, dict) else None
+
         return WorkflowAPIResponse(
             request_id=request_id,
             run_id=run_id,
@@ -59,6 +63,9 @@ async def create_workflow_run_endpoint(payload: WorkflowRequest) -> WorkflowAPIR
             confidence=final_answer.get("confidence", 0.0),
             sources=final_answer.get("sources", []),
             analysis_results=analysis_data,
+            validation=validation_data,
+            validation_status=val_status,
+            validation_score=val_score,
             errors=errors,
         )
 
@@ -146,6 +153,7 @@ async def get_run_detail_endpoint(
 
     sources = (run.metadata_json or {}).get("sources", [])
     analysis_results = (run.metadata_json or {}).get("analysis_results")
+    validation_data = (run.metadata_json or {}).get("validation")
 
     return WorkflowRunDetailResponse(
         run_id=str(run.id),
@@ -162,6 +170,9 @@ async def get_run_detail_endpoint(
         confidence=run.confidence,
         sources=sources,
         analysis_results=analysis_results,
+        validation=validation_data,
+        validation_status=run.validation_status,
+        validation_score=run.validation_score,
         errors=run.errors or [],
         metadata=run.metadata_json or {},
         steps=steps,
