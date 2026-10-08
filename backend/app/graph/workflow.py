@@ -5,6 +5,7 @@ START -> Planner -> Document Retrieval -> Data Analysis -> Researcher -> Respond
 Integrates durable lifecycle persistence in PostgreSQL and checkpointing.
 """
 
+import asyncio
 from typing import Any, Dict, Optional
 import uuid
 from langgraph.graph import StateGraph, START, END
@@ -196,9 +197,12 @@ async def run_workflow(
 
     graph = get_compiled_workflow()
     thread_config = {"configurable": {"thread_id": str(active_run_id)}}
-
+    settings = get_settings()
     try:
-        final_state: WorkflowState = await graph.ainvoke(initial_state, config=thread_config)
+        final_state: WorkflowState = await asyncio.wait_for(
+            graph.ainvoke(initial_state, config=thread_config),
+            timeout=settings.WORKFLOW_TIMEOUT_SECONDS,
+        )
 
         # Ensure run_id is attached to state
         if active_run_id and not final_state.get("run_id"):
@@ -310,6 +314,23 @@ async def run_workflow(
 
         return final_state
 
+    except asyncio.TimeoutError:
+        timeout_msg = f"Workflow execution timed out after {settings.WORKFLOW_TIMEOUT_SECONDS}s"
+        logger.error(format_log_msg(timeout_msg, req_id, active_run_id))
+        if active_run_id:
+            try:
+                async with get_db_context() as session:
+                    await fail_workflow_run(session=session, run_id=active_run_id, errors=[timeout_msg])
+            except Exception as db_err:
+                logger.warning(format_log_msg(f"Could not persist timed out run status: {db_err}", req_id, active_run_id))
+
+        fallback_state = dict(initial_state)
+        fallback_state["errors"] = [timeout_msg]
+        fallback_state["status"] = "FAILED"
+        if active_run_id:
+            fallback_state["run_id"] = active_run_id
+        return fallback_state
+
     except Exception as exc:
         err_msg = f"Workflow failed with unhandled exception: {str(exc)}"
         logger.error(format_log_msg(err_msg, req_id), exc_info=True)
@@ -382,8 +403,12 @@ async def resume_workflow(
         "decided_by": decided_by,
     }
 
+    settings = get_settings()
     try:
-        resumed_state = await graph.ainvoke(Command(resume=resume_payload), config=thread_config)
+        resumed_state = await asyncio.wait_for(
+            graph.ainvoke(Command(resume=resume_payload), config=thread_config),
+            timeout=settings.WORKFLOW_TIMEOUT_SECONDS,
+        )
         if str(run_id) and not resumed_state.get("run_id"):
             resumed_state["run_id"] = str(run_id)
 
@@ -473,6 +498,13 @@ async def resume_workflow(
                 )
 
         return resumed_state
+
+    except asyncio.TimeoutError:
+        timeout_msg = f"Workflow resume timed out after {settings.WORKFLOW_TIMEOUT_SECONDS}s"
+        logger.error(format_log_msg(timeout_msg, req_id, str(run_id)))
+        async with get_db_context() as session:
+            await fail_workflow_run(session=session, run_id=run_id, errors=[timeout_msg])
+        raise TimeoutError(timeout_msg)
 
     except Exception as exc:
         err_msg = f"Resume workflow failed: {str(exc)}"

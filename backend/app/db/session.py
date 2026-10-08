@@ -34,6 +34,8 @@ def get_async_engine() -> AsyncEngine:
         else:
             engine_kwargs["pool_size"] = settings.DB_POOL_SIZE
             engine_kwargs["max_overflow"] = settings.DB_MAX_OVERFLOW
+            engine_kwargs["pool_pre_ping"] = True
+            engine_kwargs["pool_timeout"] = settings.DB_POOL_TIMEOUT
 
         _engine = create_async_engine(
             settings.DATABASE_URL,
@@ -96,7 +98,8 @@ async def check_database_connection() -> Dict[str, Any]:
         return {"status": "connected", "details": "Successfully connected to PostgreSQL"}
     except Exception as exc:
         logger.warning(f"Database health check failed: {exc}")
-        return {"status": "disconnected", "details": str(exc)}
+        details = "Database connection unavailable" if settings.APP_ENV == "production" else str(exc)
+        return {"status": "disconnected", "details": details}
 
 
 async def close_database_connection() -> None:

@@ -25,6 +25,7 @@ if sys.platform == "win32":
 
 _global_checkpointer: Optional[BaseCheckpointSaver] = None
 _global_pool: Any = None
+_init_lock = asyncio.Lock()
 
 
 def _format_postgres_conn_string(db_url: str) -> str:
@@ -37,45 +38,55 @@ def _format_postgres_conn_string(db_url: str) -> str:
 
 
 async def init_checkpointer() -> BaseCheckpointSaver:
-    """Initialize and setup the durable checkpointer (PostgreSQL or fallback)."""
+    """Initialize and setup the durable checkpointer with concurrency protection and leak prevention."""
     global _global_checkpointer, _global_pool
 
-    if _global_checkpointer is not None and _global_pool is not None:
-        return _global_checkpointer
-
-    settings = get_settings()
-    db_url = settings.DATABASE_URL
-
-    if "postgresql" in db_url:
-        try:
-            from psycopg_pool import AsyncConnectionPool
-            from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
-
-            conn_str = _format_postgres_conn_string(db_url)
-            logger.info("Initializing AsyncPostgresSaver checkpointer connection pool...")
-            _global_pool = AsyncConnectionPool(
-                conn_str,
-                max_size=settings.DB_POOL_SIZE or 5,
-                open=False,
-                kwargs={"autocommit": True},
-            )
-            await _global_pool.open()
-            saver = AsyncPostgresSaver(_global_pool)
-            await saver.setup()
-            _global_checkpointer = saver
-            logger.info("AsyncPostgresSaver initialized and migration tables verified.")
+    async with _init_lock:
+        if _global_checkpointer is not None and _global_pool is not None:
             return _global_checkpointer
-        except Exception as exc:
-            logger.warning(
-                format_log_msg(
-                    f"Could not initialize AsyncPostgresSaver, falling back to MemorySaver: {exc}",
-                    "checkpointer",
-                )
-            )
 
-    logger.info("Using MemorySaver checkpointer.")
-    _global_checkpointer = MemorySaver()
-    return _global_checkpointer
+        settings = get_settings()
+        db_url = settings.DATABASE_URL
+
+        if "postgresql" in db_url:
+            pool = None
+            try:
+                from psycopg_pool import AsyncConnectionPool
+                from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
+
+                conn_str = _format_postgres_conn_string(db_url)
+                logger.info("Initializing AsyncPostgresSaver checkpointer connection pool...")
+                pool = AsyncConnectionPool(
+                    conn_str,
+                    max_size=settings.DB_POOL_SIZE or 5,
+                    timeout=settings.CHECKPOINTER_POOL_TIMEOUT,
+                    open=False,
+                    kwargs={"autocommit": True},
+                )
+                await pool.open()
+                saver = AsyncPostgresSaver(pool)
+                await saver.setup()
+                _global_pool = pool
+                _global_checkpointer = saver
+                logger.info("AsyncPostgresSaver initialized and migration tables verified.")
+                return _global_checkpointer
+            except Exception as exc:
+                if pool is not None:
+                    try:
+                        await pool.close()
+                    except Exception:
+                        pass
+                _global_pool = None
+                logger.warning(
+                    format_log_msg(
+                        f"Could not initialize AsyncPostgresSaver, falling back to MemorySaver: {exc}",
+                        "checkpointer",
+                    )
+                )
+
+        logger.info("Using MemorySaver checkpointer.")
+        _global_checkpointer = MemorySaver()
+        return _global_checkpointer
 
 
 def get_checkpointer() -> BaseCheckpointSaver:
@@ -92,15 +103,31 @@ def set_checkpointer(checkpointer: Optional[BaseCheckpointSaver]) -> None:
     _global_checkpointer = checkpointer
 
 
+async def is_checkpointer_healthy() -> bool:
+    """Check if the durable checkpointer is active and healthy."""
+    global _global_checkpointer, _global_pool
+    if _global_checkpointer is None:
+        return False
+    if isinstance(_global_checkpointer, MemorySaver):
+        return True
+    if _global_pool is not None:
+        try:
+            return not _global_pool.closed
+        except Exception:
+            return False
+    return False
+
+
 async def close_checkpointer() -> None:
     """Gracefully close active connection pool upon application shutdown."""
     global _global_checkpointer, _global_pool
-    if _global_pool is not None:
-        try:
-            await _global_pool.close()
-            logger.info("Checkpointer connection pool closed.")
-        except Exception as exc:
-            logger.warning(f"Error closing checkpointer connection pool: {exc}")
-        finally:
-            _global_pool = None
-    _global_checkpointer = None
+    async with _init_lock:
+        if _global_pool is not None:
+            try:
+                await _global_pool.close()
+                logger.info("Checkpointer connection pool closed.")
+            except Exception as exc:
+                logger.warning(f"Error closing checkpointer connection pool: {exc}")
+            finally:
+                _global_pool = None
+        _global_checkpointer = None

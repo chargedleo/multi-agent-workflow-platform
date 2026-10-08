@@ -1,12 +1,25 @@
-"""Logging configuration for Multi-Agent AI Workflow Automation Platform.
-
-Provides standardized logging formats and request context logging without
-exposing credentials or sensitive user data.
-"""
-
 import logging
+import re
 import sys
 from typing import Optional
+
+SENSITIVE_PATTERNS = [
+    (re.compile(r"(password[:=]\s*)[^\s&,;'\"]+", re.IGNORECASE), r"\1***"),
+    (re.compile(r"(bearer\s+)[a-zA-Z0-9_\-\.]{8,}", re.IGNORECASE), r"\1***"),
+    (re.compile(r"((?:api[_-]?key|token)[:=]\s*)[^\s&,;'\"]+", re.IGNORECASE), r"\1***"),
+    (re.compile(r"(postgresql(?:\+asyncpg)?://[^:]+:)([^@]+)(@)", re.IGNORECASE), r"\1***\3"),
+    (re.compile(r"(sk-[a-zA-Z0-9]{8,})", re.IGNORECASE), r"sk-***"),
+]
+
+
+def sanitize_log_msg(message: str) -> str:
+    """Sanitize message to ensure credentials, passwords, or tokens are masked."""
+    if not isinstance(message, str):
+        return str(message)
+    sanitized = message
+    for pattern, replacement in SENSITIVE_PATTERNS:
+        sanitized = pattern.sub(replacement, sanitized)
+    return sanitized
 
 
 def setup_logging(log_level: str = "INFO") -> None:
@@ -42,8 +55,22 @@ def get_logger(name: str) -> logging.Logger:
     return logging.getLogger(name)
 
 
-def format_log_msg(message: str, request_id: Optional[str] = None) -> str:
-    """Helper to prefix messages with request ID when available."""
-    if request_id:
-        return f"[{request_id}] {message}"
-    return message
+def format_log_msg(
+    message: str,
+    request_id: Optional[str] = None,
+    run_id: Optional[str] = None,
+    req_id: Optional[str] = None,
+) -> str:
+    """Helper to prefix messages with request ID and/or run ID without leaking secrets."""
+    sanitized = sanitize_log_msg(message)
+    actual_req = request_id or req_id
+    prefixes = []
+    if actual_req:
+        prefixes.append(f"req:{actual_req}")
+    if run_id:
+        prefixes.append(f"run:{run_id}")
+    if prefixes:
+        prefix_str = " ".join(f"[{p}]" for p in prefixes)
+        return f"{prefix_str} {sanitized}"
+    return sanitized
+

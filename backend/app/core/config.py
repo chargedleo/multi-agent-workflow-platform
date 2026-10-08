@@ -64,6 +64,13 @@ class Settings(BaseSettings):
     APPROVAL_ENABLED: bool = Field(default=True, description="Enable human-in-the-loop approval gate")
     MAX_APPROVAL_REVISIONS: int = Field(default=3, ge=1, le=10, description="Maximum approval revision cycles before final rejection")
 
+    # Production Hardening Settings (Milestone 8)
+    ENABLE_DOCS: bool = Field(default=True, description="Enable FastAPI OpenAPI/Swagger documentation endpoints")
+    LLM_TIMEOUT: float = Field(default=60.0, ge=5.0, le=300.0, description="HTTP request timeout for external LLM providers in seconds")
+    WORKFLOW_TIMEOUT_SECONDS: float = Field(default=120.0, ge=10.0, le=600.0, description="Total workflow execution timeout in seconds")
+    DB_POOL_TIMEOUT: float = Field(default=30.0, ge=1.0, le=120.0, description="Database connection pool checkout timeout in seconds")
+    CHECKPOINTER_POOL_TIMEOUT: float = Field(default=10.0, ge=1.0, le=60.0, description="Checkpointer pool checkout timeout in seconds")
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

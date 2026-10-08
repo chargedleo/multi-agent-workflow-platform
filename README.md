@@ -11,44 +11,52 @@ An enterprise-ready **Multi-Agent AI Workflow Automation Platform** that decompo
 
 ---
 
-## Current Status: Milestone 7 — React Monitoring Dashboard & Live Workflow Observability
+## Current Status: Milestone 8 — Production Hardening & Operational Observability
 
-**Milestone 7** delivers an enterprise-grade **React Monitoring Dashboard** that provides deep observability into the autonomous multi-agent pipeline, durable PostgreSQL execution records, and human-in-the-loop workflows:
+**Milestone 8** hardens the entire multi-agent platform into a reliable, observable, resilient, and production-ready system:
 
 ```text
-User / Reviewer
+User / Orchestrator / Load Balancer
     ↓
-React Monitoring Dashboard (Port 5173)
-    ├── 1. Executive Metrics Bar     → Real-time PostgreSQL stats (Total, Active, Awaiting Approval, Completed, Failed, Rejected, Avg Duration)
-    ├── 2. Pipeline Stage Visualizer → 8-stage interactive LangGraph timeline with per-node latency (Planner → Retrieval → Analytics → Research → Response → Validation → HITL → Finalized)
-    ├── 3. Filterable Workflow Table → Search by query/ID, filter by status, auto-refresh with visibility pause, pagination
-    ├── 4. Run Detail Modal          → Deep inspection: inputs/outputs, guardrail audits, MCP data analysis, document citations, decision history
-    ├── 5. Approvals Queue           → Dedicated HITL review workspace for Approve / Reject / Changes Requested
-    └── 6. Knowledge Base Manager    → Document ingestion & FAISS vector index management
+React Production Frontend (Nginx Reverse Proxy, Port 5173)
+    ├── ErrorBoundary Resilience & Graceful Fallback UI
+    ├── Relative API Base Routing (/api/v1) for Domain Agnosticism
+    └── Live Observability, Metrics, Approvals & Workflow Replay
     ↓
-FastAPI Backend (Port 8000) & PostgreSQL 16 Persistence
+FastAPI Backend (Port 8000)
+    ├── Request Correlation Middleware (X-Request-ID propagation & logging)
+    ├── Probes: Liveness (/api/v1/health/live) & Readiness (/api/v1/health/ready, HTTP 503 on DB disconnect)
+    ├── Production Exception Masking (Sanitized 500s with correlated request IDs)
+    ├── Sensitive Log Sanitization (Masks passwords, bearer tokens, API keys, Postgres URLs)
+    ├── Configurable Timeouts (LLM, Workflow execution, DB pools)
+    └── Bounded Connection Pools & Leak-Free AsyncPostgresSaver Checkpointer Lifecycle
+    ↓
+LangGraph Multi-Agent Engine & PostgreSQL 16 Persistence
+    ├── 6 Specialized Agents (Planner → Retrieval → Analytics → Researcher → Responder → Validation)
+    ├── Native FAISS 1.15.1 Vector Search & Grounded Citations
+    ├── MCP PostgreSQL Analytics Tooling
+    └── Durable Human-in-the-Loop Checkpoints (Survives container restarts)
 ```
 
-### Capabilities Introduced in Milestone 7:
-- **Executive Metrics Aggregation (`GET /api/v1/workflows/stats`)**:
-  - High-performance, single-query SQL aggregation across all persisted runs: total runs, active/running, awaiting approval, completed, failed, rejected/cancelled, and average execution duration for completed workflows.
-- **Searchable, Filterable, Paginated Run History (`GET /api/v1/workflows`)**:
-  - Query parameters for status filtering (`ALL`, `ACTIVE`, `WAITING_FOR_APPROVAL`, `COMPLETED`, `FAILED`, `REJECTED`) and full-text keyword search matching queries and run UUIDs.
-  - Dynamic page-size and page-index controls with total count attribution.
-- **Multi-Agent Pipeline Stage Timeline (`WorkflowTimeline`)**:
-  - Visualizes all 8 execution stages with agent roles, per-step execution durations (ms), and active/completed/waiting/failed states.
-- **Comprehensive Run Detail Inspection (`RunDetailModal`)**:
-  - Compartmentalized tabs for Overview, Execution Timeline, Synthesized Output, Guardrails Evaluation, MCP PostgreSQL Analytics, HITL Decision Audit Trail, and FAISS Citations.
-- **Auto-Refresh with Page Visibility Detection**:
-  - Configurable polling intervals (Off, 5s, 10s, 30s) that automatically pause when the tab/window is inactive (`document.hidden`) and immediately re-synchronize when reactivated.
-- **115 Passing Tests**:
-  - Full automated verification across unit, integration, persistence, MCP, guardrails, HITL, and dashboard API endpoints.
-  - `POST /api/v1/workflows/{run_id}/approval` — Submits human decision (`APPROVE`, `REJECT`, `CHANGES_REQUESTED`).
-- **Interactive React Monitoring UI**:
-  - `ApprovalCard`: Review draft answer, validation score, reviewer name, feedback textarea, and Approve / Request Changes / Reject buttons.
-  - `PendingApprovals`: Live queue of runs waiting for human action with 1-click inspection.
-  - `RunDetailModal`: Complete human approval history timeline and embedded review capability.
-- **Comprehensive Test Suite**: **110 automated tests** passing across host environment and Docker backend.
+### Capabilities Delivered in Milestone 8:
+- **Liveness & Readiness Probes (`/health/live`, `/health/ready`)**:
+  - Distinct endpoints for container orchestrators (Kubernetes / Docker Compose).
+  - Readiness probe actively validates PostgreSQL connectivity and LangGraph checkpointer health, returning HTTP 503 Service Unavailable when dependencies are unreachable.
+- **Request Correlation (`X-Request-ID`)**:
+  - Automatically generates or propagates incoming `X-Request-ID` across HTTP response headers, ASGI state, and all structured log outputs (`[req:<id>] [run:<id>]`).
+- **Secrets & Log Sanitization**:
+  - Regex-based masking protects logs from leaking database passwords, bearer tokens, API keys, and LLM credentials.
+  - Production environment mode (`APP_ENV=production`) masks unhandled 500 errors to avoid exposing internal stack traces.
+- **Engine Reliability & Lifecycle Controls**:
+  - `pool_pre_ping=True` and configurable connection timeouts (`DB_POOL_TIMEOUT`, `CHECKPOINTER_POOL_TIMEOUT`).
+  - Thread-safe, leak-free `AsyncPostgresSaver` checkpointer lifecycle with guaranteed connection pool disposal on startup failures or shutdown.
+- **Configurable Execution Timeouts**:
+  - `WORKFLOW_TIMEOUT_SECONDS` (180s default) enforces bounded LangGraph execution; `LLM_TIMEOUT` (60s default) bounds external model inference.
+- **Frontend Production Hardening**:
+  - Production React build served via Nginx with relative reverse proxying (`/api/v1`), removing localhost coupling.
+  - Root `ErrorBoundary` gracefully catches unhandled UI errors.
+- **124 Automated Tests**:
+  - 100% test pass rate across host environment and Docker container, validating all M1–M8 capabilities without external paid APIs.
 
 ---
 
@@ -438,17 +446,21 @@ curl -X GET "http://localhost:8000/api/v1/workflows/045b10c2-d427-4719-bf7e-81a8
 
 ## Running Automated Tests
 
-The test suite covers configuration, schema constraints, health check endpoints, the LLM factory, LangGraph workflow execution, SQLAlchemy persistence models, persistence lifecycle services, and API history endpoints. All 30 tests run deterministically without requiring external paid API keys.
+The test suite covers configuration, schema constraints, health check endpoints, the LLM factory, LangGraph workflow execution, SQLAlchemy persistence models, persistence lifecycle services, document ingestion, native FAISS retrieval, MCP analytics tooling, guardrails validation, Human-in-the-Loop approval loops, React dashboard APIs, and Milestone 8 production hardening probes. All 124 tests run deterministically without requiring external paid API keys.
 
 ```bash
-# Run full test suite with pytest
+# Run full test suite with pytest on host
 pytest -v
+
+# Run full test suite inside Docker container
+docker exec workflow_backend pytest /app/backend/tests -v
 ```
 
-**Test Coverage Summary (30 Passing Tests):**
+**Test Coverage Summary (124 Passing Tests):**
 - `test_config.py`: Settings defaults, environment overrides, and CORS string parsing.
 - `test_schemas.py`: Pydantic validation of `Plan`, `ResearchResult`, `WorkflowResponse`, and boundary assertions.
 - `test_health.py`: HTTP 200 responses on `/api/v1/health` and `/`.
+- `test_production_hardening.py` (9 tests): Liveness/readiness probes, HTTP 503 on database disconnect, request correlation `X-Request-ID`, credential log sanitization, checkpointer lifecycle idempotency, production exception masking, and timeout defaults.
 - `test_llm.py`: Central LLM abstraction factory and structured mock outputs.
 - `test_workflow.py`: End-to-end LangGraph execution, state transitions (Planner → Researcher → Responder), intermediate step accumulation, and error capturing.
 - `test_api.py`: FastAPI endpoint execution and validation error rejection.
@@ -456,24 +468,20 @@ pytest -v
 - `test_workflow_persistence.py`: Service-level workflow run lifecycle (`PENDING` → `RUNNING` → `COMPLETED` / `FAILED`), step recording, and pagination.
 - `test_workflow_execution_persistence.py`: Verifies LangGraph execution writes durable records to PostgreSQL, records agent timing, and tracks agent failure persistence.
 - `test_api_persistence.py`: Integration testing for `POST /workflows` (returns `run_id`), `GET /workflows` (paginated history), and `GET /workflows/{run_id}` (detail inspection & 404 handling).
+- `test_document_ingestion.py` & `test_documents_api.py`: Ingestion of PDF/TXT/MD, chunking, and metadata storage.
+- `test_vectorstore.py` & `test_retrieval_agent.py`: Native FAISS vector search, similarity queries, and grounded citation generation.
+- `test_postgres_tool.py`, `test_mcp_tools.py`, `test_data_analysis_agent.py`: MCP tool server, aggregate queries, and dataset analytics.
+- `test_validation_service.py` & `test_workflow_m5.py`: Guardrails validation, numerical checks, citation audits, and bounded correction loops.
+- `test_hitl_workflow.py`: Human-in-the-Loop review gates, checkpointing via `AsyncPostgresSaver`, approval resume, and revision loops.
+- `test_dashboard_api.py`: Executive metrics aggregation (`/stats`) and paginated search.
 
 ---
 
-## Current Scope & Limitations (Milestone 2)
+## Operations & Deployment Runbook
 
-Milestone 2 establishes full database persistence and run history tracking for multi-agent workflows.
-
-- **Web Search**: The Research Agent currently uses structured LLM reasoning rather than live internet search. (Planned for Milestone 3+).
-- **Vector Search / FAISS**: Semantic document retrieval is deferred to Milestone 3.
-- **Tool Sandbox**: Function calling, MCP protocol servers, and code execution sandboxing will be integrated in Milestone 4.
-- **Human-in-the-Loop**: Approval checkpoints and pauses will build on top of the Milestone 2 persistence models in Milestone 5.
-
----
-
-## Planned Future Milestones
-
-- **Milestone 2**: PostgreSQL State Checkpointing, Run History API, and Persistent Workflow Replay.
-- **Milestone 3**: Document Retrieval Agent with FAISS Vector Store and RAG integration.
-- **Milestone 4**: Data Analysis Agent with sandboxed function calling and tool execution.
-- **Milestone 5**: Validation Agent and Human-in-the-Loop (HITL) pause/resume approval gates.
-- **Milestone 6**: React monitoring dashboard with real-time streaming, run inspection, and workflow management.
+See [docs/deployment.md](file:///d:/Projects/Multi-Agent%20AI%20Workflow%20Automation%20Platform/docs/deployment.md) for complete operational guidance:
+- Environment configuration and secret masking
+- Liveness (`/health/live`) and Readiness (`/health/ready`) probe integration
+- Database migration execution via Alembic
+- Zero-loss container restart procedures
+- Troubleshooting runbook for common production scenarios

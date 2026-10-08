@@ -270,3 +270,14 @@ class HealthResponse(BaseModel):
     database: str = Field(default="unconfigured", description="Database connection status: connected, disconnected, or unconfigured")
     app_env: str = Field(..., description="Running environment")
     version: str = Field(default="0.1.0", description="Application version")
+
+
+class ReadinessResponse(BaseModel):
+    """Readiness probe response indicating operational ability to serve requests."""
+
+    status: str = Field(..., description="Service readiness: ready or not_ready")
+    database: str = Field(..., description="Database connection status: connected or disconnected")
+    checkpointer: str = Field(..., description="Checkpointer status: ready or degraded")
+    app_env: str = Field(..., description="Running environment")
+    version: str = Field(default="0.1.0", description="Application version")
+

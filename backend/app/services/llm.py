@@ -282,6 +282,7 @@ def get_llm(
             api_key=api_key,
             base_url=base_url,
             temperature=cfg.LLM_TEMPERATURE,
+            timeout=cfg.LLM_TIMEOUT,
         )
 
     # Default fallback
