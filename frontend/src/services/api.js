@@ -55,13 +55,45 @@ export async function executeWorkflow(query) {
 }
 
 /**
- * Fetch paginated history of workflow runs.
+ * Fetch aggregated metrics across all workflow runs for the dashboard.
+ * @returns {Promise<{ total_runs: number, active_runs: number, awaiting_approval: number, completed_runs: number, failed_runs: number, rejected_runs: number, avg_duration_ms: number|null }>}
+ */
+export async function fetchWorkflowStats() {
+  const response = await fetch(`${API_BASE_URL}/workflows/stats`, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to load workflow stats (HTTP ${response.status})`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Fetch paginated history of workflow runs with optional status and search filters.
  * @param {number} page
  * @param {number} pageSize
+ * @param {string|null} status
+ * @param {string|null} search
  * @returns {Promise<{ items: Array, total: number, page: number, page_size: number }>}
  */
-export async function fetchWorkflowRuns(page = 1, pageSize = 10) {
-  const response = await fetch(`${API_BASE_URL}/workflows?page=${page}&page_size=${pageSize}`, {
+export async function fetchWorkflowRuns(page = 1, pageSize = 10, status = null, search = null) {
+  const params = new URLSearchParams({
+    page: String(page),
+    page_size: String(pageSize),
+  });
+  if (status && status !== 'ALL') {
+    params.append('status', status);
+  }
+  if (search && search.trim()) {
+    params.append('search', search.trim());
+  }
+
+  const response = await fetch(`${API_BASE_URL}/workflows?${params.toString()}`, {
     method: 'GET',
     headers: {
       'Accept': 'application/json',

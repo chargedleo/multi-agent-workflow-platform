@@ -209,6 +209,22 @@ class WorkflowRunSummary(BaseModel):
     started_at: Optional[datetime] = Field(default=None, description="Workflow started timestamp")
     completed_at: Optional[datetime] = Field(default=None, description="Workflow completed timestamp")
     duration_ms: Optional[int] = Field(default=None, description="Execution duration in milliseconds")
+    current_stage: Optional[str] = Field(default=None, description="Current or last known pipeline stage")
+    validation_status: Optional[str] = Field(default=None, description="Guardrails validation status (PASS, FAIL, RECOVERABLE, BLOCKED)")
+    created_at: Optional[datetime] = Field(default=None, description="Creation timestamp")
+    updated_at: Optional[datetime] = Field(default=None, description="Last update timestamp")
+
+
+class WorkflowStatsResponse(BaseModel):
+    """Aggregated workflow metrics for monitoring dashboard."""
+
+    total_runs: int = Field(0, description="Total number of workflow runs recorded")
+    active_runs: int = Field(0, description="Number of active or running workflows")
+    awaiting_approval: int = Field(0, description="Workflows currently awaiting human approval")
+    completed_runs: int = Field(0, description="Successfully completed workflows")
+    failed_runs: int = Field(0, description="Failed workflows")
+    rejected_runs: int = Field(0, description="Rejected or cancelled workflows")
+    avg_duration_ms: Optional[float] = Field(None, description="Average execution duration in milliseconds for completed runs")
 
 
 class WorkflowRunListResponse(BaseModel):

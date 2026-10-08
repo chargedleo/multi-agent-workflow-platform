@@ -11,53 +11,38 @@ An enterprise-ready **Multi-Agent AI Workflow Automation Platform** that decompo
 
 ---
 
-## Current Status: Milestone 6 — Human-in-the-Loop Approval, Interrupt/Resume & Durable Workflow Control
+## Current Status: Milestone 7 — React Monitoring Dashboard & Live Workflow Observability
 
-**Milestone 6** elevates the platform from an autonomous workflow into an enterprise-grade governance system featuring **Human-in-the-Loop (HITL) approval**, **durable state persistence**, and **interruption/resume controls** using official **LangGraph 1.2+ `interrupt()` and `Command(resume=...)` semantics**:
+**Milestone 7** delivers an enterprise-grade **React Monitoring Dashboard** that provides deep observability into the autonomous multi-agent pipeline, durable PostgreSQL execution records, and human-in-the-loop workflows:
 
 ```text
-User Query
+User / Reviewer
     ↓
-FastAPI REST API (POST /api/v1/workflows)
+React Monitoring Dashboard (Port 5173)
+    ├── 1. Executive Metrics Bar     → Real-time PostgreSQL stats (Total, Active, Awaiting Approval, Completed, Failed, Rejected, Avg Duration)
+    ├── 2. Pipeline Stage Visualizer → 8-stage interactive LangGraph timeline with per-node latency (Planner → Retrieval → Analytics → Research → Response → Validation → HITL → Finalized)
+    ├── 3. Filterable Workflow Table → Search by query/ID, filter by status, auto-refresh with visibility pause, pagination
+    ├── 4. Run Detail Modal          → Deep inspection: inputs/outputs, guardrail audits, MCP data analysis, document citations, decision history
+    ├── 5. Approvals Queue           → Dedicated HITL review workspace for Approve / Reject / Changes Requested
+    └── 6. Knowledge Base Manager    → Document ingestion & FAISS vector index management
     ↓
-Database Run Record Created (status: PENDING → RUNNING)
-    ↓
-LangGraph StateGraph Execution (7 Collaborative Stages)
-    ├── 1. Planner Agent            → Extract goals & sequential plan
-    ├── 2. Document Retrieval Agent → Query FAISS vector index & retrieve matching chunks
-    ├── 3. Data Analysis Agent      → Decide requirement & invoke approved MCP analytical tools
-    ├── 4. Research Agent           → Synthesize plan, documents, and verified numerical figures
-    ├── 5. Response Agent           → Synthesize executive response with citations & metric tables
-    ├── 6. Validation Agent         → Guardrail checks across schema, citations, math, tools, & claims
-    │       ├── RECOVERABLE         → Loop to Response Agent with actionable corrections (max 2 attempts)
-    │       ├── FAIL / BLOCKED      → Terminate safely with violation audit (status: FAILED)
-    │       └── PASS                → Forward to Human Approval Gate
-    └── 7. Human Approval Gate      → LangGraph interrupt() suspends execution & persists thread checkpoint
-            │                          (status: WAITING_FOR_APPROVAL, approval_status: PENDING)
-            ├── APPROVE             → Command(resume=APPROVE) → Complete workflow (status: COMPLETED)
-            ├── REJECT              → Command(resume=REJECT) → Terminate workflow (status: CANCELLED)
-            └── CHANGES_REQUESTED   → Command(resume=CHANGES_REQUESTED) → Re-run Response Agent with reviewer feedback
-                                       (max 3 revision loops, then re-validates and returns to approval gate)
-    ↓
-Durable PostgreSQL Checkpoint & Approval Audit Saved
-    ↓
-Final API Response Released to User / Production
+FastAPI Backend (Port 8000) & PostgreSQL 16 Persistence
 ```
 
-### Capabilities Introduced in Milestone 6:
-- **Official LangGraph Interrupt & Resume**:
-  - Implements native `interrupt()` in `human_approval_node` and `Command(resume=...)` in `resume_workflow`.
-- **Durable PostgreSQL Checkpointing**:
-  - Powered by `AsyncPostgresSaver` and `AsyncConnectionPool` (`langgraph-checkpoint-postgres` with `psycopg` 3.x).
-  - Workflow state, threads, and agent intermediate steps survive container and process restarts without loss of progress.
-- **Dedicated Approval State Machine & Database Persistence**:
-  - Alembic migration `005_human_approval.py` adds `workflow_approvals` table and `approval_status` column to `workflow_runs`.
-  - Audits decision, reviewer name, feedback notes, revision count, and timestamps for full compliance traceability.
-- **Bounded Revisions Loop**:
-  - Governed by `MAX_APPROVAL_REVISIONS = 3` to prevent infinite revision cycles.
-- **New REST API Endpoints**:
-  - `GET /api/v1/approvals/pending` — Lists all runs currently paused at the approval gate.
-  - `GET /api/v1/workflows/{run_id}/approval` — Retrieves approval status, draft answer, guardrail results, and audit history.
+### Capabilities Introduced in Milestone 7:
+- **Executive Metrics Aggregation (`GET /api/v1/workflows/stats`)**:
+  - High-performance, single-query SQL aggregation across all persisted runs: total runs, active/running, awaiting approval, completed, failed, rejected/cancelled, and average execution duration for completed workflows.
+- **Searchable, Filterable, Paginated Run History (`GET /api/v1/workflows`)**:
+  - Query parameters for status filtering (`ALL`, `ACTIVE`, `WAITING_FOR_APPROVAL`, `COMPLETED`, `FAILED`, `REJECTED`) and full-text keyword search matching queries and run UUIDs.
+  - Dynamic page-size and page-index controls with total count attribution.
+- **Multi-Agent Pipeline Stage Timeline (`WorkflowTimeline`)**:
+  - Visualizes all 8 execution stages with agent roles, per-step execution durations (ms), and active/completed/waiting/failed states.
+- **Comprehensive Run Detail Inspection (`RunDetailModal`)**:
+  - Compartmentalized tabs for Overview, Execution Timeline, Synthesized Output, Guardrails Evaluation, MCP PostgreSQL Analytics, HITL Decision Audit Trail, and FAISS Citations.
+- **Auto-Refresh with Page Visibility Detection**:
+  - Configurable polling intervals (Off, 5s, 10s, 30s) that automatically pause when the tab/window is inactive (`document.hidden`) and immediately re-synchronize when reactivated.
+- **115 Passing Tests**:
+  - Full automated verification across unit, integration, persistence, MCP, guardrails, HITL, and dashboard API endpoints.
   - `POST /api/v1/workflows/{run_id}/approval` — Submits human decision (`APPROVE`, `REJECT`, `CHANGES_REQUESTED`).
 - **Interactive React Monitoring UI**:
   - `ApprovalCard`: Review draft answer, validation score, reviewer name, feedback textarea, and Approve / Request Changes / Reject buttons.

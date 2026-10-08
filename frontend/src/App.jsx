@@ -1,12 +1,13 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Dashboard } from './components/dashboard/Dashboard';
 import { QueryInput } from './components/QueryInput';
 import { WorkflowResult } from './components/WorkflowResult';
-import { WorkflowHistory } from './components/WorkflowHistory';
 import { RunDetailModal } from './components/RunDetailModal';
 import { DocumentManager } from './components/DocumentManager';
 import { PendingApprovals } from './components/PendingApprovals';
 import {
   fetchHealth,
+  fetchWorkflowStats,
   executeWorkflow,
   fetchWorkflowRuns,
   fetchWorkflowRunDetail,
@@ -16,64 +17,128 @@ import {
 import './App.css';
 
 export function App() {
-  const [query, setQuery] = useState('Compare the advantages and disadvantages of PostgreSQL and MongoDB for a startup SaaS application.');
-  const [result, setResult] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
+  // Navigation tabs: 'dashboard', 'query', 'approvals', 'documents'
+  const [activeNavTab, setActiveNavTab] = useState('dashboard');
+
+  // Backend Health state
   const [healthInfo, setHealthInfo] = useState({ status: 'checking', database: 'unknown' });
 
-  // History and inspection state
+  // Query Runner state
+  const [query, setQuery] = useState('Compare the advantages and disadvantages of PostgreSQL and MongoDB for a startup SaaS application.');
+  const [result, setResult] = useState(null);
+  const [isLoadingQuery, setIsLoadingQuery] = useState(false);
+  const [queryError, setQueryError] = useState(null);
+
+  // Executive Dashboard Stats state
+  const [stats, setStats] = useState({
+    total_runs: 0,
+    active_runs: 0,
+    awaiting_approval: 0,
+    completed_runs: 0,
+    failed_runs: 0,
+    rejected_runs: 0,
+    avg_duration_ms: null,
+  });
+  const [isStatsLoading, setIsStatsLoading] = useState(false);
+
+  // Filterable Workflow Runs Table state
   const [runs, setRuns] = useState([]);
-  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [totalRuns, setTotalRuns] = useState(0);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isRunsLoading, setIsRunsLoading] = useState(false);
+
+  // Run detail modal state
   const [selectedRunDetail, setSelectedRunDetail] = useState(null);
   const [isDetailLoading, setIsDetailLoading] = useState(false);
 
+  // Pending Approvals queue state
+  const [pendingApprovals, setPendingApprovals] = useState([]);
+  const [isApprovalsLoading, setIsApprovalsLoading] = useState(false);
+
   // Documents state
   const [documents, setDocuments] = useState([]);
-  const [isLoadingDocs, setIsLoadingDocs] = useState(false);
+  const [isDocsLoading, setIsDocsLoading] = useState(false);
 
-  // Pending Approvals state
-  const [pendingApprovals, setPendingApprovals] = useState([]);
-  const [isLoadingApprovals, setIsLoadingApprovals] = useState(false);
+  // Auto-refresh polling & Page Visibility state
+  const [autoRefreshInterval, setAutoRefreshInterval] = useState(10); // in seconds, 0 = off
+  const [isPausedDueToVisibility, setIsPausedDueToVisibility] = useState(false);
+  const timerRef = useRef(null);
 
-  // Load recent workflow runs
-  const loadRuns = useCallback(async () => {
-    setIsLoadingHistory(true);
+  // 1. Fetch Backend Health
+  const checkHealth = useCallback(async () => {
     try {
-      const data = await fetchWorkflowRuns(1, 10);
+      const data = await fetchHealth();
+      setHealthInfo(data);
+    } catch (err) {
+      setHealthInfo({ status: 'offline', database: 'unreachable' });
+    }
+  }, []);
+
+  // 2. Fetch Aggregated Workflow Stats
+  const loadStats = useCallback(async () => {
+    setIsStatsLoading(true);
+    try {
+      const data = await fetchWorkflowStats();
+      setStats(data);
+    } catch (err) {
+      console.warn('Failed to load workflow stats:', err);
+    } finally {
+      setIsStatsLoading(false);
+    }
+  }, []);
+
+  // 3. Fetch Filtered Workflow Runs
+  const loadRuns = useCallback(async (p = page, ps = pageSize, stat = statusFilter, search = searchQuery) => {
+    setIsRunsLoading(true);
+    try {
+      const data = await fetchWorkflowRuns(p, ps, stat, search);
       setRuns(data.items || []);
+      setTotalRuns(data.total || 0);
     } catch (err) {
       console.warn('Failed to load workflow runs:', err);
     } finally {
-      setIsLoadingHistory(false);
+      setIsRunsLoading(false);
     }
-  }, []);
+  }, [page, pageSize, statusFilter, searchQuery]);
 
-  // Load ingested documents
-  const loadDocuments = useCallback(async () => {
-    setIsLoadingDocs(true);
-    try {
-      const data = await fetchDocuments(1, 50);
-      setDocuments(data.items || []);
-    } catch (err) {
-      console.warn('Failed to load documents:', err);
-    } finally {
-      setIsLoadingDocs(false);
-    }
-  }, []);
-
-  // Load pending approvals
+  // 4. Fetch Pending Approvals
   const loadPendingApprovals = useCallback(async () => {
-    setIsLoadingApprovals(true);
+    setIsApprovalsLoading(true);
     try {
       const data = await fetchPendingApprovals();
       setPendingApprovals(data.items || []);
     } catch (err) {
       console.warn('Failed to load pending approvals:', err);
     } finally {
-      setIsLoadingApprovals(false);
+      setIsApprovalsLoading(false);
     }
   }, []);
+
+  // 5. Fetch Ingested Documents
+  const loadDocuments = useCallback(async () => {
+    setIsDocsLoading(true);
+    try {
+      const data = await fetchDocuments(1, 50);
+      setDocuments(data.items || []);
+    } catch (err) {
+      console.warn('Failed to load documents:', err);
+    } finally {
+      setIsDocsLoading(false);
+    }
+  }, []);
+
+  // Refresh all dashboard data
+  const handleRefreshAll = useCallback(async () => {
+    await Promise.all([
+      checkHealth(),
+      loadStats(),
+      loadRuns(page, pageSize, statusFilter, searchQuery),
+      loadPendingApprovals(),
+    ]);
+  }, [checkHealth, loadStats, loadRuns, page, pageSize, statusFilter, searchQuery, loadPendingApprovals]);
 
   // Inspect run details
   const handleSelectRun = async (runId) => {
@@ -82,195 +147,263 @@ export function App() {
       const detail = await fetchWorkflowRunDetail(runId);
       setSelectedRunDetail(detail);
     } catch (err) {
-      setError(`Failed to load details for run ${runId}: ${err.message}`);
+      console.error(`Failed to load details for run ${runId}:`, err);
     } finally {
       setIsDetailLoading(false);
     }
   };
 
-  // Initial health check, runs load, documents load, and pending approvals load
-  useEffect(() => {
-    let isMounted = true;
-    async function checkBackend() {
-      try {
-        const data = await fetchHealth();
-        if (isMounted) {
-          setHealthInfo(data);
-        }
-      } catch (err) {
-        if (isMounted) {
-          setHealthInfo({ status: 'offline', database: 'unreachable' });
-        }
-      }
-    }
-    checkBackend();
-    loadRuns();
-    loadDocuments();
-    loadPendingApprovals();
-    const interval = setInterval(checkBackend, 30000);
-    return () => {
-      isMounted = false;
-      clearInterval(interval);
-    };
-  }, [loadRuns, loadDocuments, loadPendingApprovals]);
-
+  // Execute workflow from Query Runner
   const handleRunWorkflow = async () => {
     if (!query.trim()) return;
 
-    setIsLoading(true);
-    setError(null);
+    setIsLoadingQuery(true);
+    setQueryError(null);
 
     try {
       const data = await executeWorkflow(query);
       setResult(data);
-      // Refresh run history and pending approvals
-      await loadRuns();
-      await loadPendingApprovals();
+      // Immediately refresh stats, runs, and pending approvals
+      await handleRefreshAll();
     } catch (err) {
-      setError(err.message || 'An error occurred while executing the workflow.');
+      setQueryError(err.message || 'An error occurred while executing the multi-agent workflow.');
       setResult(null);
     } finally {
-      setIsLoading(false);
+      setIsLoadingQuery(false);
     }
   };
 
-  const handleApprovalDecision = async (updatedData) => {
+  // Handle approval decision from modal or cards
+  const handleApprovalDone = async (updatedData) => {
     if (updatedData) {
       setResult(updatedData);
     }
-    await loadRuns();
-    await loadPendingApprovals();
+    await handleRefreshAll();
   };
+
+  // Pagination & Filter Handlers
+  const handlePageChange = (newPage) => {
+    setPage(newPage);
+    loadRuns(newPage, pageSize, statusFilter, searchQuery);
+  };
+
+  const handlePageSizeChange = (newSize) => {
+    setPageSize(newSize);
+    setPage(1);
+    loadRuns(1, newSize, statusFilter, searchQuery);
+  };
+
+  const handleStatusFilterChange = (newStatus) => {
+    setStatusFilter(newStatus);
+    setPage(1);
+    loadRuns(1, pageSize, newStatus, searchQuery);
+  };
+
+  const handleSearchChange = (newSearch) => {
+    setSearchQuery(newSearch);
+    setPage(1);
+    loadRuns(1, pageSize, statusFilter, newSearch);
+  };
+
+  // Initial load
+  useEffect(() => {
+    checkHealth();
+    loadStats();
+    loadRuns(1, pageSize, statusFilter, searchQuery);
+    loadPendingApprovals();
+    loadDocuments();
+  }, []);
+
+  // Visibility detection & auto-refresh polling
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        setIsPausedDueToVisibility(true);
+      } else {
+        setIsPausedDueToVisibility(false);
+        // Refresh immediately upon returning to the window
+        handleRefreshAll();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [handleRefreshAll]);
+
+  // Polling timer
+  useEffect(() => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+
+    if (autoRefreshInterval > 0 && !isPausedDueToVisibility) {
+      timerRef.current = setInterval(() => {
+        handleRefreshAll();
+      }, autoRefreshInterval * 1000);
+    }
+
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, [autoRefreshInterval, isPausedDueToVisibility, handleRefreshAll]);
 
   return (
     <div className="app-container">
-      {/* Header */}
+      {/* Top Header */}
       <header className="app-header">
         <div className="header-top">
           <div className="header-title-group">
             <div className="logo-badge">M</div>
-            <h1 className="header-title">Multi-Agent AI Workflow Automation</h1>
+            <div>
+              <h1 className="header-title">Multi-Agent AI Workflow Automation Platform</h1>
+              <span className="header-subtitle-text">
+                Autonomous LangGraph Orchestration • PostgreSQL Persistence • FAISS RAG • MCP Tools • HITL Control
+              </span>
+            </div>
           </div>
           <div className="header-badges">
-            <span className="badge badge-milestone">Milestone 6 • Human-in-the-Loop & Durable Control</span>
+            <span className="badge badge-milestone">Milestone 7 • Monitoring Dashboard</span>
             <span className={`badge badge-status ${healthInfo.status !== 'healthy' ? 'disconnected' : ''}`}>
               <span className="status-dot"></span>
               API: {healthInfo.status}
             </span>
           </div>
         </div>
-        <p className="header-subtitle">
-          Autonomous multi-agent orchestration built with LangGraph, FastAPI, PostgreSQL persistence, FAISS vector intelligence, MCP data analysis tools, automated guardrails, and Human-in-the-Loop approval.
-          Execution safely suspends at human review checkpoints, persists state durably across server restarts via PostgreSQL checkpointer, and seamlessly resumes via LangGraph interrupt/resume semantics.
-        </p>
+
+        {/* Global Navigation Tabs */}
+        <nav className="main-nav-tabs">
+          <button
+            className={`nav-tab-btn ${activeNavTab === 'dashboard' ? 'active' : ''}`}
+            onClick={() => setActiveNavTab('dashboard')}
+          >
+            📊 Monitoring Dashboard
+          </button>
+          <button
+            className={`nav-tab-btn ${activeNavTab === 'query' ? 'active' : ''}`}
+            onClick={() => setActiveNavTab('query')}
+          >
+            ⚡ Query Runner
+          </button>
+          <button
+            className={`nav-tab-btn ${activeNavTab === 'approvals' ? 'active' : ''}`}
+            onClick={() => setActiveNavTab('approvals')}
+          >
+            ⏳ Approvals Queue
+            {pendingApprovals.length > 0 && (
+              <span className="nav-tab-badge">{pendingApprovals.length}</span>
+            )}
+          </button>
+          <button
+            className={`nav-tab-btn ${activeNavTab === 'documents' ? 'active' : ''}`}
+            onClick={() => setActiveNavTab('documents')}
+          >
+            📁 Knowledge Base
+            {documents.length > 0 && (
+              <span className="nav-tab-badge-subtle">{documents.length}</span>
+            )}
+          </button>
+        </nav>
       </header>
 
-      {/* Agent Pipeline Visualizer */}
-      <div className="pipeline-bar">
-        <div className={`pipeline-node ${isLoading ? 'active' : result ? 'completed' : ''}`}>
-          <span className="pipeline-icon">📋</span>
-          <span>Planner</span>
-        </div>
-        <span className="pipeline-arrow">→</span>
-        <div className={`pipeline-node ${isLoading ? 'active' : result ? 'completed' : ''}`}>
-          <span className="pipeline-icon">📚</span>
-          <span>Retrieval</span>
-        </div>
-        <span className="pipeline-arrow">→</span>
-        <div className={`pipeline-node ${isLoading ? 'active' : result ? 'completed' : ''}`}>
-          <span className="pipeline-icon">📈</span>
-          <span>Data Analysis</span>
-        </div>
-        <span className="pipeline-arrow">→</span>
-        <div className={`pipeline-node ${isLoading ? 'active' : result ? 'completed' : ''}`}>
-          <span className="pipeline-icon">🔍</span>
-          <span>Research</span>
-        </div>
-        <span className="pipeline-arrow">→</span>
-        <div className={`pipeline-node ${isLoading ? 'active' : result ? 'completed' : ''}`}>
-          <span className="pipeline-icon">✨</span>
-          <span>Response</span>
-        </div>
-        <span className="pipeline-arrow">→</span>
-        <div className={`pipeline-node ${isLoading ? 'active' : result ? 'completed' : ''}`}>
-          <span className="pipeline-icon">🛡️</span>
-          <span>Validation</span>
-        </div>
-        <span className="pipeline-arrow">→</span>
-        <div className={`pipeline-node ${isLoading ? 'active' : (result?.approval_status === 'APPROVED' || result?.status === 'COMPLETED') ? 'completed' : (result?.approval_status === 'PENDING' || result?.status === 'WAITING_FOR_APPROVAL') ? 'active' : ''}`}>
-          <span className="pipeline-icon">👤</span>
-          <span>Approval Gate</span>
-        </div>
-        <span className="pipeline-arrow">→</span>
-        <div className={`pipeline-node ${result?.status === 'COMPLETED' ? 'completed' : ''}`}>
-          <span className="pipeline-icon">📊</span>
-          <span>Verified Output</span>
-        </div>
-      </div>
+      {/* Main Tabbed Views */}
+      <main className="main-content-area">
+        {/* TAB 1: Monitoring Dashboard */}
+        {activeNavTab === 'dashboard' && (
+          <Dashboard
+            stats={stats}
+            isStatsLoading={isStatsLoading}
+            runs={runs}
+            totalRuns={totalRuns}
+            page={page}
+            pageSize={pageSize}
+            statusFilter={statusFilter}
+            searchQuery={searchQuery}
+            isRunsLoading={isRunsLoading}
+            autoRefreshInterval={autoRefreshInterval}
+            isPausedDueToVisibility={isPausedDueToVisibility}
+            pendingApprovals={pendingApprovals}
+            onPageChange={handlePageChange}
+            onPageSizeChange={handlePageSizeChange}
+            onStatusFilterChange={handleStatusFilterChange}
+            onSearchChange={handleSearchChange}
+            onAutoRefreshChange={setAutoRefreshInterval}
+            onSelectRun={handleSelectRun}
+            onRefreshAll={handleRefreshAll}
+            onNavigateToApprovals={() => setActiveNavTab('approvals')}
+          />
+        )}
 
-      {/* Query Input Card */}
-      <QueryInput
-        query={query}
-        setQuery={setQuery}
-        onSubmit={handleRunWorkflow}
-        isLoading={isLoading}
-      />
+        {/* TAB 2: Query Runner */}
+        {activeNavTab === 'query' && (
+          <div className="query-runner-view">
+            <QueryInput
+              query={query}
+              setQuery={setQuery}
+              onSubmit={handleRunWorkflow}
+              isLoading={isLoadingQuery}
+            />
 
-      {/* Error Display */}
-      {error && (
-        <div className="error-banner">
-          <div>
-            <strong>Error:</strong> {error}
+            {queryError && (
+              <div className="error-banner">
+                <div>
+                  <strong>Error:</strong> {queryError}
+                </div>
+              </div>
+            )}
+
+            <WorkflowResult
+              result={result}
+              onApprovalDone={handleApprovalDone}
+            />
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Workflow Result */}
-      <WorkflowResult
-        result={result}
-        onApprovalDone={handleApprovalDecision}
-      />
+        {/* TAB 3: Approvals Queue */}
+        {activeNavTab === 'approvals' && (
+          <div className="approvals-view">
+            <PendingApprovals
+              pendingApprovals={pendingApprovals}
+              isLoading={isApprovalsLoading}
+              onSelectApproval={handleSelectRun}
+              onRefresh={loadPendingApprovals}
+            />
+          </div>
+        )}
 
-      {/* Pending Human Approvals Queue */}
-      <PendingApprovals
-        pendingApprovals={pendingApprovals}
-        isLoading={isLoadingApprovals}
-        onSelectApproval={handleSelectRun}
-        onRefresh={loadPendingApprovals}
-      />
+        {/* TAB 4: Knowledge Base (Documents) */}
+        {activeNavTab === 'documents' && (
+          <div className="documents-view">
+            <DocumentManager
+              documents={documents}
+              isLoading={isDocsLoading}
+              onRefresh={loadDocuments}
+            />
+          </div>
+        )}
+      </main>
 
-      {/* Document Knowledge Base Manager */}
-      <DocumentManager
-        documents={documents}
-        isLoading={isLoadingDocs}
-        onRefresh={loadDocuments}
-      />
-
-      {/* Persistent History Table */}
-      <WorkflowHistory
-        runs={runs}
-        isLoading={isLoadingHistory}
-        onSelectRun={handleSelectRun}
-        onRefresh={loadRuns}
-      />
-
-      {/* Run Detail Modal */}
+      {/* Run Detail Inspection Modal */}
       {selectedRunDetail && (
         <RunDetailModal
           run={selectedRunDetail}
           onClose={() => setSelectedRunDetail(null)}
-          onApprovalDone={handleApprovalDecision}
+          onApprovalDone={handleApprovalDone}
         />
       )}
 
       {/* Loading overlay for run detail */}
       {isDetailLoading && (
-        <div className="loading-toast">Loading run details...</div>
+        <div className="loading-toast">Loading run details from PostgreSQL...</div>
       )}
 
-      {/* Footer */}
+      {/* App Footer */}
       <footer className="app-footer">
-        Portfolio Platform Architecture — Milestone 6: Human-in-the-Loop Approval & Durable Workflow Control
+        Portfolio Platform Architecture — Milestone 7: React Monitoring Dashboard & Live Workflow Observability
       </footer>
     </div>
   );

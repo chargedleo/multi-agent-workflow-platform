@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple, Union
 import uuid
 
-from sqlalchemy import desc, func, select
+from sqlalchemy import and_, case, cast, desc, func, or_, select, String
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -305,14 +305,41 @@ async def list_workflow_runs(
     session: AsyncSession,
     page: int = 1,
     page_size: int = 20,
+    status: Optional[str] = None,
+    search: Optional[str] = None,
 ) -> Tuple[List[WorkflowRun], int]:
-    """Return paginated list of workflow runs and total count."""
+    """Return paginated list of workflow runs and total count with optional filtering."""
     safe_page = max(1, page)
     safe_limit = max(1, min(100, page_size))
     offset = (safe_page - 1) * safe_limit
 
+    filters = []
+    if status and status.strip():
+        norm_status = status.strip().upper()
+        if norm_status != "ALL":
+            if norm_status == "ACTIVE":
+                filters.append(WorkflowRun.status.in_(["RUNNING", "PENDING"]))
+            elif norm_status in ("WAITING_FOR_APPROVAL", "AWAITING_APPROVAL"):
+                filters.append(WorkflowRun.status == "WAITING_FOR_APPROVAL")
+            elif norm_status == "REJECTED":
+                filters.append(or_(WorkflowRun.approval_status == "REJECTED", WorkflowRun.status == "CANCELLED"))
+            else:
+                filters.append(or_(WorkflowRun.status == norm_status, WorkflowRun.approval_status == norm_status))
+
+    if search and search.strip():
+        term = f"%{search.strip()}%"
+        filters.append(
+            or_(
+                WorkflowRun.user_query.ilike(term),
+                cast(WorkflowRun.id, String).ilike(term),
+                cast(WorkflowRun.request_id, String).ilike(term),
+            )
+        )
+
     # Count query
     count_stmt = select(func.count(WorkflowRun.id))
+    if filters:
+        count_stmt = count_stmt.where(and_(*filters))
     total_result = await session.execute(count_stmt)
     total = total_result.scalar_one()
 
@@ -323,10 +350,39 @@ async def list_workflow_runs(
         .offset(offset)
         .limit(safe_limit)
     )
+    if filters:
+        stmt = stmt.where(and_(*filters))
     result = await session.execute(stmt)
     items = list(result.scalars().all())
 
     return items, total
+
+
+async def get_workflow_stats(session: AsyncSession) -> Dict[str, Any]:
+    """Calculate aggregated workflow metrics across all persisted runs."""
+    stmt = select(
+        func.count(WorkflowRun.id).label("total_runs"),
+        func.count(case((WorkflowRun.status.in_(["RUNNING", "PENDING"]), 1))).label("active_runs"),
+        func.count(case((WorkflowRun.status == "WAITING_FOR_APPROVAL", 1))).label("awaiting_approval"),
+        func.count(case((WorkflowRun.status == "COMPLETED", 1))).label("completed_runs"),
+        func.count(case((WorkflowRun.status == "FAILED", 1))).label("failed_runs"),
+        func.count(
+            case((or_(WorkflowRun.approval_status == "REJECTED", WorkflowRun.status == "CANCELLED"), 1))
+        ).label("rejected_runs"),
+        func.avg(case((WorkflowRun.status == "COMPLETED", WorkflowRun.duration_ms))).label("avg_duration_ms"),
+    )
+    res = await session.execute(stmt)
+    row = res.one()
+    avg_dur = float(row.avg_duration_ms) if row.avg_duration_ms is not None else None
+    return {
+        "total_runs": int(row.total_runs or 0),
+        "active_runs": int(row.active_runs or 0),
+        "awaiting_approval": int(row.awaiting_approval or 0),
+        "completed_runs": int(row.completed_runs or 0),
+        "failed_runs": int(row.failed_runs or 0),
+        "rejected_runs": int(row.rejected_runs or 0),
+        "avg_duration_ms": round(avg_dur, 1) if avg_dur is not None else None,
+    }
 
 
 async def update_workflow_run_approval_status(

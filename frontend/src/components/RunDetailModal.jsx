@@ -1,22 +1,37 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ApprovalCard } from './ApprovalCard';
+import { WorkflowTimeline } from './dashboard/WorkflowTimeline';
+import { WorkflowStatusBadge } from './dashboard/WorkflowStatusBadge';
 
 export function RunDetailModal({ run, onClose, onApprovalDone }) {
+  const [activeTab, setActiveTab] = useState('all');
+
   if (!run) return null;
 
-  const statusClass = (run.status || '').toLowerCase();
-  const durationText = run.duration_ms != null ? `${(run.duration_ms / 1000).toFixed(2)}s (${run.duration_ms} ms)` : 'In progress';
+  const durationText = run.duration_ms != null
+    ? `${(run.duration_ms / 1000).toFixed(2)}s (${run.duration_ms} ms)`
+    : 'In progress';
+
+  const stepsCount = run.steps ? run.steps.length : 0;
+  const sourcesCount = (run.sources || run.metadata?.sources || []).length;
+  const approvalsCount = (run.approvals || []).length;
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-content modal-content-lg" onClick={(e) => e.stopPropagation()}>
+        {/* Modal Header */}
         <div className="modal-header">
           <div className="modal-title-group">
-            <h2 className="modal-title">Workflow Run Details</h2>
-            <div className="modal-meta-row">
-              <span className={`status-badge status-${statusClass}`}>
-                {run.status}
-              </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+              <h2 className="modal-title">Workflow Execution Run Details</h2>
+              <WorkflowStatusBadge status={run.status} />
+              {run.approval_status && (
+                <span className={`status-badge status-${run.approval_status.toLowerCase()}`}>
+                  Approval: {run.approval_status}
+                </span>
+              )}
+            </div>
+            <div className="modal-meta-row" style={{ marginTop: '0.35rem' }}>
               <span className="mono-badge">Run ID: {run.run_id || run.id}</span>
               {run.request_id && (
                 <span className="mono-badge">Request ID: {run.request_id}</span>
@@ -28,14 +43,54 @@ export function RunDetailModal({ run, onClose, onApprovalDone }) {
           </button>
         </div>
 
+        {/* Modal Navigation Tabs */}
+        <div className="modal-tabs-bar">
+          <button
+            className={`modal-tab ${activeTab === 'all' ? 'active' : ''}`}
+            onClick={() => setActiveTab('all')}
+          >
+            📋 Comprehensive View
+          </button>
+          <button
+            className={`modal-tab ${activeTab === 'timeline' ? 'active' : ''}`}
+            onClick={() => setActiveTab('timeline')}
+          >
+            ⚡ Execution Stages ({stepsCount})
+          </button>
+          <button
+            className={`modal-tab ${activeTab === 'results' ? 'active' : ''}`}
+            onClick={() => setActiveTab('results')}
+          >
+            ✨ Output & Synthesis
+          </button>
+          <button
+            className={`modal-tab ${activeTab === 'guardrails' ? 'active' : ''}`}
+            onClick={() => setActiveTab('guardrails')}
+          >
+            🛡️ Guardrails & MCP
+          </button>
+          <button
+            className={`modal-tab ${activeTab === 'approvals' ? 'active' : ''}`}
+            onClick={() => setActiveTab('approvals')}
+          >
+            👤 HITL Approval ({approvalsCount})
+          </button>
+        </div>
+
         <div className="modal-body">
-          {/* Query section */}
+          {/* Multi-Agent Execution Stage Visualizer (Always shown or prominent in timeline) */}
+          <div className="detail-section" style={{ paddingBottom: '0.5rem' }}>
+            <h4 className="detail-heading">Multi-Agent Pipeline Progression</h4>
+            <WorkflowTimeline run={run} interactive={true} />
+          </div>
+
+          {/* User Query Box */}
           <div className="detail-section">
-            <h4 className="detail-heading">User Query</h4>
+            <h4 className="detail-heading">Submitted User Query</h4>
             <div className="query-box">{run.query || run.user_query}</div>
           </div>
 
-          {/* Overview metrics */}
+          {/* Key Execution Metrics Grid */}
           <div className="metrics-grid">
             <div className="metric-box">
               <div className="metric-title">Duration</div>
@@ -48,7 +103,7 @@ export function RunDetailModal({ run, onClose, onApprovalDone }) {
               </div>
             </div>
             <div className="metric-box">
-              <div className="metric-title">Validation</div>
+              <div className="metric-title">Guardrails Status</div>
               <div className="metric-value">
                 {run.validation_status ? (
                   <span className={`status-badge status-${run.validation_status.toLowerCase()}`}>
@@ -58,7 +113,7 @@ export function RunDetailModal({ run, onClose, onApprovalDone }) {
               </div>
             </div>
             <div className="metric-box">
-              <div className="metric-title">Approval</div>
+              <div className="metric-title">Approval Gate</div>
               <div className="metric-value">
                 {run.approval_status ? (
                   <span className={`status-badge status-${run.approval_status.toLowerCase()}`}>
@@ -68,11 +123,11 @@ export function RunDetailModal({ run, onClose, onApprovalDone }) {
               </div>
             </div>
             <div className="metric-box">
-              <div className="metric-title">Steps Executed</div>
-              <div className="metric-value">{run.steps ? run.steps.length : 0}</div>
+              <div className="metric-title">Recorded Steps</div>
+              <div className="metric-value">{stepsCount}</div>
             </div>
             <div className="metric-box">
-              <div className="metric-title">Started At</div>
+              <div className="metric-title">Executed At</div>
               <div className="metric-value">
                 {run.started_at ? new Date(run.started_at).toLocaleTimeString() : 'N/A'}
               </div>
@@ -81,7 +136,7 @@ export function RunDetailModal({ run, onClose, onApprovalDone }) {
 
           {/* Active Approval Card if waiting for review */}
           {run.status === 'WAITING_FOR_APPROVAL' && (
-            <div style={{ margin: '1rem 0' }}>
+            <div style={{ margin: '1.25rem 0' }}>
               <ApprovalCard
                 runId={run.run_id || run.id}
                 result={run}
@@ -96,7 +151,7 @@ export function RunDetailModal({ run, onClose, onApprovalDone }) {
           {/* Errors section if any */}
           {run.errors && run.errors.length > 0 && (
             <div className="error-banner" style={{ margin: '1rem 0' }}>
-              <strong>Recorded Errors:</strong>
+              <strong>Execution Errors Recorded:</strong>
               <ul>
                 {run.errors.map((err, i) => (
                   <li key={i}>{err}</li>
@@ -105,63 +160,14 @@ export function RunDetailModal({ run, onClose, onApprovalDone }) {
             </div>
           )}
 
-          {/* Agent Steps Timeline */}
-          <div className="detail-section">
-            <h4 className="detail-heading">Agent Execution Steps</h4>
-            <div className="steps-timeline">
-              {run.steps && run.steps.length > 0 ? (
-                run.steps.map((step) => {
-                  const stepStatusClass = (step.status || '').toLowerCase();
-                  return (
-                    <div key={step.id || step.step_order} className="step-card">
-                      <div className="step-card-header">
-                        <div className="step-header-left">
-                          <span className="step-order-badge">#{step.step_order}</span>
-                          <span className="step-agent-name">{step.agent_name.toUpperCase()} AGENT</span>
-                          <span className={`status-badge status-${stepStatusClass}`}>
-                            {step.status}
-                          </span>
-                        </div>
-                        <div className="step-header-right">
-                          {step.duration_ms != null && (
-                            <span className="step-duration">{step.duration_ms} ms</span>
-                          )}
-                        </div>
-                      </div>
-
-                      {step.error && (
-                        <div className="step-error-msg">
-                          <strong>Error:</strong> {step.error}
-                        </div>
-                      )}
-
-                      {step.output_data && (
-                        <div className="step-data-preview">
-                          <details>
-                            <summary>View Output Data</summary>
-                            <pre className="json-preview">
-                              {JSON.stringify(step.output_data, null, 2)}
-                            </pre>
-                          </details>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })
-              ) : (
-                <p className="empty-subtext">No step records found for this run.</p>
-              )}
-            </div>
-          </div>
-
-          {/* Final Synthesized Answer */}
-          {(run.final_answer || run.answer) && (
+          {/* Section: Synthesized Final Answer */}
+          {(activeTab === 'all' || activeTab === 'results') && (run.final_answer || run.answer) && (
             <div className="detail-section">
               <h4 className="detail-heading">Synthesized Final Answer</h4>
               <div className="final-answer-box">{run.final_answer || run.answer}</div>
               {run.key_points && run.key_points.length > 0 && (
                 <div style={{ marginTop: '0.75rem' }}>
-                  <strong>Key Points:</strong>
+                  <strong>Key Strategic Takeaways:</strong>
                   <ul className="key-points-list">
                     {run.key_points.map((pt, idx) => (
                       <li key={idx}>{pt}</li>
@@ -172,13 +178,65 @@ export function RunDetailModal({ run, onClose, onApprovalDone }) {
             </div>
           )}
 
-          {/* Quantitative Data Analysis if present */}
-          {((run.analysis_results && run.analysis_results.status === 'completed') || (run.metadata?.analysis_results && run.metadata.analysis_results.status === 'completed')) && (() => {
+          {/* Section: Agent Steps Timeline */}
+          {(activeTab === 'all' || activeTab === 'timeline') && (
+            <div className="detail-section">
+              <h4 className="detail-heading">Agent Execution Step History</h4>
+              <div className="steps-timeline">
+                {run.steps && run.steps.length > 0 ? (
+                  run.steps.map((step) => {
+                    const stepStatusClass = (step.status || '').toLowerCase();
+                    return (
+                      <div key={step.id || step.step_order} className="step-card">
+                        <div className="step-card-header">
+                          <div className="step-header-left">
+                            <span className="step-order-badge">#{step.step_order}</span>
+                            <span className="step-agent-name">{step.agent_name.toUpperCase()} AGENT</span>
+                            <span className={`status-badge status-${stepStatusClass}`}>
+                              {step.status}
+                            </span>
+                          </div>
+                          <div className="step-header-right">
+                            {step.duration_ms != null && (
+                              <span className="step-duration">{step.duration_ms} ms</span>
+                            )}
+                          </div>
+                        </div>
+
+                        {step.error && (
+                          <div className="step-error-msg">
+                            <strong>Error:</strong> {step.error}
+                          </div>
+                        )}
+
+                        {step.output_data && (
+                          <div className="step-data-preview">
+                            <details>
+                              <summary>View Output Data</summary>
+                              <pre className="json-preview">
+                                {JSON.stringify(step.output_data, null, 2)}
+                              </pre>
+                            </details>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                ) : (
+                  <p className="empty-subtext">No step records found for this run.</p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Section: Quantitative Data Analysis (MCP) */}
+          {(activeTab === 'all' || activeTab === 'guardrails') &&
+            ((run.analysis_results && run.analysis_results.status === 'completed') || (run.metadata?.analysis_results && run.metadata.analysis_results.status === 'completed')) && (() => {
             const analysis = run.analysis_results || run.metadata.analysis_results;
             return (
               <div className="detail-section">
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                  <h4 className="detail-heading" style={{ marginBottom: 0 }}>Data Analysis Results (MCP)</h4>
+                  <h4 className="detail-heading" style={{ marginBottom: 0 }}>MCP PostgreSQL Analytics</h4>
                   <div className="analysis-badges">
                     <span className="badge badge-tech">Tool: {analysis.tool_name || 'analyze_dataset'}</span>
                     <span className="badge badge-tech">Dataset: {analysis.dataset}</span>
@@ -207,8 +265,9 @@ export function RunDetailModal({ run, onClose, onApprovalDone }) {
             );
           })()}
 
-          {/* Validation Guardrails if present */}
-          {((run.validation) || (run.metadata?.validation)) && (() => {
+          {/* Section: Validation Guardrails */}
+          {(activeTab === 'all' || activeTab === 'guardrails') &&
+            ((run.validation) || (run.metadata?.validation)) && (() => {
             const val = run.validation || run.metadata.validation;
             return (
               <div className="detail-section">
@@ -258,10 +317,11 @@ export function RunDetailModal({ run, onClose, onApprovalDone }) {
             );
           })()}
 
-          {/* Sources and citations if present */}
-          {((run.sources && run.sources.length > 0) || (run.metadata?.sources && run.metadata.sources.length > 0)) && (
+          {/* Section: Sources and citations */}
+          {(activeTab === 'all' || activeTab === 'results') &&
+            ((run.sources && run.sources.length > 0) || (run.metadata?.sources && run.metadata.sources.length > 0)) && (
             <div className="detail-section">
-              <h4 className="detail-heading">Retrieved Document Citations</h4>
+              <h4 className="detail-heading">FAISS Document Retrieval Citations ({sourcesCount})</h4>
               <div className="sources-grid">
                 {(run.sources || run.metadata?.sources || []).map((src, idx) => (
                   <div key={idx} className="source-card">
@@ -282,14 +342,15 @@ export function RunDetailModal({ run, onClose, onApprovalDone }) {
             </div>
           )}
 
-          {/* Human Approval Audit Trail */}
-          {((run.approvals && run.approvals.length > 0) || run.approval_status) && (
+          {/* Section: Human Approval Audit Trail */}
+          {(activeTab === 'all' || activeTab === 'approvals') &&
+            ((run.approvals && run.approvals.length > 0) || run.approval_status) && (
             <div className="detail-section">
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-                <h4 className="detail-heading" style={{ marginBottom: 0 }}>Human-in-the-Loop Approval History</h4>
+                <h4 className="detail-heading" style={{ marginBottom: 0 }}>Human-in-the-Loop Decision Audit History</h4>
                 {run.approval_status && (
                   <span className={`status-badge status-${run.approval_status.toLowerCase()}`}>
-                    Status: {run.approval_status}
+                    Current State: {run.approval_status}
                   </span>
                 )}
               </div>
@@ -331,3 +392,5 @@ export function RunDetailModal({ run, onClose, onApprovalDone }) {
     </div>
   );
 }
+
+export default RunDetailModal;

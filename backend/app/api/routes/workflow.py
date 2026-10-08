@@ -1,7 +1,7 @@
 """Workflow execution and history API routes."""
 
 import uuid
-from typing import List
+from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -18,9 +18,14 @@ from backend.app.models.schemas import (
     WorkflowRunDetailResponse,
     WorkflowRunListResponse,
     WorkflowRunSummary,
+    WorkflowStatsResponse,
     WorkflowStepDetail,
 )
-from backend.app.services.workflow_runs import get_workflow_run, list_workflow_runs
+from backend.app.services.workflow_runs import (
+    get_workflow_run,
+    get_workflow_stats,
+    list_workflow_runs,
+)
 
 logger = get_logger(__name__)
 
@@ -154,33 +159,64 @@ async def create_workflow_run_endpoint(payload: WorkflowRequest) -> WorkflowAPIR
 
 
 @router.get(
+    "/stats",
+    response_model=WorkflowStatsResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get aggregated workflow metrics",
+    description="Returns high-level statistics across all workflow runs: total, active, awaiting approval, completed, failed, rejected, and average execution duration.",
+)
+async def get_workflow_stats_endpoint(
+    session: AsyncSession = Depends(get_db),
+) -> WorkflowStatsResponse:
+    """Retrieve aggregated execution statistics for the monitoring dashboard."""
+    stats_data = await get_workflow_stats(session)
+    return WorkflowStatsResponse(**stats_data)
+
+
+@router.get(
     "",
     response_model=WorkflowRunListResponse,
     status_code=status.HTTP_200_OK,
     summary="List workflow runs",
-    description="Returns a paginated list of recent workflow runs from PostgreSQL.",
+    description="Returns a paginated list of recent workflow runs from PostgreSQL with optional status and search filtering.",
 )
 async def list_runs_endpoint(
     page: int = Query(default=1, ge=1, description="Page number"),
     page_size: int = Query(default=20, ge=1, le=100, description="Items per page"),
+    status_filter: Optional[str] = Query(default=None, alias="status", description="Filter by status (e.g. COMPLETED, FAILED, WAITING_FOR_APPROVAL, ACTIVE, REJECTED)"),
+    search: Optional[str] = Query(default=None, description="Search query string matching query text or run ID"),
     session: AsyncSession = Depends(get_db),
 ) -> WorkflowRunListResponse:
-    """Retrieve paginated workflow runs."""
-    items, total = await list_workflow_runs(session, page=page, page_size=page_size)
+    """Retrieve paginated workflow runs with optional status and search filtering."""
+    items, total = await list_workflow_runs(
+        session, page=page, page_size=page_size, status=status_filter, search=search
+    )
 
-    summaries = [
-        WorkflowRunSummary(
-            run_id=str(r.id),
-            request_id=str(r.request_id),
-            query=r.user_query,
-            status=r.status,
-            approval_status=r.approval_status,
-            started_at=r.started_at,
-            completed_at=r.completed_at,
-            duration_ms=r.duration_ms,
+    summaries = []
+    for r in items:
+        current_stage = "completed" if r.status == "COMPLETED" else (
+            "human_approval" if r.status == "WAITING_FOR_APPROVAL" else (
+                "failed" if r.status == "FAILED" else (
+                    "planner" if r.status == "PENDING" else "processing"
+                )
+            )
         )
-        for r in items
-    ]
+        summaries.append(
+            WorkflowRunSummary(
+                run_id=str(r.id),
+                request_id=str(r.request_id),
+                query=r.user_query,
+                status=r.status,
+                approval_status=r.approval_status,
+                started_at=r.started_at,
+                completed_at=r.completed_at,
+                duration_ms=r.duration_ms,
+                current_stage=current_stage,
+                validation_status=r.validation_status,
+                created_at=r.created_at,
+                updated_at=r.updated_at,
+            )
+        )
 
     return WorkflowRunListResponse(
         items=summaries,
