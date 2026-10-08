@@ -4,12 +4,14 @@ import { WorkflowResult } from './components/WorkflowResult';
 import { WorkflowHistory } from './components/WorkflowHistory';
 import { RunDetailModal } from './components/RunDetailModal';
 import { DocumentManager } from './components/DocumentManager';
+import { PendingApprovals } from './components/PendingApprovals';
 import {
   fetchHealth,
   executeWorkflow,
   fetchWorkflowRuns,
   fetchWorkflowRunDetail,
   fetchDocuments,
+  fetchPendingApprovals,
 } from './services/api';
 import './App.css';
 
@@ -29,6 +31,10 @@ export function App() {
   // Documents state
   const [documents, setDocuments] = useState([]);
   const [isLoadingDocs, setIsLoadingDocs] = useState(false);
+
+  // Pending Approvals state
+  const [pendingApprovals, setPendingApprovals] = useState([]);
+  const [isLoadingApprovals, setIsLoadingApprovals] = useState(false);
 
   // Load recent workflow runs
   const loadRuns = useCallback(async () => {
@@ -56,6 +62,19 @@ export function App() {
     }
   }, []);
 
+  // Load pending approvals
+  const loadPendingApprovals = useCallback(async () => {
+    setIsLoadingApprovals(true);
+    try {
+      const data = await fetchPendingApprovals();
+      setPendingApprovals(data.items || []);
+    } catch (err) {
+      console.warn('Failed to load pending approvals:', err);
+    } finally {
+      setIsLoadingApprovals(false);
+    }
+  }, []);
+
   // Inspect run details
   const handleSelectRun = async (runId) => {
     setIsDetailLoading(true);
@@ -69,7 +88,7 @@ export function App() {
     }
   };
 
-  // Initial health check, runs load, and documents load
+  // Initial health check, runs load, documents load, and pending approvals load
   useEffect(() => {
     let isMounted = true;
     async function checkBackend() {
@@ -87,12 +106,13 @@ export function App() {
     checkBackend();
     loadRuns();
     loadDocuments();
+    loadPendingApprovals();
     const interval = setInterval(checkBackend, 30000);
     return () => {
       isMounted = false;
       clearInterval(interval);
     };
-  }, [loadRuns, loadDocuments]);
+  }, [loadRuns, loadDocuments, loadPendingApprovals]);
 
   const handleRunWorkflow = async () => {
     if (!query.trim()) return;
@@ -103,14 +123,23 @@ export function App() {
     try {
       const data = await executeWorkflow(query);
       setResult(data);
-      // Refresh run history to include the new run
+      // Refresh run history and pending approvals
       await loadRuns();
+      await loadPendingApprovals();
     } catch (err) {
       setError(err.message || 'An error occurred while executing the workflow.');
       setResult(null);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleApprovalDecision = async (updatedData) => {
+    if (updatedData) {
+      setResult(updatedData);
+    }
+    await loadRuns();
+    await loadPendingApprovals();
   };
 
   return (
@@ -123,7 +152,7 @@ export function App() {
             <h1 className="header-title">Multi-Agent AI Workflow Automation</h1>
           </div>
           <div className="header-badges">
-            <span className="badge badge-milestone">Milestone 5 • Validation Guardrails & Agent Correction</span>
+            <span className="badge badge-milestone">Milestone 6 • Human-in-the-Loop & Durable Control</span>
             <span className={`badge badge-status ${healthInfo.status !== 'healthy' ? 'disconnected' : ''}`}>
               <span className="status-dot"></span>
               API: {healthInfo.status}
@@ -131,8 +160,8 @@ export function App() {
           </div>
         </div>
         <p className="header-subtitle">
-          Autonomous multi-agent orchestration built with LangGraph, FastAPI, PostgreSQL persistence, FAISS vector intelligence, MCP data analysis tools, and robust validation guardrails.
-          Planner, Retrieval, Data Analysis, Research, Response, and Validation agents collaborate to synthesize grounded answers with verified numerical computation and bounded correction loops.
+          Autonomous multi-agent orchestration built with LangGraph, FastAPI, PostgreSQL persistence, FAISS vector intelligence, MCP data analysis tools, automated guardrails, and Human-in-the-Loop approval.
+          Execution safely suspends at human review checkpoints, persists state durably across server restarts via PostgreSQL checkpointer, and seamlessly resumes via LangGraph interrupt/resume semantics.
         </p>
       </header>
 
@@ -140,35 +169,40 @@ export function App() {
       <div className="pipeline-bar">
         <div className={`pipeline-node ${isLoading ? 'active' : result ? 'completed' : ''}`}>
           <span className="pipeline-icon">📋</span>
-          <span>Planner Agent</span>
+          <span>Planner</span>
         </div>
         <span className="pipeline-arrow">→</span>
         <div className={`pipeline-node ${isLoading ? 'active' : result ? 'completed' : ''}`}>
           <span className="pipeline-icon">📚</span>
-          <span>Document Retrieval</span>
+          <span>Retrieval</span>
         </div>
         <span className="pipeline-arrow">→</span>
         <div className={`pipeline-node ${isLoading ? 'active' : result ? 'completed' : ''}`}>
           <span className="pipeline-icon">📈</span>
-          <span>Data Analysis Agent</span>
+          <span>Data Analysis</span>
         </div>
         <span className="pipeline-arrow">→</span>
         <div className={`pipeline-node ${isLoading ? 'active' : result ? 'completed' : ''}`}>
           <span className="pipeline-icon">🔍</span>
-          <span>Research Agent</span>
+          <span>Research</span>
         </div>
         <span className="pipeline-arrow">→</span>
         <div className={`pipeline-node ${isLoading ? 'active' : result ? 'completed' : ''}`}>
           <span className="pipeline-icon">✨</span>
-          <span>Response Agent</span>
+          <span>Response</span>
         </div>
         <span className="pipeline-arrow">→</span>
         <div className={`pipeline-node ${isLoading ? 'active' : result ? 'completed' : ''}`}>
           <span className="pipeline-icon">🛡️</span>
-          <span>Validation Guardrails</span>
+          <span>Validation</span>
         </div>
         <span className="pipeline-arrow">→</span>
-        <div className={`pipeline-node ${result ? 'completed' : ''}`}>
+        <div className={`pipeline-node ${isLoading ? 'active' : (result?.approval_status === 'APPROVED' || result?.status === 'COMPLETED') ? 'completed' : (result?.approval_status === 'PENDING' || result?.status === 'WAITING_FOR_APPROVAL') ? 'active' : ''}`}>
+          <span className="pipeline-icon">👤</span>
+          <span>Approval Gate</span>
+        </div>
+        <span className="pipeline-arrow">→</span>
+        <div className={`pipeline-node ${result?.status === 'COMPLETED' ? 'completed' : ''}`}>
           <span className="pipeline-icon">📊</span>
           <span>Verified Output</span>
         </div>
@@ -192,7 +226,18 @@ export function App() {
       )}
 
       {/* Workflow Result */}
-      <WorkflowResult result={result} />
+      <WorkflowResult
+        result={result}
+        onApprovalDone={handleApprovalDecision}
+      />
+
+      {/* Pending Human Approvals Queue */}
+      <PendingApprovals
+        pendingApprovals={pendingApprovals}
+        isLoading={isLoadingApprovals}
+        onSelectApproval={handleSelectRun}
+        onRefresh={loadPendingApprovals}
+      />
 
       {/* Document Knowledge Base Manager */}
       <DocumentManager
@@ -214,6 +259,7 @@ export function App() {
         <RunDetailModal
           run={selectedRunDetail}
           onClose={() => setSelectedRunDetail(null)}
+          onApprovalDone={handleApprovalDecision}
         />
       )}
 
@@ -224,7 +270,7 @@ export function App() {
 
       {/* Footer */}
       <footer className="app-footer">
-        Portfolio Platform Architecture — Milestone 5: Validation Guardrails & Agent Correction Loop
+        Portfolio Platform Architecture — Milestone 6: Human-in-the-Loop Approval & Durable Workflow Control
       </footer>
     </div>
   );

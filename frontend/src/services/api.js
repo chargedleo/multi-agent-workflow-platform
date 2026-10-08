@@ -165,3 +165,76 @@ export async function deleteDocument(documentId) {
   return response.json();
 }
 
+/**
+ * Fetch all workflow runs currently suspended waiting for human approval.
+ * @returns {Promise<{ items: Array, total: number }>}
+ */
+export async function fetchPendingApprovals() {
+  const response = await fetch(`${API_BASE_URL}/approvals/pending`, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch pending approvals (HTTP ${response.status})`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Fetch approval details, latest candidate state, and revision history for a workflow run.
+ * @param {string} runId
+ * @returns {Promise<Object>}
+ */
+export async function fetchWorkflowApproval(runId) {
+  if (!runId) throw new Error('runId is required');
+
+  const response = await fetch(`${API_BASE_URL}/workflows/${runId}/approval`, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch approval details (HTTP ${response.status})`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Submit a human decision (APPROVE, REJECT, CHANGES_REQUESTED) to resume a suspended workflow.
+ * @param {string} runId
+ * @param {{ decision: string, feedback?: string, decided_by?: string }} payload
+ * @returns {Promise<Object>}
+ */
+export async function submitApprovalDecision(runId, { decision, feedback, decided_by = 'human_reviewer' }) {
+  if (!runId) throw new Error('runId is required');
+  if (!decision) throw new Error('decision is required (APPROVE, REJECT, CHANGES_REQUESTED)');
+
+  const response = await fetch(`${API_BASE_URL}/workflows/${runId}/approval`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+    body: JSON.stringify({
+      decision,
+      feedback: feedback || '',
+      decided_by,
+    }),
+  });
+
+  const data = await response.json().catch(() => null);
+  if (!response.ok) {
+    const errorMsg = data?.detail || `Failed to submit approval decision (HTTP ${response.status})`;
+    throw new Error(errorMsg);
+  }
+
+  return data;
+}
+

@@ -15,6 +15,7 @@ if str(REPO_ROOT) not in sys.path:
 # Set test environment
 os.environ["APP_ENV"] = "test"
 os.environ["LLM_PROVIDER"] = "mock"
+os.environ["APPROVAL_ENABLED"] = "false"
 if "TEST_DATABASE_URL" in os.environ:
     os.environ["DATABASE_URL"] = os.environ["TEST_DATABASE_URL"]
 elif Path("/.dockerenv").exists():
@@ -48,10 +49,11 @@ async def setup_test_db():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
         
-        # Ensure validation columns exist if table was previously created
+        # Ensure validation and approval columns exist if table was previously created
         from sqlalchemy import text
         await conn.execute(text("ALTER TABLE workflow_runs ADD COLUMN IF NOT EXISTS validation_status VARCHAR(32);"))
         await conn.execute(text("ALTER TABLE workflow_runs ADD COLUMN IF NOT EXISTS validation_score FLOAT;"))
+        await conn.execute(text("ALTER TABLE workflow_runs ADD COLUMN IF NOT EXISTS approval_status VARCHAR(32);"))
         
         # Check and seed analytics_orders if empty
         from sqlalchemy import func, select, insert

@@ -1,6 +1,7 @@
 import React from 'react';
+import { ApprovalCard } from './ApprovalCard';
 
-export function RunDetailModal({ run, onClose }) {
+export function RunDetailModal({ run, onClose, onApprovalDone }) {
   if (!run) return null;
 
   const statusClass = (run.status || '').toLowerCase();
@@ -57,6 +58,16 @@ export function RunDetailModal({ run, onClose }) {
               </div>
             </div>
             <div className="metric-box">
+              <div className="metric-title">Approval</div>
+              <div className="metric-value">
+                {run.approval_status ? (
+                  <span className={`status-badge status-${run.approval_status.toLowerCase()}`}>
+                    {run.approval_status}
+                  </span>
+                ) : 'NOT REQUIRED'}
+              </div>
+            </div>
+            <div className="metric-box">
               <div className="metric-title">Steps Executed</div>
               <div className="metric-value">{run.steps ? run.steps.length : 0}</div>
             </div>
@@ -67,6 +78,20 @@ export function RunDetailModal({ run, onClose }) {
               </div>
             </div>
           </div>
+
+          {/* Active Approval Card if waiting for review */}
+          {run.status === 'WAITING_FOR_APPROVAL' && (
+            <div style={{ margin: '1rem 0' }}>
+              <ApprovalCard
+                runId={run.run_id || run.id}
+                result={run}
+                onDecisionSubmitted={(updated) => {
+                  if (onApprovalDone) onApprovalDone(updated);
+                  onClose();
+                }}
+              />
+            </div>
+          )}
 
           {/* Errors section if any */}
           {run.errors && run.errors.length > 0 && (
@@ -254,6 +279,45 @@ export function RunDetailModal({ run, onClose }) {
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Human Approval Audit Trail */}
+          {((run.approvals && run.approvals.length > 0) || run.approval_status) && (
+            <div className="detail-section">
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+                <h4 className="detail-heading" style={{ marginBottom: 0 }}>Human-in-the-Loop Approval History</h4>
+                {run.approval_status && (
+                  <span className={`status-badge status-${run.approval_status.toLowerCase()}`}>
+                    Status: {run.approval_status}
+                  </span>
+                )}
+              </div>
+              {run.approvals && run.approvals.length > 0 ? (
+                <div className="approval-history-list">
+                  {run.approvals.map((appr, idx) => (
+                    <div key={appr.id || idx} className="approval-history-item">
+                      <div className="approval-item-header">
+                        <span className={`status-badge status-${(appr.decision || appr.status || '').toLowerCase()}`}>
+                          {appr.decision || appr.status}
+                        </span>
+                        <span className="mono-badge">Revision #{appr.revision_count ?? idx}</span>
+                        <span className="approval-reviewer-name">Reviewer: {appr.decided_by || 'system'}</span>
+                        <span className="approval-time">
+                          {appr.decided_at ? new Date(appr.decided_at).toLocaleTimeString() : appr.created_at ? new Date(appr.created_at).toLocaleTimeString() : ''}
+                        </span>
+                      </div>
+                      {appr.feedback && (
+                        <div className="approval-item-feedback">
+                          <strong>Feedback / Notes:</strong> "{appr.feedback}"
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="empty-subtext">No historical approval actions recorded yet.</p>
+              )}
             </div>
           )}
         </div>

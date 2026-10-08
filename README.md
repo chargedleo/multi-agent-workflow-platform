@@ -11,9 +11,9 @@ An enterprise-ready **Multi-Agent AI Workflow Automation Platform** that decompo
 
 ---
 
-## Current Status: Milestone 5 — Validation Guardrails & Agent Correction Loop
+## Current Status: Milestone 6 — Human-in-the-Loop Approval, Interrupt/Resume & Durable Workflow Control
 
-**Milestone 5** introduces a robust, production-grade **Validation & Guardrails Layer** with a bounded agent correction loop. The system validates agent outputs, MCP tool outputs, citation provenance, numerical calculations, and factual assertions before the workflow is allowed to complete:
+**Milestone 6** elevates the platform from an autonomous workflow into an enterprise-grade governance system featuring **Human-in-the-Loop (HITL) approval**, **durable state persistence**, and **interruption/resume controls** using official **LangGraph 1.2+ `interrupt()` and `Command(resume=...)` semantics**:
 
 ```text
 User Query
@@ -22,42 +22,48 @@ FastAPI REST API (POST /api/v1/workflows)
     ↓
 Database Run Record Created (status: PENDING → RUNNING)
     ↓
-LangGraph StateGraph Execution (6 Collaborative Agents)
+LangGraph StateGraph Execution (7 Collaborative Stages)
     ├── 1. Planner Agent            → Extract goals & sequential plan
     ├── 2. Document Retrieval Agent → Query FAISS vector index & retrieve matching chunks
     ├── 3. Data Analysis Agent      → Decide requirement & invoke approved MCP analytical tools
     ├── 4. Research Agent           → Synthesize plan, documents, and verified numerical figures
     ├── 5. Response Agent           → Synthesize executive response with citations & metric tables
-    └── 6. Validation Agent         → Guardrail checks across schema, citations, math, tools, & claims
-            ├── PASS                → Complete workflow (status: COMPLETED, validation_status: PASS)
-            ├── RECOVERABLE         → Route back to Response Agent with actionable feedback (max 2 attempts)
-            └── FAIL / BLOCKED      → Terminate safely with violation audit (status: FAILED)
+    ├── 6. Validation Agent         → Guardrail checks across schema, citations, math, tools, & claims
+    │       ├── RECOVERABLE         → Loop to Response Agent with actionable corrections (max 2 attempts)
+    │       ├── FAIL / BLOCKED      → Terminate safely with violation audit (status: FAILED)
+    │       └── PASS                → Forward to Human Approval Gate
+    └── 7. Human Approval Gate      → LangGraph interrupt() suspends execution & persists thread checkpoint
+            │                          (status: WAITING_FOR_APPROVAL, approval_status: PENDING)
+            ├── APPROVE             → Command(resume=APPROVE) → Complete workflow (status: COMPLETED)
+            ├── REJECT              → Command(resume=REJECT) → Terminate workflow (status: CANCELLED)
+            └── CHANGES_REQUESTED   → Command(resume=CHANGES_REQUESTED) → Re-run Response Agent with reviewer feedback
+                                       (max 3 revision loops, then re-validates and returns to approval gate)
     ↓
-Database Run Record Completed (validation_status, validation_score, duration_ms)
+Durable PostgreSQL Checkpoint & Approval Audit Saved
     ↓
-Structured API Response (with Grounded Citations, Quantitative Metrics, & Validation Audit)
+Final API Response Released to User / Production
 ```
 
-### Capabilities Introduced in Milestone 5:
-- **Comprehensive Validation Agent & Node**: Governs final workflow completion via LangGraph conditional routing (`validation_router`).
-- **Modular Deterministic Validators**:
-  - `response_schema`: Enforces non-empty answer bodies, structured key takeaways, calibrated confidence bounds `[0.0, 1.0]`, and matching request identifiers.
-  - `citation`: Provenance checks against retrieved documents, preventing fabricated filenames or hallucinated chunk IDs.
-  - `analysis`: Mathematical consistency checks (`count >= 0`, `sum / count == mean`, `min <= mean <= max`, group rows reconciliation to total sum, top-N limit validation).
-  - `tool_output`: Validates allowlisted MCP tool names, prevents unapproved tool calls, and detects masked execution failures.
-  - `claim`: Compares numerical and currency claims in synthesized answers against verified analysis metrics and retrieved source documents to prevent hallucinated figures.
-- **Bounded Dynamic Correction Loop**:
-  - Automatically feeds validation feedback into the Response Agent on recoverable issues.
-  - Hard limit of `MAX_VALIDATION_ATTEMPTS = 2` ensures termination with zero infinite loops.
-- **Durable Database Persistence & Auditing**:
-  - Alembic migration `004_workflow_validation.py` adds `validation_status` and `validation_score` columns to `workflow_runs`.
-  - All validation attempts and issues stored in `metadata_json["validation"]`.
-  - Validation steps tracked with timing and status in `workflow_steps`.
-- **Enhanced Frontend UI**:
-  - Milestone 5 badge and updated 6-node visual pipeline.
-  - Dedicated Validation Guardrails inspection card displaying status badge, score percentage, passed checks count, duration, and structured issue tags.
-  - Run detail modal with validation metrics and issue audit.
-- **Comprehensive Test Suite**: **100 automated tests** passing across host environment and Docker backend.
+### Capabilities Introduced in Milestone 6:
+- **Official LangGraph Interrupt & Resume**:
+  - Implements native `interrupt()` in `human_approval_node` and `Command(resume=...)` in `resume_workflow`.
+- **Durable PostgreSQL Checkpointing**:
+  - Powered by `AsyncPostgresSaver` and `AsyncConnectionPool` (`langgraph-checkpoint-postgres` with `psycopg` 3.x).
+  - Workflow state, threads, and agent intermediate steps survive container and process restarts without loss of progress.
+- **Dedicated Approval State Machine & Database Persistence**:
+  - Alembic migration `005_human_approval.py` adds `workflow_approvals` table and `approval_status` column to `workflow_runs`.
+  - Audits decision, reviewer name, feedback notes, revision count, and timestamps for full compliance traceability.
+- **Bounded Revisions Loop**:
+  - Governed by `MAX_APPROVAL_REVISIONS = 3` to prevent infinite revision cycles.
+- **New REST API Endpoints**:
+  - `GET /api/v1/approvals/pending` — Lists all runs currently paused at the approval gate.
+  - `GET /api/v1/workflows/{run_id}/approval` — Retrieves approval status, draft answer, guardrail results, and audit history.
+  - `POST /api/v1/workflows/{run_id}/approval` — Submits human decision (`APPROVE`, `REJECT`, `CHANGES_REQUESTED`).
+- **Interactive React Monitoring UI**:
+  - `ApprovalCard`: Review draft answer, validation score, reviewer name, feedback textarea, and Approve / Request Changes / Reject buttons.
+  - `PendingApprovals`: Live queue of runs waiting for human action with 1-click inspection.
+  - `RunDetailModal`: Complete human approval history timeline and embedded review capability.
+- **Comprehensive Test Suite**: **110 automated tests** passing across host environment and Docker backend.
 
 ---
 

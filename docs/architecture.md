@@ -308,8 +308,73 @@ flowchart TD
 
 ---
 
-## 8. Target Future Architecture (Milestone 6)
+## 8. Milestone 6 Architecture: Human-in-the-Loop Approval & Durable Workflow Control
 
-The upcoming milestone will introduce:
-- **Milestone 6**: Human-in-the-Loop (HITL) approval gates, live streaming execution with server-sent events (SSE), interactive run inspection, and visual agent analytics.
+Milestone 6 transitions the platform from fully autonomous execution into an enterprise-grade supervised orchestration system featuring **LangGraph Interrupt & Resume semantics**, **durable PostgreSQL checkpointing**, and a dedicated **Human-in-the-Loop (HITL) Approval Gate**:
+
+```mermaid
+flowchart TD
+    User([User]) --> API["FastAPI Gateway\n(POST /api/v1/workflows)"]
+    API --> InitRun[("workflow_runs Record\n(PENDING → RUNNING)")]
+    
+    subgraph MultiAgentSystem ["Multi-Agent Execution & Guardrail Pipeline"]
+        direction TB
+        Planner["1. Planner Agent"]
+        DocRetrieval["2. Document Retrieval Agent\n(FAISS Vector Store)"]
+        DataAnalysis["3. Data Analysis Agent\n(MCP Tool Layer)"]
+        Research["4. Research Agent"]
+        Responder["5. Response Agent"]
+        Validator{"6. Validation Guardrails"}
+        ApprovalGate{"7. Human Approval Gate\n(interrupt() checkpoint)"}
+        
+        Planner --> DocRetrieval
+        DocRetrieval --> DataAnalysis
+        DataAnalysis --> Research
+        Research --> Responder
+        Responder --> Validator
+        
+        Validator -->|RECOVERABLE\n(attempt < 2)| Responder
+        Validator -->|FAIL / BLOCKED| EndFail([Workflow Failed])
+        Validator -->|PASS| ApprovalGate
+    end
+
+    InitRun --> Planner
+    ApprovalGate -.->|interrupt() Suspends Thread| DBCheckpointer[("Durable PostgreSQL Checkpointer\n(checkpoints, checkpoint_writes)")]
+    ApprovalGate -->|Waiting Status| PendingQueue["Pending Approvals Queue\n(GET /api/v1/approvals/pending)"]
+    
+    Reviewer([Human Reviewer]) -->|Inspects Draft & Guardrails| PendingQueue
+    Reviewer -->|POST /api/v1/workflows/{run_id}/approval| DecisionHandler["Approval Decision API"]
+    
+    DecisionHandler -->|APPROVE\nCommand(resume=APPROVE)| CompleteRun[("workflow_runs: COMPLETED\nworkflow_approvals: APPROVED")]
+    DecisionHandler -->|REJECT\nCommand(resume=REJECT)| TerminateRun[("workflow_runs: CANCELLED\nworkflow_approvals: REJECTED")]
+    DecisionHandler -->|CHANGES_REQUESTED\nCommand(resume=CHANGES_REQUESTED)| RevisionLoop["Feedback Loop\n(revision <= 3)"]
+    
+    RevisionLoop --> Responder
+    CompleteRun --> UserFinal([Production Output Delivered])
+```
+
+### 8.1 Key Design Highlights
+
+1. **Native LangGraph `interrupt()` & `Command(resume=...)`**:
+   - The `human_approval_node` invokes `interrupt({"candidate_answer": ...})` upon successful validation pass.
+   - Execution is suspended without holding HTTP connections open or consuming server threads.
+   - Resuming via `graph.ainvoke(Command(resume=payload), config={"configurable": {"thread_id": str(run_id)}})` recovers state directly at the gate.
+
+2. **Durable PostgreSQL Checkpointer**:
+   - Backed by `AsyncPostgresSaver` and `psycopg_pool.AsyncConnectionPool` with `autocommit=True`.
+   - Checkpoints survive container and server restarts, enabling workflows to be reviewed hours or days later.
+
+3. **Approval State Machine**:
+   - Status transitions: `PENDING` → `RUNNING` → `WAITING_FOR_APPROVAL` → (`APPROVED` | `REJECTED` | `CHANGES_REQUESTED`).
+   - If changes are requested, the revision loop feeds human notes into the Response Agent and re-validates before suspending at the gate again.
+   - Strictly bounded by `MAX_APPROVAL_REVISIONS = 3`.
+
+4. **Dedicated Persistence & Audit Trail**:
+   - `workflow_approvals` table tracks: `id`, `workflow_run_id`, `status`, `decision`, `feedback`, `decided_by`, `revision_count`, `decided_at`, `created_at`.
+   - `workflow_runs` stores high-level `approval_status`.
+
+5. **Monitoring & Interactive Review UI**:
+   - `ApprovalCard`: Provides draft review, automated guardrail stats, reviewer name, feedback textarea, and Approve / Request Changes / Reject actions.
+   - `PendingApprovals`: Dedicated queue monitoring paused workflows with quick action triggers.
+   - `RunDetailModal`: Visualizes full human approval audit trail with reviewer notes and timestamps.
 

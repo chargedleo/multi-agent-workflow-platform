@@ -96,7 +96,7 @@ class WorkflowAPIResponse(BaseModel):
 
     request_id: str = Field(..., description="Unique workflow run request ID")
     run_id: Optional[str] = Field(default=None, description="Database primary key identifier for the persisted run")
-    status: str = Field(default="completed", description="Execution status: completed, failed, running, pending")
+    status: str = Field(default="completed", description="Execution status: completed, failed, running, pending, waiting_for_approval")
     answer: str = Field(..., description="Comprehensive answer synthesized by the agents")
     key_points: List[str] = Field(..., description="Key executive takeaways")
     confidence: float = Field(..., description="Confidence score (0.0 to 1.0)")
@@ -105,6 +105,7 @@ class WorkflowAPIResponse(BaseModel):
     validation: Optional[Dict[str, Any]] = Field(default=None, description="Guardrails and validation evaluation results")
     validation_status: Optional[str] = Field(default=None, description="Validation status: PASS, FAIL, RECOVERABLE, BLOCKED")
     validation_score: Optional[float] = Field(default=None, description="Validation score (0.0 to 1.0)")
+    approval_status: Optional[str] = Field(default=None, description="Human approval status: PENDING, APPROVED, REJECTED, CHANGES_REQUESTED")
     errors: List[str] = Field(default_factory=list, description="Any warnings or errors recorded during execution")
 
 
@@ -127,13 +128,84 @@ class WorkflowStepDetail(BaseModel):
     error: Optional[str] = Field(default=None, description="Error details if step failed")
 
 
+# -----------------------------------------------------------------------------
+# Milestone 6: Human-in-the-Loop Approval Schemas
+# -----------------------------------------------------------------------------
+
+class ApprovalDecisionRequest(BaseModel):
+    """Payload submitted when a human reviewer makes a decision."""
+
+    decision: str = Field(..., description="Decision: APPROVE, REJECT, or CHANGES_REQUESTED")
+    feedback: Optional[str] = Field(default=None, description="Optional feedback or revision instructions")
+    decided_by: Optional[str] = Field(default="human_reviewer", description="Identifier of the reviewer")
+
+
+class ApprovalRecordResponse(BaseModel):
+    """Schema representing a single human approval record / audit entry."""
+
+    id: str = Field(..., description="Approval UUID")
+    workflow_run_id: str = Field(..., description="Associated workflow run UUID")
+    status: str = Field(..., description="Status: PENDING, APPROVED, REJECTED, CHANGES_REQUESTED")
+    requested_at: datetime = Field(..., description="Timestamp when approval was requested")
+    decided_at: Optional[datetime] = Field(default=None, description="Timestamp when decision was made")
+    decided_by: Optional[str] = Field(default=None, description="Identifier of reviewer")
+    decision: Optional[str] = Field(default=None, description="Decision made: APPROVE, REJECT, CHANGES_REQUESTED")
+    feedback: Optional[str] = Field(default=None, description="Reviewer feedback comments")
+    revision_count: int = Field(default=0, description="Revision number at the time of this approval")
+    metadata: Dict[str, Any] = Field(default_factory=dict, description="Metadata dictionary")
+
+
+class PendingApprovalSummary(BaseModel):
+    """Concise summary of a workflow run awaiting human approval."""
+
+    approval_id: str = Field(..., description="Approval UUID")
+    run_id: str = Field(..., description="Workflow run UUID")
+    request_id: str = Field(..., description="Request UUID")
+    query: str = Field(..., description="User query submitted")
+    status: str = Field(..., description="Approval record status: PENDING")
+    requested_at: datetime = Field(..., description="Requested timestamp")
+    revision_count: int = Field(default=0, description="Current revision count")
+    validation_status: Optional[str] = Field(default=None, description="Validation status")
+    validation_score: Optional[float] = Field(default=None, description="Validation score")
+
+
+class PendingApprovalsListResponse(BaseModel):
+    """List response for pending approvals dashboard."""
+
+    items: List[PendingApprovalSummary] = Field(..., description="List of pending approval requests")
+    total: int = Field(..., ge=0, description="Total count of pending requests")
+
+
+class WorkflowApprovalDetailResponse(BaseModel):
+    """Detailed approval state for inspection by a human reviewer."""
+
+    run_id: str = Field(..., description="Workflow run UUID")
+    request_id: str = Field(..., description="Request UUID")
+    status: str = Field(..., description="Workflow status")
+    approval_status: str = Field(..., description="Approval status: PENDING, APPROVED, REJECTED, CHANGES_REQUESTED")
+    query: str = Field(..., description="Original user query")
+    answer: Optional[str] = Field(default=None, description="Draft synthesized answer awaiting approval")
+    key_points: List[str] = Field(default_factory=list, description="Key executive takeaways")
+    confidence: Optional[float] = Field(default=None, description="Confidence score")
+    sources: List[Dict[str, Any]] = Field(default_factory=list, description="Retrieved source citations")
+    analysis_results: Optional[Dict[str, Any]] = Field(default=None, description="Quantitative analysis results")
+    validation: Optional[Dict[str, Any]] = Field(default=None, description="Validation results and metrics")
+    validation_status: Optional[str] = Field(default=None, description="Validation status")
+    validation_score: Optional[float] = Field(default=None, description="Validation score")
+    revision_count: int = Field(default=0, description="Current revision cycle count")
+    max_revisions: int = Field(default=3, description="Maximum permitted revision cycles")
+    current_approval: Optional[ApprovalRecordResponse] = Field(default=None, description="Active pending approval record")
+    approval_history: List[ApprovalRecordResponse] = Field(default_factory=list, description="Complete history of decisions")
+
+
 class WorkflowRunSummary(BaseModel):
     """Concise workflow run item for paginated history lists."""
 
     run_id: str = Field(..., description="Run UUID")
     request_id: str = Field(..., description="Request UUID")
     query: str = Field(..., description="User query submitted")
-    status: str = Field(..., description="Workflow status: PENDING, RUNNING, COMPLETED, FAILED")
+    status: str = Field(..., description="Workflow status: PENDING, RUNNING, COMPLETED, FAILED, WAITING_FOR_APPROVAL")
+    approval_status: Optional[str] = Field(default=None, description="Approval status")
     started_at: Optional[datetime] = Field(default=None, description="Workflow started timestamp")
     completed_at: Optional[datetime] = Field(default=None, description="Workflow completed timestamp")
     duration_ms: Optional[int] = Field(default=None, description="Execution duration in milliseconds")
@@ -149,11 +221,12 @@ class WorkflowRunListResponse(BaseModel):
 
 
 class WorkflowRunDetailResponse(BaseModel):
-    """Comprehensive details of a persisted workflow run including all steps."""
+    """Comprehensive details of a persisted workflow run including all steps and approvals."""
 
     run_id: str = Field(..., description="Run UUID")
     request_id: str = Field(..., description="Request UUID")
-    status: str = Field(..., description="Workflow status: PENDING, RUNNING, COMPLETED, FAILED")
+    status: str = Field(..., description="Workflow status: PENDING, RUNNING, COMPLETED, FAILED, WAITING_FOR_APPROVAL")
+    approval_status: Optional[str] = Field(default=None, description="Approval status")
     query: str = Field(..., description="User query")
     started_at: Optional[datetime] = Field(default=None, description="Workflow started timestamp")
     completed_at: Optional[datetime] = Field(default=None, description="Workflow completed timestamp")
@@ -171,6 +244,7 @@ class WorkflowRunDetailResponse(BaseModel):
     errors: List[str] = Field(default_factory=list, description="Errors recorded for the run")
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Metadata dictionary")
     steps: List[WorkflowStepDetail] = Field(default_factory=list, description="Ordered agent execution steps")
+    approvals: List[ApprovalRecordResponse] = Field(default_factory=list, description="Human approval decision history")
 
 
 class HealthResponse(BaseModel):

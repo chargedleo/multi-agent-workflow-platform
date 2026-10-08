@@ -9,15 +9,16 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.app.api.routes.analytics import router as analytics_router
+from backend.app.api.routes.approvals import router as approvals_router
 from backend.app.api.routes.documents import router as documents_router
 from backend.app.api.routes.health import router as health_router
 from backend.app.api.routes.workflow import router as workflow_router
 from backend.app.core.config import get_settings
 from backend.app.core.logging import get_logger, setup_logging
+from backend.app.graph.checkpointer import close_checkpointer, init_checkpointer
 from backend.app.services.database import check_database_connection, close_database_connection
 
 logger = get_logger(__name__)
-
 
 
 @asynccontextmanager
@@ -31,9 +32,16 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     db_status = await check_database_connection()
     logger.info(f"Initial database status: {db_status['status']} ({db_status.get('details', '')})")
 
+    # Initialize durable checkpointer for human-in-the-loop workflows
+    try:
+        await init_checkpointer()
+    except Exception as exc:
+        logger.warning(f"Checkpointer initialization warning: {exc}")
+
     yield
 
     logger.info(f"Shutting down {settings.APP_NAME}...")
+    await close_checkpointer()
     await close_database_connection()
     logger.info("Application shutdown complete.")
 
@@ -68,6 +76,7 @@ def create_app() -> FastAPI:
     app.include_router(workflow_router, prefix=api_v1_prefix)
     app.include_router(documents_router, prefix=api_v1_prefix)
     app.include_router(analytics_router, prefix=api_v1_prefix)
+    app.include_router(approvals_router, prefix=api_v1_prefix)
 
     @app.get("/", tags=["Root"])
     async def root():

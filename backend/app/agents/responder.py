@@ -81,6 +81,8 @@ async def response_agent(state: WorkflowState) -> Dict[str, Any]:
                         "retrieved_sources_count": len(sources),
                         "has_analysis": bool(analysis_results and analysis_results.get("status") == "completed"),
                         "correction_attempt": current_attempt,
+                        "approval_revision": state.get("approval_revision", 0),
+                        "has_approval_feedback": bool(state.get("approval_feedback")),
                     },
                 )
                 step_id = step.id
@@ -136,6 +138,17 @@ async def response_agent(state: WorkflowState) -> Dict[str, Any]:
                 f"You MUST revise your answer to resolve all issues. Adhere strictly to the verified evidence figures."
             )
 
+        approval_feedback_prompt = ""
+        user_feedback = state.get("approval_feedback")
+        revision_count = state.get("approval_revision", 0)
+        if user_feedback:
+            approval_feedback_prompt = (
+                f"\n\nHUMAN REVIEWER REVISION REQUEST (Revision #{revision_count}):\n"
+                f"A human reviewer reviewed the previous response and requested changes:\n"
+                f"\"{user_feedback}\"\n"
+                f"You MUST directly incorporate this feedback into your revised response and address all reviewer requests."
+            )
+
         prompt_content = (
             f"User Query:\n{user_query}\n\n"
             f"Strategic Plan Goal:\n{plan_data.get('goal', 'N/A')}\n"
@@ -145,7 +158,8 @@ async def response_agent(state: WorkflowState) -> Dict[str, Any]:
             f"Unanswered Questions / Nuances:\n{unanswered_str}"
             f"{sources_prompt}"
             f"{analysis_prompt}"
-            f"{validation_feedback}\n\n"
+            f"{validation_feedback}"
+            f"{approval_feedback_prompt}\n\n"
             f"Workflow Request ID:\n{request_id}\n\n"
             f"Synthesize this into a final response matching the WorkflowResponse schema. "
             f"Include the exact request_id: '{request_id}'."

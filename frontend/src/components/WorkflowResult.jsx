@@ -1,6 +1,7 @@
 import React from 'react';
+import { ApprovalCard } from './ApprovalCard';
 
-export function WorkflowResult({ result }) {
+export function WorkflowResult({ result, onApprovalDone }) {
   if (!result) return null;
 
   const { request_id, answer, key_points, confidence, sources, analysis_results, validation, errors } = result;
@@ -16,6 +17,11 @@ export function WorkflowResult({ result }) {
               ID: {request_id}
             </span>
           )}
+          {result.approval_status && (
+            <span className={`status-badge status-${result.approval_status.toLowerCase()}`}>
+              Approval: {result.approval_status}
+            </span>
+          )}
         </div>
 
         <div className="confidence-box">
@@ -23,6 +29,26 @@ export function WorkflowResult({ result }) {
           <span className="confidence-val">{confidencePercent}%</span>
         </div>
       </div>
+
+      {/* Human Approval Review Gate if currently suspended */}
+      {(result.status === 'WAITING_FOR_APPROVAL' || result.approval_status === 'PENDING') && (
+        <div style={{ marginBottom: '1.25rem' }}>
+          <ApprovalCard
+            runId={result.run_id}
+            result={result}
+            onDecisionSubmitted={onApprovalDone}
+          />
+        </div>
+      )}
+
+      {/* Human Rejection Notice if rejected */}
+      {result.approval_status === 'REJECTED' && (
+        <div className="error-banner" style={{ marginBottom: '1.25rem' }}>
+          <div>
+            <strong>Workflow Rejected by Human Reviewer:</strong> This execution was terminated at the review gate and not released to downstream services.
+          </div>
+        </div>
+      )}
 
       {errors && errors.length > 0 && (
         <div className="error-banner">

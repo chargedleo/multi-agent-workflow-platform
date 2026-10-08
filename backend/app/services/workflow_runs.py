@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from backend.app.core.logging import format_log_msg, get_logger
+from backend.app.db.models.workflow_approval import WorkflowApproval
 from backend.app.db.models.workflow_run import WorkflowRun
 from backend.app.db.models.workflow_step import WorkflowStep
 
@@ -79,6 +80,7 @@ async def complete_workflow_run(
     sources: Optional[List[Dict[str, Any]]] = None,
     analysis_results: Optional[Dict[str, Any]] = None,
     validation_results: Optional[Dict[str, Any]] = None,
+    approval_status: Optional[str] = None,
 ) -> Optional[WorkflowRun]:
     """Transition a workflow run to COMPLETED and record outputs and duration."""
     run_uuid = _to_uuid(run_id)
@@ -93,6 +95,8 @@ async def complete_workflow_run(
         run.duration_ms = int(delta.total_seconds() * 1000)
 
     run.status = "COMPLETED"
+    if approval_status:
+        run.approval_status = approval_status
     run.final_answer = final_answer
     run.key_points = key_points
     run.confidence = confidence
@@ -137,6 +141,7 @@ async def fail_workflow_run(
     plan: Optional[Dict[str, Any]] = None,
     research_results: Optional[Dict[str, Any]] = None,
     validation_results: Optional[Dict[str, Any]] = None,
+    approval_status: Optional[str] = None,
 ) -> Optional[WorkflowRun]:
     """Transition a workflow run to FAILED and record error details."""
     run_uuid = _to_uuid(run_id)
@@ -151,6 +156,8 @@ async def fail_workflow_run(
         run.duration_ms = int(delta.total_seconds() * 1000)
 
     run.status = "FAILED"
+    if approval_status:
+        run.approval_status = approval_status
     run.errors = errors
     if final_answer:
         run.final_answer = final_answer
@@ -254,7 +261,7 @@ async def get_workflow_run(
     session: AsyncSession,
     run_id: Union[str, uuid.UUID],
 ) -> Optional[WorkflowRun]:
-    """Retrieve a workflow run by run_id with all its steps eagerly loaded."""
+    """Retrieve a workflow run by run_id with all its steps and approvals eagerly loaded."""
     try:
         run_uuid = _to_uuid(run_id)
     except (ValueError, TypeError):
@@ -263,7 +270,10 @@ async def get_workflow_run(
     stmt = (
         select(WorkflowRun)
         .where(WorkflowRun.id == run_uuid)
-        .options(selectinload(WorkflowRun.steps))
+        .options(
+            selectinload(WorkflowRun.steps),
+            selectinload(WorkflowRun.approvals),
+        )
     )
     result = await session.execute(stmt)
     return result.scalar_one_or_none()
@@ -273,7 +283,7 @@ async def get_workflow_run_by_request_id(
     session: AsyncSession,
     request_id: Union[str, uuid.UUID],
 ) -> Optional[WorkflowRun]:
-    """Retrieve a workflow run by request_id."""
+    """Retrieve a workflow run by request_id with steps and approvals."""
     try:
         req_uuid = _to_uuid(request_id)
     except (ValueError, TypeError):
@@ -282,7 +292,10 @@ async def get_workflow_run_by_request_id(
     stmt = (
         select(WorkflowRun)
         .where(WorkflowRun.request_id == req_uuid)
-        .options(selectinload(WorkflowRun.steps))
+        .options(
+            selectinload(WorkflowRun.steps),
+            selectinload(WorkflowRun.approvals),
+        )
     )
     result = await session.execute(stmt)
     return result.scalar_one_or_none()
@@ -314,3 +327,163 @@ async def list_workflow_runs(
     items = list(result.scalars().all())
 
     return items, total
+
+
+async def update_workflow_run_approval_status(
+    session: AsyncSession,
+    run_id: Union[str, uuid.UUID],
+    status: str,
+    approval_status: str,
+) -> Optional[WorkflowRun]:
+    """Update workflow run execution status and approval_status."""
+    run_uuid = _to_uuid(run_id)
+    run = await session.get(WorkflowRun, run_uuid)
+    if not run:
+        return None
+    run.status = status
+    run.approval_status = approval_status
+    await session.commit()
+    await session.refresh(run)
+    return run
+
+
+async def create_approval_request(
+    session: AsyncSession,
+    run_id: Union[str, uuid.UUID],
+    revision_count: int = 0,
+    metadata: Optional[Dict[str, Any]] = None,
+) -> WorkflowApproval:
+    """Create a new human approval request for a workflow run and update run status."""
+    run_uuid = _to_uuid(run_id)
+    approval = WorkflowApproval(
+        id=uuid.uuid4(),
+        workflow_run_id=run_uuid,
+        status="PENDING",
+        requested_at=datetime.now(timezone.utc),
+        revision_count=revision_count,
+        metadata_json=metadata or {},
+    )
+    session.add(approval)
+
+    run = await session.get(WorkflowRun, run_uuid)
+    if run:
+        run.status = "WAITING_FOR_APPROVAL"
+        run.approval_status = "PENDING"
+
+    await session.commit()
+    await session.refresh(approval)
+    logger.info(
+        format_log_msg(
+            f"Created approval request {approval.id} for run {run_uuid} (revision: {revision_count})",
+            str(run.request_id) if run else "unknown",
+        )
+    )
+    return approval
+
+
+async def record_approval_decision(
+    session: AsyncSession,
+    run_id: Union[str, uuid.UUID],
+    decision: str,
+    feedback: Optional[str] = None,
+    decided_by: Optional[str] = "human_reviewer",
+) -> Optional[WorkflowApproval]:
+    """Record a human decision on the pending approval request for a workflow run."""
+    run_uuid = _to_uuid(run_id)
+    stmt = (
+        select(WorkflowApproval)
+        .where(
+            WorkflowApproval.workflow_run_id == run_uuid,
+            WorkflowApproval.status == "PENDING",
+        )
+        .order_by(desc(WorkflowApproval.requested_at))
+    )
+    result = await session.execute(stmt)
+    approval = result.scalars().first()
+    if not approval:
+        return None
+
+    dec_upper = decision.upper()
+    now = datetime.now(timezone.utc)
+    status_map = {
+        "APPROVE": "APPROVED",
+        "REJECT": "REJECTED",
+        "CHANGES_REQUESTED": "CHANGES_REQUESTED",
+    }
+    app_status = status_map.get(dec_upper, dec_upper)
+    approval.status = app_status
+    approval.decision = dec_upper
+    approval.feedback = feedback
+    approval.decided_by = decided_by
+    approval.decided_at = now
+
+    run = await session.get(WorkflowRun, run_uuid)
+    if run:
+        run.approval_status = app_status
+        if dec_upper == "REJECT":
+            run.status = "FAILED"
+        elif dec_upper == "CHANGES_REQUESTED":
+            run.status = "RUNNING"
+        elif dec_upper == "APPROVE":
+            run.status = "RUNNING"
+
+    await session.commit()
+    await session.refresh(approval)
+    return approval
+
+
+async def get_pending_approvals(
+    session: AsyncSession,
+    page: int = 1,
+    page_size: int = 20,
+) -> Tuple[List[Dict[str, Any]], int]:
+    """Retrieve all workflow runs currently awaiting human approval."""
+    safe_page = max(1, page)
+    safe_limit = max(1, min(100, page_size))
+    offset = (safe_page - 1) * safe_limit
+
+    count_stmt = select(func.count(WorkflowApproval.id)).where(WorkflowApproval.status == "PENDING")
+    total_result = await session.execute(count_stmt)
+    total = total_result.scalar_one()
+
+    stmt = (
+        select(WorkflowApproval, WorkflowRun)
+        .join(WorkflowRun, WorkflowApproval.workflow_run_id == WorkflowRun.id)
+        .where(WorkflowApproval.status == "PENDING")
+        .order_by(desc(WorkflowApproval.requested_at))
+        .offset(offset)
+        .limit(safe_limit)
+    )
+    result = await session.execute(stmt)
+    rows = result.all()
+
+    items = []
+    for app_row, run_row in rows:
+        items.append({
+            "approval_id": str(app_row.id),
+            "run_id": str(run_row.id),
+            "request_id": str(run_row.request_id),
+            "query": run_row.user_query,
+            "status": app_row.status,
+            "requested_at": app_row.requested_at,
+            "revision_count": app_row.revision_count,
+            "validation_status": run_row.validation_status,
+            "validation_score": run_row.validation_score,
+        })
+
+    return items, total
+
+
+async def get_workflow_approvals_for_run(
+    session: AsyncSession,
+    run_id: Union[str, uuid.UUID],
+) -> List[WorkflowApproval]:
+    """Retrieve all approval records for a given workflow run."""
+    run_uuid = _to_uuid(run_id)
+    stmt = (
+        select(WorkflowApproval)
+        .where(WorkflowApproval.workflow_run_id == run_uuid)
+        .order_by(WorkflowApproval.created_at.asc())
+    )
+    result = await session.execute(stmt)
+    return list(result.scalars().all())

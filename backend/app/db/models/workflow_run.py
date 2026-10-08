@@ -10,6 +10,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from backend.app.db.base import Base, JSON_TYPE
 
 if TYPE_CHECKING:
+    from backend.app.db.models.workflow_approval import WorkflowApproval
     from backend.app.db.models.workflow_step import WorkflowStep
 
 
@@ -61,6 +62,9 @@ class WorkflowRun(Base):
     validation_status: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
     validation_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
 
+    # Human-in-the-Loop Approval status (Milestone 6)
+    approval_status: Mapped[Optional[str]] = mapped_column(String(32), nullable=True, index=True)
+
     # Generic metadata mapping
     metadata_json: Mapped[Dict[str, Any]] = mapped_column(
         "metadata",
@@ -87,6 +91,15 @@ class WorkflowRun(Base):
         back_populates="run",
         cascade="all, delete-orphan",
         order_by="WorkflowStep.step_order",
+        lazy="selectin",
+    )
+
+    # One-to-many relationship with human approvals (Milestone 6)
+    approvals: Mapped[List["WorkflowApproval"]] = relationship(
+        "WorkflowApproval",
+        back_populates="run",
+        cascade="all, delete-orphan",
+        order_by="WorkflowApproval.created_at",
         lazy="selectin",
     )
 

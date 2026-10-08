@@ -60,5 +60,6 @@ postgres_data/
 data/*
 !data/sample/
 !data/sample/**
+backend/data/*
 
 

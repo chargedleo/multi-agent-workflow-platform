@@ -60,6 +60,10 @@ class Settings(BaseSettings):
     MAX_VALIDATION_ATTEMPTS: int = Field(default=2, ge=1, le=5, description="Maximum validation/correction attempts before terminating")
     VALIDATION_SCORE_THRESHOLD: float = Field(default=0.8, ge=0.0, le=1.0, description="Minimum validation score threshold to pass")
 
+    # Human-in-the-Loop & Approval Settings (Milestone 6)
+    APPROVAL_ENABLED: bool = Field(default=True, description="Enable human-in-the-loop approval gate")
+    MAX_APPROVAL_REVISIONS: int = Field(default=3, ge=1, le=10, description="Maximum approval revision cycles before final rejection")
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

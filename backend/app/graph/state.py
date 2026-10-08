@@ -31,8 +31,13 @@ class WorkflowState(TypedDict, total=False):
     validation_attempt: Optional[int]
     validation_issues: Optional[List[Dict[str, Any]]]
     validation_history: Optional[List[Dict[str, Any]]]
-    tool_calls: Optional[List[Dict[str, Any]]]
+    # Human-in-the-Loop Approval slots (Milestone 6)
     approval_status: Optional[str]
+    approval_required: Optional[bool]
+    approval_decision: Optional[str]
+    approval_feedback: Optional[str]
+    approval_revision: Optional[int]
+    approval_history: Optional[List[Dict[str, Any]]]
 
 
 def create_initial_state(
@@ -61,4 +66,9 @@ def create_initial_state(
         validation_history=[],
         tool_calls=None,
         approval_status=None,
+        approval_required=True,
+        approval_decision=None,
+        approval_feedback=None,
+        approval_revision=0,
+        approval_history=[],
     )
