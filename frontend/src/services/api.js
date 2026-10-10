@@ -4,7 +4,7 @@
  */
 
 // Fall back to relative /api/v1 reverse-proxy path if not specified via VITE_API_BASE_URL
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
+const API_BASE_URL = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL) || '/api/v1';
 
 /**
  * Perform a health check query against the backend.
@@ -264,6 +264,192 @@ export async function submitApprovalDecision(runId, { decision, feedback, decide
   const data = await response.json().catch(() => null);
   if (!response.ok) {
     const errorMsg = data?.detail || `Failed to submit approval decision (HTTP ${response.status})`;
+    throw new Error(errorMsg);
+  }
+
+  return data;
+}
+
+// ============================================================================
+// Evaluation Engine Service APIs (Milestone 9A & 9B)
+// ============================================================================
+
+/**
+ * Fetch list of registered benchmark datasets and their metadata.
+ * @returns {Promise<Array<{ name: string, version: string, description: string, case_count: number, categories: string[], checksum: string }>>}
+ */
+export async function fetchEvaluationDatasets() {
+  const response = await fetch(`${API_BASE_URL}/evaluations/datasets`, {
+    method: 'GET',
+    headers: { 'Accept': 'application/json' },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to load evaluation datasets (HTTP ${response.status})`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Fetch paginated list of evaluation runs.
+ * @param {number} page
+ * @param {number} pageSize
+ * @param {string|null} datasetName
+ * @returns {Promise<{ items: Array, total: number, page: number, page_size: number }>}
+ */
+export async function fetchEvaluationRuns(page = 1, pageSize = 20, datasetName = null) {
+  const params = new URLSearchParams({
+    page: String(page),
+    page_size: String(pageSize),
+  });
+  if (datasetName && datasetName.trim()) {
+    params.append('dataset_name', datasetName.trim());
+  }
+
+  const response = await fetch(`${API_BASE_URL}/evaluations?${params.toString()}`, {
+    method: 'GET',
+    headers: { 'Accept': 'application/json' },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to load evaluation runs (HTTP ${response.status})`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Fetch summary and aggregate metrics for a single evaluation run.
+ * @param {string} runId
+ * @returns {Promise<Object>}
+ */
+export async function fetchEvaluationRun(runId) {
+  if (!runId) throw new Error('runId is required');
+
+  const response = await fetch(`${API_BASE_URL}/evaluations/${runId}`, {
+    method: 'GET',
+    headers: { 'Accept': 'application/json' },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch evaluation run details (HTTP ${response.status})`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Fetch paginated per-case results for an evaluation run.
+ * @param {string} runId
+ * @param {string|null} category
+ * @param {number} page
+ * @param {number} pageSize
+ * @returns {Promise<{ items: Array, total: number, page: number, page_size: number }>}
+ */
+export async function fetchEvaluationCaseResults(runId, category = null, page = 1, pageSize = 50) {
+  if (!runId) throw new Error('runId is required');
+
+  const params = new URLSearchParams({
+    page: String(page),
+    page_size: String(pageSize),
+  });
+  if (category && category.trim()) {
+    params.append('category', category.trim());
+  }
+
+  const response = await fetch(`${API_BASE_URL}/evaluations/${runId}/results?${params.toString()}`, {
+    method: 'GET',
+    headers: { 'Accept': 'application/json' },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to load case results (HTTP ${response.status})`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Fetch full standalone machine-readable evaluation report.
+ * @param {string} runId
+ * @returns {Promise<Object>}
+ */
+export async function fetchEvaluationReport(runId) {
+  if (!runId) throw new Error('runId is required');
+
+  const response = await fetch(`${API_BASE_URL}/evaluations/${runId}/report`, {
+    method: 'GET',
+    headers: { 'Accept': 'application/json' },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to load evaluation report (HTTP ${response.status})`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Trigger a new evaluation benchmark run.
+ * @param {{ dataset_name: string, mode: string, max_concurrency?: number, timeout_per_case_seconds?: number }} payload
+ * @returns {Promise<Object>}
+ */
+export async function startEvaluation({
+  dataset_name = 'benchmark_v1',
+  mode = 'metric_only',
+  max_concurrency = 4,
+  timeout_per_case_seconds = 30.0,
+}) {
+  const response = await fetch(`${API_BASE_URL}/evaluations`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+    body: JSON.stringify({
+      dataset_name,
+      mode,
+      max_concurrency: Number(max_concurrency),
+      timeout_per_case_seconds: Number(timeout_per_case_seconds),
+    }),
+  });
+
+  const data = await response.json().catch(() => null);
+  if (!response.ok) {
+    const errorMsg = data?.detail || `Evaluation failed to start (HTTP ${response.status})`;
+    throw new Error(errorMsg);
+  }
+
+  return data;
+}
+
+/**
+ * Compare two evaluation runs to calculate metric deltas and detect regressions.
+ * @param {string} baselineRunId
+ * @param {string} comparisonRunId
+ * @returns {Promise<Object>}
+ */
+export async function compareEvaluations(baselineRunId, comparisonRunId) {
+  if (!baselineRunId || !comparisonRunId) {
+    throw new Error('Both baselineRunId and comparisonRunId are required');
+  }
+
+  const response = await fetch(`${API_BASE_URL}/evaluations/compare`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+    body: JSON.stringify({
+      baseline_run_id: baselineRunId,
+      comparison_run_id: comparisonRunId,
+    }),
+  });
+
+  const data = await response.json().catch(() => null);
+  if (!response.ok) {
+    const errorMsg = data?.detail || `Comparison failed (HTTP ${response.status})`;
     throw new Error(errorMsg);
   }
 

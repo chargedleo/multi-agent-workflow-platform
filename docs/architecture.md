@@ -444,3 +444,78 @@ flowchart TD
 5. **Run Comparison Engine**:
    - Computes per-metric deltas, classifies improvements vs regressions with a 0.5% significance threshold, and yields an automated verdict (`IMPROVED`, `REGRESSED`, `NEUTRAL`).
 
+---
+
+## 10. Milestone 9B — React Evaluation Console & Final Platform Architecture
+
+Milestone 9B represents the final mandatory release milestone of the platform, delivering the **React Evaluation Console**, end-to-end multi-agent verification, durable HITL lifecycle validation, and complete portfolio release hardening.
+
+### 10.1 Complete End-to-End System Architecture
+
+```mermaid
+flowchart TD
+    User([User / Operator / Reviewer])
+    
+    subgraph UI ["React 18 + Vite Production Frontend (Port 5173)"]
+        direction TB
+        Monitor["Monitoring Dashboard\n(Run history, stats, execution timeline)"]
+        Runner["Query Runner\n(Interactive query submission & response display)"]
+        Approvals["HITL Approvals Queue\n(Pending reviews, candidate state, revision history)"]
+        KB["Knowledge Base Manager\n(PDF/TXT/MD document upload & vector management)"]
+        EvalConsole["Evaluation Console\n(Benchmark launch, macro metrics, case diagnostics, run comparison)"]
+    end
+    
+    subgraph API ["FastAPI Backend (Port 8000)"]
+        direction TB
+        Middleware["Correlation Middleware & Readiness Probes"]
+        WFRouter["/api/v1/workflows\n(Execution & detail endpoints)"]
+        ApprRouter["/api/v1/approvals\n(HITL decision endpoints)"]
+        DocRouter["/api/v1/documents\n(Ingestion & FAISS management)"]
+        EvalRouter["/api/v1/evaluations\n(Benchmark, results, comparison, reports)"]
+    end
+    
+    subgraph LG ["LangGraph Multi-Agent Orchestrator"]
+        direction TB
+        Planner["Planner Agent"]
+        Retriever["Document Retrieval Agent"]
+        Analyzer["Data Analysis Agent (MCP)"]
+        Researcher["Researcher Agent"]
+        Responder["Responder Agent"]
+        Validator["Validation & Guardrails Agent"]
+        ApprovalGate{"HITL Approval Gate\n(Interrupt / Resume)"}
+        
+        Planner --> Retriever
+        Retriever --> Analyzer
+        Analyzer --> Researcher
+        Researcher --> Responder
+        Responder --> Validator
+        Validator -->|PASS| ApprovalGate
+        Validator -->|RECOVERABLE| Planner
+        ApprovalGate -->|APPROVED| EndState([Completed])
+        ApprovalGate -->|REJECTED| FailState([Failed])
+        ApprovalGate -->|CHANGES_REQUESTED| Planner
+    end
+    
+    subgraph DataTier ["Data & Storage Tier"]
+        PG[("PostgreSQL 16\n- workflow_runs & steps\n- checkpoints & checkpoint_blobs\n- documents & chunks\n- evaluation_runs & case_results")]
+        FAISSStore[("FAISS Vector Store\n(Native 1.15.1 IndexFlatIP on disk)")]
+    end
+    
+    User --> UI
+    UI --> API
+    API --> LG
+    LG --> DataTier
+    API --> DataTier
+```
+
+### 10.2 Evaluation Console Capabilities
+- **Benchmark Launch**: Configurable dataset selection, execution modes (`metric_only` vs `integration`), concurrency bounding (1–16 workers), and per-case timeouts (1–120s).
+- **Macro Performance Metrics**: Real-time display of Recall@1/3/5, Precision@1/3/5, MRR, MAP, HitRate@1, Citation Presence, Identifier/Source/Page Validity, Attribution Matching, Mean Fact Coverage, Abstention Accuracy, and Guardrail Accuracy.
+- **Category Diagnostics**: Performance profiling across 7 operational benchmark categories (`answerable`, `multi_hop`, `unanswerable`, `ambiguous`, `citation_sensitive`, `unsupported_premise`, `retrieval_edge_case`).
+- **Deep Per-Case Inspection**: Expandable rows with verbatim question prompts, expected vs actual status, atomic fact matches, missing facts, and safe error summaries.
+- **Run Comparison**: Side-by-side delta analysis between baseline and target runs with automated verdict (`IMPROVED`, `REGRESSED`, `NEUTRAL`) and highlighted regressions.
+- **Machine-Readable Reports**: Direct export and in-browser inspection of standardized JSON evaluation reports.
+
+### 10.3 Final Release Roadmap Status
+**Milestone 9B is the final planned milestone of the project.** The platform is fully implemented, verified across Host and Docker, backed by 202 passing automated tests, and ready for production portfolio demonstration.
+

@@ -1,0 +1,510 @@
+/* ============================================================================
+   Evaluation Console Styles (Milestone 9B)
+   Matches the Multi-Agent Platform Dark Mode Design System
+   ============================================================================ */
+
+.eval-console-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+  width: 100%;
+}
+
+/* Sub-Navigation Tabs */
+.eval-subnav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--bg-secondary);
+  padding: 0.35rem 0.5rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  flex-wrap: wrap;
+}
+
+.eval-subnav-btn {
+  background: transparent;
+  color: var(--text-secondary);
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.15s ease-in-out;
+}
+
+.eval-subnav-btn:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.eval-subnav-btn.active {
+  background: var(--accent-primary);
+  color: #ffffff;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
+/* Macro Status Cards Grid */
+.eval-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.eval-stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  transition: border-color 0.15s ease;
+}
+
+.eval-stat-card:hover {
+  border-color: rgba(99, 102, 241, 0.4);
+}
+
+.eval-stat-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.eval-stat-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+}
+
+.eval-stat-subtext {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+/* Sections & Panels */
+.eval-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.eval-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 1rem;
+}
+
+.eval-panel-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.eval-panel-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* Form Controls */
+.eval-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.25rem;
+}
+
+.eval-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.eval-form-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.eval-form-input,
+.eval-form-select {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 0.65rem 0.85rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  transition: border-color 0.15s ease;
+}
+
+.eval-form-input:focus,
+.eval-form-select:focus {
+  outline: none;
+  border-color: var(--border-focus);
+}
+
+.eval-form-helper {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.eval-btn {
+  background: var(--accent-primary);
+  color: white;
+  border: none;
+  padding: 0.65rem 1.25rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.15s ease;
+}
+
+.eval-btn:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.eval-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.eval-btn-secondary {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.eval-btn-secondary:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.eval-btn-sm {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.75rem;
+}
+
+/* Polling & Active Run Banner */
+.eval-active-banner {
+  background: rgba(99, 102, 241, 0.12);
+  border: 1px solid rgba(99, 102, 241, 0.4);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.eval-active-spinner {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(99, 102, 241, 0.3);
+  border-radius: 50%;
+  border-top-color: var(--accent-primary);
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Tables */
+.eval-table-container {
+  overflow-x: auto;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+}
+
+.eval-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.85rem;
+}
+
+.eval-table th {
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-secondary);
+  font-weight: 600;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-color);
+  white-space: nowrap;
+}
+
+.eval-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid rgba(51, 65, 85, 0.4);
+  color: var(--text-primary);
+}
+
+.eval-table tr:hover td {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.eval-mono {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+}
+
+/* Badges */
+.eval-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.eval-badge-status-completed {
+  background: var(--success-bg);
+  color: var(--success);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.eval-badge-status-running,
+.eval-badge-status-pending {
+  background: rgba(99, 102, 241, 0.15);
+  color: #818cf8;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+}
+
+.eval-badge-status-failed {
+  background: var(--danger-bg);
+  color: var(--danger);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.eval-badge-mode {
+  background: rgba(148, 163, 184, 0.15);
+  color: var(--text-secondary);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.eval-badge-category {
+  background: rgba(139, 92, 246, 0.15);
+  color: #c084fc;
+  border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+.eval-badge-delta-improved {
+  background: var(--success-bg);
+  color: var(--success);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.eval-badge-delta-regressed {
+  background: var(--danger-bg);
+  color: var(--danger);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.eval-badge-delta-unchanged {
+  background: rgba(148, 163, 184, 0.15);
+  color: var(--text-muted);
+}
+
+/* Category Progress Bars */
+.eval-category-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.eval-category-card {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.eval-cat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.eval-cat-name {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  text-transform: capitalize;
+}
+
+.eval-cat-score {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--accent-primary);
+}
+
+.eval-progress-bar-bg {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.eval-progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-primary), #8b5cf6);
+  border-radius: 9999px;
+  transition: width 0.3s ease;
+}
+
+/* Expandable Case Result Rows */
+.eval-case-expandable {
+  background: rgba(15, 23, 42, 0.7);
+  padding: 1.25rem;
+  border-top: 1px dashed var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.eval-case-detail-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.eval-case-detail-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.eval-case-detail-content {
+  font-size: 0.85rem;
+  color: var(--text-primary);
+}
+
+.eval-metrics-pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.eval-pill {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  padding: 0.35rem 0.65rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.eval-pill-label {
+  color: var(--text-secondary);
+}
+
+.eval-pill-val {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--accent-primary);
+}
+
+/* Comparison UI */
+.eval-compare-header {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  background: var(--bg-primary);
+  padding: 1.25rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+}
+
+.eval-verdict-banner {
+  padding: 1rem 1.25rem;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.eval-verdict-banner.improved {
+  background: var(--success-bg);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: var(--success);
+}
+
+.eval-verdict-banner.regressed {
+  background: var(--danger-bg);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: var(--danger);
+}
+
+.eval-verdict-banner.neutral {
+  background: rgba(99, 102, 241, 0.12);
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  color: #818cf8;
+}
+
+/* JSON Report Viewer */
+.eval-json-box {
+  background: #020617;
+  color: #38bdf8;
+  padding: 1.25rem;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  max-height: 480px;
+  overflow: auto;
+  border: 1px solid var(--border-color);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* Empty State */
+.eval-empty {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  color: var(--text-muted);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.eval-empty-icon {
+  font-size: 2.5rem;
+  opacity: 0.6;
+}

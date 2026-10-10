@@ -5,6 +5,7 @@ import { WorkflowResult } from './components/WorkflowResult';
 import { RunDetailModal } from './components/RunDetailModal';
 import { DocumentManager } from './components/DocumentManager';
 import { PendingApprovals } from './components/PendingApprovals';
+import { EvaluationConsole } from './components/evaluation/EvaluationConsole';
 import {
   fetchHealth,
   fetchWorkflowStats,
@@ -267,7 +268,7 @@ export function App() {
             </div>
           </div>
           <div className="header-badges">
-            <span className="badge badge-milestone">Milestone 7 • Monitoring Dashboard</span>
+            <span className="badge badge-milestone">Milestone 9B • Evaluation Console & Release</span>
             <span className={`badge badge-status ${healthInfo.status !== 'healthy' ? 'disconnected' : ''}`}>
               <span className="status-dot"></span>
               API: {healthInfo.status}
@@ -306,6 +307,12 @@ export function App() {
             {documents.length > 0 && (
               <span className="nav-tab-badge-subtle">{documents.length}</span>
             )}
+          </button>
+          <button
+            className={`nav-tab-btn ${activeNavTab === 'evaluations' ? 'active' : ''}`}
+            onClick={() => setActiveNavTab('evaluations')}
+          >
+            🧪 Evaluation Console
           </button>
         </nav>
       </header>
@@ -385,6 +392,13 @@ export function App() {
             />
           </div>
         )}
+
+        {/* TAB 5: Evaluation Console (Milestone 9B) */}
+        {activeNavTab === 'evaluations' && (
+          <div className="evaluations-view">
+            <EvaluationConsole />
+          </div>
+        )}
       </main>
 
       {/* Run Detail Inspection Modal */}
@@ -403,7 +417,7 @@ export function App() {
 
       {/* App Footer */}
       <footer className="app-footer">
-        Portfolio Platform Architecture — Milestone 7: React Monitoring Dashboard & Live Workflow Observability
+        Portfolio Platform Architecture — Milestone 9B: Evaluation Console, End-to-End Verification & Portfolio Release
       </footer>
     </div>
   );

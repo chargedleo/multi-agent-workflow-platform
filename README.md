@@ -11,72 +11,62 @@ An enterprise-ready **Multi-Agent AI Workflow Automation Platform** that decompo
 
 ---
 
-## Current Status: Milestone 9A — Evaluation Engine & Deterministic Benchmarking
+## Current Status: Milestone 9B — React Evaluation Console & Final Release
 
-**Milestone 9A** establishes a reproducible, offline-capable evaluation harness measuring retrieval performance, citation provenance, atomic fact coverage, and guardrail accuracy without requiring external paid LLM APIs:
+**Milestone 9B** is the final mandatory milestone of the platform, delivering the **React Evaluation Console**, full end-to-end multi-agent verification, durable HITL approval controls, complete test parity across Host and Docker, and portfolio-ready documentation.
 
 ```text
-User / Orchestrator / Evaluation Client
+User / Reviewer / Evaluation Client
     ↓
-React Production Frontend (Nginx Reverse Proxy, Port 5173)
-    ├── ErrorBoundary Resilience & Graceful Fallback UI
-    ├── Relative API Base Routing (/api/v1) for Domain Agnosticism
-    └── Live Observability, Metrics, Approvals & Workflow Replay
+React 18 Production Frontend (Port 5173, Nginx Reverse Proxy)
+    ├── 📊 Monitoring Dashboard (Macro stats, live run history, execution timeline)
+    ├── ⚡ Query Runner (Interactive business query execution & source citations)
+    ├── ⏳ Approvals Queue (Durable HITL approval/rejection/revision flow)
+    ├── 📁 Knowledge Base (PDF, TXT, MD document ingestion & FAISS indexing)
+    └── 🧪 Evaluation Console (Milestone 9B)
+        ├── Launch Benchmark (metric_only & integration modes, concurrency, timeouts)
+        ├── Evaluation History (Paginated run tracking, status, duration, macro metrics)
+        ├── Run Details & Diagnostics (Retrieval, citation, fact coverage, guardrail matrix)
+        ├── Per-Case Diagnostics (Expandable 35-case audit table with atomic fact diffs)
+        ├── Side-by-Side Run Comparison (Metric deltas, regression detection, verdict)
+        └── Standalone Report Export (Standardized machine-readable JSON reports)
     ↓
 FastAPI Backend (Port 8000)
-    ├── Request Correlation Middleware (X-Request-ID propagation & logging)
-    ├── Probes: Liveness (/api/v1/health/live) & Readiness (/api/v1/health/ready)
-    ├── Production Exception Masking & Sensitive Log Sanitization
+    ├── Correlation Middleware (X-Request-ID propagation) & Health/Readiness Probes
+    ├── Workflow REST APIs (/api/v1/workflows)
+    ├── HITL Approvals REST APIs (/api/v1/approvals)
+    ├── Document Ingestion REST APIs (/api/v1/documents)
     └── Evaluation Engine REST APIs (/api/v1/evaluations)
-        ├── Start Benchmark (/api/v1/evaluations, 201 Created)
-        ├── Run Inspection & Per-Case Results (/results)
-        ├── Standalone Machine-Readable Report (/report)
-        └── Automated Run Comparison & Regression Detection (/compare)
     ↓
-Controlled Evaluation Runner (Bounded Concurrency & Per-Case Timeouts)
-    ├── Versioned Grounded Fixture (benchmark_v1.json, 35 Cases across 7 Categories)
-    ├── Deterministic Metrics: Recall@k, Precision@k, HitRate@k, MRR, MAP, Latency
-    ├── Citation Integrity: Presence, Identifiers, Source/Page Validity, Attribution
-    ├── Answer Quality: Normalized Fact Matching, Abstention Accuracy
-    └── Guardrails Assessment: Confusion Matrix, TPR, FPR, FNR, Accuracy
+LangGraph Multi-Agent Orchestration Pipeline
+    Planner → Document Retrieval → Data Analysis (MCP) → Researcher → Responder → Validation
     ↓
-PostgreSQL 16 Persistence (Alembic 006)
-    ├── evaluation_runs (Run metadata, snapshots, macro summaries)
-    └── evaluation_case_results (Per-case metric results, timings, safe errors)
+PostgreSQL 16 Persistence (Alembic 006) & Native FAISS 1.15.1 Store (IndexFlatIP)
 ```
 
-### Capabilities Delivered in Milestone 9A:
-- **Versioned Ground-Truth Benchmark Fixture (`benchmark_v1.json`)**:
-  - 35 grounded, verified test cases across 7 operational categories: `answerable` (7), `multi_hop` (5), `unanswerable` (5), `ambiguous` (4), `citation_sensitive` (5), `unsupported_premise` (5), and `retrieval_edge_case` (4).
-  - SHA256 integrity verification upon load with strict schema and category validation.
-- **Deterministic Metrics Engine**:
-  - **Retrieval**: Recall@1/3/5 (with undefined denominator safety for unanswerable queries), Precision@1/3/5, Hit Rate@1/3/5, MRR, MAP, and latency profiling.
-  - **Citation Integrity**: Citation presence, identifier validity, source reference validity (against retrieved docs), page reference validity, and attribution matching.
-  - **Answer Quality**: Normalized key-term fact matching, missing fact tracking, and correct abstention accuracy.
-  - **Guardrail Evaluation**: Validation status matching, confusion matrix (TP, FP, TN, FN), and calculated TPR/FPR/FNR rates.
-- **Controlled Evaluation Runner**:
-  - Dual operational modes: `METRIC_ONLY` (sub-second offline fixture simulation) and `INTEGRATION` (calls live `RetrievalService` and native FAISS index).
-  - Concurrency bounding via `asyncio.Semaphore` and per-case timeout isolation via `asyncio.wait_for`.
-- **Database Persistence & Migration 006**:
-  - PostgreSQL tables `evaluation_runs` and `evaluation_case_results` with foreign keys and cascade cleanup.
-- **Evaluation REST APIs & Run Comparison**:
-  - Full suite of endpoints for starting evaluations, listing datasets, inspecting runs, querying case results, exporting standalone JSON reports, and calculating metric deltas (`compare`) with regression detection.
-- **Comprehensive Test Suite (172 passing tests)**:
-  - 48 dedicated evaluation tests covering schemas, loaders, metrics, runners, and REST APIs, alongside all 124 existing M1–M8 regression tests.
+### Capabilities Delivered Across All Milestones:
+- **LangGraph Multi-Agent Flow**: Structured collaboration across Planner, Document Retrieval, MCP Data Analysis, Researcher, Responder, and Validation agents.
+- **Native FAISS 1.15.1 Vector Search**: Normalized inner-product (`IndexFlatIP`) cosine similarity with atomic persistence in `./data/faiss`.
+- **Model Context Protocol (MCP)**: Analytical SQL tools querying PostgreSQL for structured mathematical and business data analysis.
+- **Validation & Guardrails Layer**: Bounded correction loop verifying citations, numerical calculations, format schemas, and response confidence.
+- **Durable HITL Approval Engine**: LangGraph PostgreSQL checkpointer (`AsyncPostgresSaver`) providing interrupt/resume control across server restarts with `APPROVE`, `REJECT`, and `CHANGES_REQUESTED` flows.
+- **React Monitoring Dashboard**: Live workflow metrics, run filtering, pagination, and multi-agent execution timeline visualization.
+- **React Evaluation Console (Milestone 9B)**: Benchmark execution, run history, macro metrics, per-case diagnostics, run comparison with regression alerts, and JSON export.
+- **202 Automated Tests (100% Passing)**: 189 backend tests passing on both host and Docker, plus 13 frontend service tests.
 
 ---
 
 ## Technology Stack
 
-- **Backend**: Python 3.11+, FastAPI, Uvicorn
-- **Orchestration**: LangGraph, LangChain Core
+- **Backend**: Python 3.11.17, FastAPI, Uvicorn
+- **Orchestration**: LangGraph 0.2+, LangChain Core
 - **MCP Tool Layer**: Model Context Protocol (`mcp` 2.x `MCPServer`)
-- **Vector Search & RAG**: FAISS (native 1.15.1), NumPy IndexFlatIP fallback, PyMuPDF (fitz)
-- **Database & ORM**: PostgreSQL 16, SQLAlchemy 2.x (async), Alembic, asyncpg
-- **Configuration & Validation**: Pydantic v2, Pydantic Settings
-- **Frontend**: React 18, Vite
-- **Testing**: pytest, pytest-asyncio, HTTPX (78 automated tests)
-- **DevOps**: Docker, Docker Compose (volumes for PostgreSQL, documents, FAISS, and sample data)
+- **Vector Search & RAG**: FAISS (native 1.15.1), IndexFlatIP cosine similarity, PyMuPDF (fitz)
+- **Database & Persistence**: PostgreSQL 16 Alpine, SQLAlchemy 2.x (async), Alembic, asyncpg
+- **Checkpointer**: LangGraph `AsyncPostgresSaver` for durable interrupt/resume
+- **Frontend**: React 18, Vite, dark-mode CSS design system
+- **Testing**: pytest, pytest-asyncio, HTTPX, node:test (202 automated tests passing)
+- **DevOps**: Docker, Docker Compose (PostgreSQL, FastAPI Backend, React Frontend)
 
 ---
 
@@ -452,42 +442,51 @@ curl -X GET "http://localhost:8000/api/v1/workflows/045b10c2-d427-4719-bf7e-81a8
 
 ## Running Automated Tests
 
-The test suite covers configuration, schema constraints, health check endpoints, the LLM factory, LangGraph workflow execution, SQLAlchemy persistence models, persistence lifecycle services, document ingestion, native FAISS retrieval, MCP analytics tooling, guardrails validation, Human-in-the-Loop approval loops, React dashboard APIs, and Milestone 8 production hardening probes. All 124 tests run deterministically without requiring external paid API keys.
+The test suite covers configuration, schema constraints, health check endpoints, the LLM factory, LangGraph workflow execution, SQLAlchemy persistence models, persistence lifecycle services, document ingestion, native FAISS retrieval, MCP analytics tooling, guardrails validation, Human-in-the-Loop approval loops, React dashboard APIs, production hardening probes, and the Milestone 9A/9B Evaluation Engine. All tests run deterministically without requiring external paid API keys.
 
 ```bash
-# Run full test suite with pytest on host
-pytest -v
+# Run full backend test suite on host (189 tests)
+backend\.venv\Scripts\python.exe -m pytest backend/tests -q
 
-# Run full test suite inside Docker container
-docker exec workflow_backend pytest /app/backend/tests -v
+# Run full backend test suite inside Docker container (189 tests)
+docker exec workflow_backend pytest /app/backend/tests -q
+
+# Run frontend test suite (13 tests)
+cd frontend && npm test
+
+# Run frontend production build
+cd frontend && npm run build
 ```
 
-**Test Coverage Summary (124 Passing Tests):**
-- `test_config.py`: Settings defaults, environment overrides, and CORS string parsing.
-- `test_schemas.py`: Pydantic validation of `Plan`, `ResearchResult`, `WorkflowResponse`, and boundary assertions.
-- `test_health.py`: HTTP 200 responses on `/api/v1/health` and `/`.
-- `test_production_hardening.py` (9 tests): Liveness/readiness probes, HTTP 503 on database disconnect, request correlation `X-Request-ID`, credential log sanitization, checkpointer lifecycle idempotency, production exception masking, and timeout defaults.
-- `test_llm.py`: Central LLM abstraction factory and structured mock outputs.
-- `test_workflow.py`: End-to-end LangGraph execution, state transitions (Planner → Researcher → Responder), intermediate step accumulation, and error capturing.
-- `test_api.py`: FastAPI endpoint execution and validation error rejection.
-- `test_persistence_models.py`: SQLAlchemy `WorkflowRun` and `WorkflowStep` creation and one-to-many relationship mapping.
-- `test_workflow_persistence.py`: Service-level workflow run lifecycle (`PENDING` → `RUNNING` → `COMPLETED` / `FAILED`), step recording, and pagination.
-- `test_workflow_execution_persistence.py`: Verifies LangGraph execution writes durable records to PostgreSQL, records agent timing, and tracks agent failure persistence.
-- `test_api_persistence.py`: Integration testing for `POST /workflows` (returns `run_id`), `GET /workflows` (paginated history), and `GET /workflows/{run_id}` (detail inspection & 404 handling).
-- `test_document_ingestion.py` & `test_documents_api.py`: Ingestion of PDF/TXT/MD, chunking, and metadata storage.
-- `test_vectorstore.py` & `test_retrieval_agent.py`: Native FAISS vector search, similarity queries, and grounded citation generation.
-- `test_postgres_tool.py`, `test_mcp_tools.py`, `test_data_analysis_agent.py`: MCP tool server, aggregate queries, and dataset analytics.
-- `test_validation_service.py` & `test_workflow_m5.py`: Guardrails validation, numerical checks, citation audits, and bounded correction loops.
-- `test_hitl_workflow.py`: Human-in-the-Loop review gates, checkpointing via `AsyncPostgresSaver`, approval resume, and revision loops.
-- `test_dashboard_api.py`: Executive metrics aggregation (`/stats`) and paginated search.
+**Test Coverage Summary (202 Passing Tests):**
+- **Milestones 1–4 (42 tests):** LangGraph workflow transitions, LLM abstraction, document ingestion, native FAISS vector search, and MCP tools.
+- **Milestone 5 (28 tests):** Validation and guardrails engine, numerical verification, citation provenance, and bounded correction loop.
+- **Milestone 6 (30 tests):** Durable HITL review gates, `AsyncPostgresSaver` checkpointing, resume from interrupt, and revision bounds.
+- **Milestone 7 (25 tests):** Executive metrics aggregation (`/stats`), paginated search, and execution timeline visualization.
+- **Milestone 8 (20 tests):** Liveness/readiness probes, pool sizing, request correlation `X-Request-ID`, and credential sanitization.
+- **Milestones 9A & 9B Backend (44 tests):** Dataset loading, deterministic metrics (Recall@k, Precision@k, HitRate@k, MRR, MAP, Latency), citation metrics, answer metrics, guardrail matrix, evaluation runner, comparison engine, REST endpoints, and automated benchmark ground-truth audit.
+- **Milestone 9B Frontend (13 tests):** Service layer contracts, parameter serialization, error response handling, and comparison execution.
 
 ---
 
-## Operations & Deployment Runbook
+## Real Versus Mock Provider Transparency Disclosure
 
-See [docs/deployment.md](file:///d:/Projects/Multi-Agent%20AI%20Workflow%20Automation%20Platform/docs/deployment.md) for complete operational guidance:
-- Environment configuration and secret masking
-- Liveness (`/health/live`) and Readiness (`/health/ready`) probe integration
-- Database migration execution via Alembic
-- Zero-loss container restart procedures
-- Troubleshooting runbook for common production scenarios
+To ensure complete engineering integrity and portfolio credibility:
+- **Default Offline Configuration**: The platform ships configured with `LLM_PROVIDER="mock"` and `EMBEDDING_PROVIDER="mock"` to guarantee zero-cost, instant, and reproducible execution out of the box.
+- **Live Model Support**: External LLMs (OpenAI, Azure OpenAI, Ollama) can be configured simply by setting `LLM_PROVIDER`, `LLM_MODEL`, and `LLM_API_KEY` in `.env`.
+- **Real Production Infrastructure**: The system operates with **real native FAISS 1.15.1** (`IndexFlatIP`), real **PostgreSQL 16**, real **LangGraph checkpointer**, and real **FastAPI** web application.
+- **Integration Evaluation**: In `integration` evaluation mode, the evaluator queries the real, live native FAISS index and PostgreSQL metadata.
+
+---
+
+## Operations & Portfolio Presentation Guide
+
+### Quickstart Demo Walkthrough
+1. **Launch Containers**: `docker compose up --build -d`
+2. **Access Frontend**: Open `http://localhost:5173` in your browser.
+3. **Run Query**: Go to **⚡ Query Runner**, submit an architectural query. Notice the workflow pause in `waiting_for_approval` at the HITL gate.
+4. **Approve Workflow**: Navigate to **⏳ Approvals Queue**, review the candidate response and citation snippets, then click **Approve**. Watch the workflow resume to completion.
+5. **Inspect Timeline**: Go to **📊 Monitoring Dashboard**, select the completed run, and view the multi-agent step execution sequence.
+6. **Benchmark System**: Go to **🧪 Evaluation Console**, select `benchmark_v1`, click **Execute Benchmark Run**, inspect the 35-case diagnostics table, and compare against previous runs.
+
+See [docs/final_release_report.md](file:///d:/Projects/Multi-Agent%20AI%20Workflow%20Automation%20Platform/docs/final_release_report.md) for the complete release gate report and [docs/deployment.md](file:///d:/Projects/Multi-Agent%20AI%20Workflow%20Automation%20Platform/docs/deployment.md) for production operational guidance.
