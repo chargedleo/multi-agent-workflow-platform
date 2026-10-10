@@ -26,9 +26,8 @@ async def test_document_retrieval_agent_empty_store():
 @pytest.mark.asyncio
 async def test_document_retrieval_with_indexed_content(db_session: AsyncSession):
     """Verify retrieval agent finds matching chunks and downstream flow has citations."""
-    unique_id = uuid.uuid4().hex[:8]
     sample_content = (
-        f"Antigravity Enterprise Architecture Specification {unique_id}.\n\n"
+        "Antigravity Enterprise Architecture Specification.\n\n"
         "Section 1: The system uses LangGraph for coordinating Planner, Retrieval, Researcher, and Responder agents.\n"
         "Section 2: High throughput messaging is managed via durable PostgreSQL state persistence."
     ).encode("utf-8")

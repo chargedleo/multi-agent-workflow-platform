@@ -14,6 +14,11 @@ from backend.app.services.retrieval import RetrievalService
 logger = get_logger(__name__)
 
 
+class RetrievalAdapterError(RuntimeError):
+    """Raised when the retrieval pipeline fails unexpectedly during evaluation execution."""
+    pass
+
+
 def execute_evaluation_retrieval(
     query: str,
     top_k: int = 5,
@@ -26,6 +31,9 @@ def execute_evaluation_retrieval(
 
     Returns:
         Tuple of (normalized_retrieved_items, measured_latency_ms).
+
+    Raises:
+        RetrievalAdapterError: If retrieval execution encounters an unexpected failure.
     """
     start_time = time.perf_counter()
     try:
@@ -49,5 +57,10 @@ def execute_evaluation_retrieval(
         return normalized, round(duration_ms, 2)
     except Exception as exc:
         duration_ms = (time.perf_counter() - start_time) * 1000.0
-        logger.warning(f"Evaluation retrieval execution encountered error for query '{query[:40]}...': {exc}")
-        return [], round(duration_ms, 2)
+        sanitized_query = query[:40] + ("..." if len(query) > 40 else "")
+        logger.error(
+            f"Evaluation retrieval execution encountered error for query '{sanitized_query}': {exc}",
+            exc_info=True,
+        )
+        raise RetrievalAdapterError(f"Retrieval execution failure: {str(exc)}") from exc
+

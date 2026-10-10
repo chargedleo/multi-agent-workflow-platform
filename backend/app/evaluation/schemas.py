@@ -51,6 +51,10 @@ class EvaluationCase(BaseModel):
     expected_answer_facts: List[str] = Field(default_factory=list, description="List of required atomic facts")
     relevant_document_ids: List[str] = Field(default_factory=list, description="IDs of ground-truth documents")
     relevant_chunk_ids: List[str] = Field(default_factory=list, description="IDs of ground-truth chunks")
+    relevant_chunk_aliases: List[List[str]] = Field(
+        default_factory=list,
+        description="Explicit equivalence groups or aliases of chunk UUIDs representing the same ground-truth chunk content",
+    )
     expected_citations: List[ExpectedCitation] = Field(default_factory=list, description="Expected citation metadata")
     answerable: bool = Field(default=True, description="Whether the question is answerable given the corpus")
     expected_validation_behavior: str = Field(
@@ -58,6 +62,19 @@ class EvaluationCase(BaseModel):
         description="Expected validation outcome: PASS, FAIL, RECOVERABLE, or BLOCKED",
     )
     evaluation_notes: Optional[str] = Field(default=None, description="Rationale or test case documentation")
+
+    @field_validator("relevant_chunk_aliases", mode="before")
+    @classmethod
+    def normalize_chunk_aliases(cls, v: Any) -> List[List[str]]:
+        if not v:
+            return []
+        if isinstance(v, list):
+            if all(isinstance(x, str) for x in v):
+                # Flat list of strings: treat as single equivalence group or list of singleton aliases
+                return [[str(x)] for x in v] if v else []
+            elif all(isinstance(x, list) for x in v):
+                return [[str(item) for item in group] for group in v]
+        return []
 
     @field_validator("expected_validation_behavior")
     @classmethod

@@ -180,6 +180,8 @@ def list_available_datasets() -> List[Dict[str, Any]]:
         return results
 
     for file in sorted(FIXTURES_DIR.glob("*.json")):
+        if file.name.endswith("_corpus.json"):
+            continue
         try:
             ds = load_dataset(filepath=str(file))
             results.append(

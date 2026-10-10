@@ -254,6 +254,16 @@ class EvaluationService:
         summary_data = run.summary or run.aggregate_metrics or {}
         summary_model = EvaluationSummaryMetrics.model_validate(summary_data) if summary_data else EvaluationSummaryMetrics()
 
+        failures = [
+            {
+                "case_id": c.case_id,
+                "category": c.category,
+                "error": c.safe_error_summary,
+            }
+            for c in run.case_results
+            if c.status == "FAILED"
+        ]
+
         return EvaluationRunReport(
             report_version="1.0.0",
             evaluation_run_id=str(run.id),
@@ -266,7 +276,7 @@ class EvaluationService:
             summary=summary_model,
             category_breakdown=run.configuration_snapshot.get("category_breakdown", {}),
             case_results=case_results,
-            failures=[],
+            failures=failures,
             known_limitations=[
                 "Deterministic evaluation uses normalized term matching and heuristic fact coverage",
                 "Integration mode relies on existing FAISS index state and mock/local LLM configuration",

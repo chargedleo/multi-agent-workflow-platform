@@ -21,7 +21,10 @@ from backend.app.evaluation.guardrail_metrics import (
     compute_aggregate_guardrail_metrics,
     evaluate_state_guardrails,
 )
-from backend.app.evaluation.retrieval_adapter import execute_evaluation_retrieval
+from backend.app.evaluation.retrieval_adapter import (
+    RetrievalAdapterError,
+    execute_evaluation_retrieval,
+)
 from backend.app.evaluation.retrieval_metrics import compute_retrieval_metrics
 from backend.app.evaluation.schemas import (
     BenchmarkCategory,
@@ -196,6 +199,7 @@ class EvaluationRunner:
                 relevant_chunk_ids=case.relevant_chunk_ids,
                 relevant_document_ids=case.relevant_document_ids,
                 latency_ms=2.5,
+                relevant_chunk_aliases=case.relevant_chunk_aliases,
             )
 
             # Answer and Citation evaluation
@@ -262,18 +266,45 @@ class EvaluationRunner:
 
         else:
             # 2. INTEGRATION mode: Invoke real RetrievalService and workflow agent pipeline
-            norm_retrieved, latency_ms = execute_evaluation_retrieval(query=case.question, top_k=5)
+            try:
+                norm_retrieved, latency_ms = execute_evaluation_retrieval(query=case.question, top_k=5)
+            except (RetrievalAdapterError, Exception) as exc:
+                duration_ms = (time.perf_counter() - case_start) * 1000.0
+                err_msg = f"Retrieval execution failure: {str(exc)}"
+                logger.error(format_log_msg(f"Case '{case.case_id}' retrieval failed: {exc}", eval_run_id))
+                return CaseEvaluationResult(
+                    case_id=case.case_id,
+                    category=case.category,
+                    status="FAILED",
+                    duration_ms=round(duration_ms, 2),
+                    error=err_msg,
+                )
 
             ret_metrics = compute_retrieval_metrics(
                 retrieved_items=norm_retrieved,
                 relevant_chunk_ids=case.relevant_chunk_ids,
                 relevant_document_ids=case.relevant_document_ids,
                 latency_ms=latency_ms,
+                relevant_chunk_aliases=case.relevant_chunk_aliases,
             )
 
             from backend.app.graph.workflow import run_workflow
 
-            wf_state = await run_workflow(query=case.question)
+            try:
+                wf_state = await run_workflow(query=case.question)
+            except Exception as exc:
+                duration_ms = (time.perf_counter() - case_start) * 1000.0
+                err_msg = f"Workflow execution failure: {str(exc)}"
+                logger.error(format_log_msg(f"Case '{case.case_id}' workflow failed: {exc}", eval_run_id))
+                return CaseEvaluationResult(
+                    case_id=case.case_id,
+                    category=case.category,
+                    status="FAILED",
+                    retrieval=ret_metrics,
+                    duration_ms=round(duration_ms, 2),
+                    error=err_msg,
+                )
+
             wf_run_id = wf_state.get("run_id")
             final_ans = wf_state.get("final_answer") or {}
             answer_text = final_ans.get("answer") or ""

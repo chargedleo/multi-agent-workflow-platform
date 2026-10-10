@@ -1,0 +1,39 @@
+{
+  "name": "isolated_benchmark_corpus",
+  "version": "1.0.0",
+  "description": "Isolated benchmark corpus with stable document and chunk UUIDs for deterministic integration testing and evaluation regression control.",
+  "documents": [
+    {
+      "document_id": "doc-stable-postgres-guide",
+      "filename": "database_guide.txt",
+      "chunks": [
+        {
+          "chunk_id": "chunk-stable-pg-01",
+          "page_number": 1,
+          "content": "PostgreSQL is a powerful, open-source object-relational database system known for reliability and feature robustness."
+        },
+        {
+          "chunk_id": "chunk-stable-pg-02",
+          "page_number": 1,
+          "content": "PostgreSQL provides ACID compliance, strong data integrity, and enterprise support for complex SQL analytics."
+        }
+      ]
+    },
+    {
+      "document_id": "doc-stable-enterprise-arch",
+      "filename": "enterprise_arch.txt",
+      "chunks": [
+        {
+          "chunk_id": "chunk-stable-arch-01",
+          "page_number": 1,
+          "content": "Antigravity Enterprise Architecture Specification.\n\nSection 1: The system uses LangGraph for coordinating Planner, Retrieval, Researcher, and Responder agents."
+        },
+        {
+          "chunk_id": "chunk-stable-arch-02",
+          "page_number": 1,
+          "content": "Section 2: High throughput messaging is managed via durable PostgreSQL state persistence and checkpointing."
+        }
+      ]
+    }
+  ]
+}

@@ -89,16 +89,18 @@ The benchmark fixture `benchmark_v1.json` provides 35 ground-truth test cases co
 ## 4. Metric Definitions & Formulas
 
 ### 4.1 Retrieval Metrics (`retrieval_metrics.py`)
-- **Recall@k**: Fraction of relevant chunks retrieved in top-k:
+- **Recall@k**: Fraction of distinct relevant concepts retrieved in top-k:
   $$\text{Recall@k} = \frac{|\text{Retrieved}_{\le k} \cap \text{Relevant}|}{|\text{Relevant}|}$$
-  *Undefined convention*: Returns `None` when $|\text{Relevant}| = 0$ (e.g. unanswerable cases), preventing skew in macro averages.
+  *Undefined convention*: Returns `None` when $|\text{Relevant}| = 0$ (e.g. unanswerable Category C cases), preventing skew in macro averages.
 - **Precision@k**:
   $$\text{Precision@k} = \frac{|\text{Retrieved}_{\le k} \cap \text{Relevant}|}{k}$$
 - **Hit Rate@k**: Binary indicator ($1.0$ if $|\text{Retrieved}_{\le k} \cap \text{Relevant}| > 0$, else $0.0$).
 - **MRR (Mean Reciprocal Rank)**:
   $$\text{MRR} = \frac{1}{\text{rank of first relevant chunk}} \quad (\text{or } 0.0 \text{ if no hit})$$
-- **MAP (Mean Average Precision)**: Standard average precision computed across ranks $1..k$.
+- **MAP (Mean Average Precision)**: Standard average precision computed across newly satisfied target ranks $1..k$.
 - **Retrieval Latency**: Measured via high-resolution `time.perf_counter()` in milliseconds.
+- **Chunk Equivalence Groups & Duplicate Handling**: When multiple chunks in the index represent the same underlying content (e.g. from repeated uploads), explicit alias groups defined in `relevant_chunk_aliases` ensure any equivalent chunk satisfies the target concept without inflating recall or precision beyond the concept's single unit of relevance. Filename-only matching is strictly rejected to prevent false positives across unrelated chunks of identical files.
+- **Robust Error Handling**: Unexpected retrieval pipeline exceptions raise typed `RetrievalAdapterError` and are marked with `status="FAILED"` in `CaseEvaluationResult`, preventing retrieval crashes from falsely passing unanswerable cases.
 
 ### 4.2 Citation Integrity Metrics (`citation_metrics.py`)
 - **Citation Presence**: $1.0$ if citations are provided when expected (or absent when unanswerable); $0.0$ otherwise.
@@ -209,12 +211,31 @@ Managed via Alembic migration `006_evaluation_engine.py`.
 
 ---
 
-## 8. Verification & Running Tests
+---
+
+## 8. Isolated Benchmark Corpus & Automated Integration Regression Tests
+
+An isolated benchmark corpus fixture (`isolated_benchmark_corpus.json`) provides stable document and chunk UUIDs for deterministic testing without mutating or depending on production index state.
+
+The automated integration regression suite in `backend/tests/evaluation/test_evaluation_integration.py` verifies:
+- **Test A (Positive Control)**: Verifies real FAISS search returns ground-truth chunk at rank 1 with Recall@1=1.0 and MRR=1.0.
+- **Test B (Empty-Result Control)**: Valid query returning 0 chunks returns `status="COMPLETED"` with Recall=None (for unanswerable queries) and Recall=0.0 (for answerable queries), not an execution failure.
+- **Test C (Perturbation Control)**: Removing a target chunk from the index drops Recall and Hit Rate to 0.0.
+- **Test D (Ranking Shift Control)**: Placing target chunk at rank 2 yields MRR=0.5 and Recall@1=0.0.
+- **Test E (Retrieval Exception Handling)**: Unexpected exceptions in `RetrievalService.retrieve` raise `RetrievalAdapterError`, record `status="FAILED"` with sanitized error messages, and do not falsely pass unanswerable cases.
+- **Test F (Timeout Control)**: Queries exceeding execution timeout are isolated and marked `status="FAILED"`.
+- **Test G (Metric-Only Isolation)**: Metric-only mode operates strictly offline without calling `RetrievalService` or external systems.
+- **Test H (Persistence & Failure Reporting)**: Failed cases are persisted to PostgreSQL and serialized into the report's `failures` array.
+- **Test I (Equivalence Groups & Duplicates)**: Validates alias groups satisfy target concepts and rejects filename-only matching.
+
+---
+
+## 9. Verification & Running Tests
 
 To run the complete evaluation test suite:
 
 ```bash
-# Host environment
+# Host environment (57 evaluation tests)
 python -m pytest backend/tests/evaluation -v
 
 # Docker container
@@ -224,6 +245,6 @@ docker exec workflow_backend pytest /app/backend/tests/evaluation -v
 To run full project regression tests:
 
 ```bash
-# Complete suite (172+ tests across M1–M9A)
+# Complete suite (181 passed tests across M1–M9A)
 docker exec workflow_backend pytest /app/backend/tests -q
 ```
