@@ -1,0 +1,902 @@
+{
+  "dataset_name": "benchmark_v1",
+  "dataset_version": "1.0.0",
+  "total_cases": 35,
+  "verified_count": 35,
+  "unverified_count": 0,
+  "cases": [
+    {
+      "case_id": "CASE-A01",
+      "category": "answerable",
+      "question": "What kind of database system is PostgreSQL according to the documentation?",
+      "answerable": true,
+      "expected_facts_count": 1,
+      "expected_answer_facts": [
+        "PostgreSQL is an open-source object-relational database system"
+      ],
+      "relevant_chunk_ids": [
+        "acf57f4c-104c-40bd-aa65-9ec3026597ed",
+        "73544533-c7b6-452c-af82-cc0c9eccb693"
+      ],
+      "relevant_document_ids": [
+        "ac680340-c135-4fb9-a092-48e9681569de",
+        "c58942cb-446d-4b84-9043-aa74827a41b6"
+      ],
+      "chunks_verified_in_corpus": 2,
+      "expected_citations": [
+        {
+          "filename": "database_guide.txt",
+          "page_number": 1
+        }
+      ],
+      "evidence_snippet": "PostgreSQL is a powerful, open-source object-relational database system.",
+      "audit_verdict": "VERIFIED_SUPPORTED",
+      "audit_notes": "Ground-truth evidence verified present in corpus and textually supports expected facts"
+    },
+    {
+      "case_id": "CASE-A02",
+      "category": "answerable",
+      "question": "Which framework coordinates the Planner, Retrieval, Researcher, and Responder agents in the system architecture?",
+      "answerable": true,
+      "expected_facts_count": 1,
+      "expected_answer_facts": [
+        "LangGraph is used for coordinating Planner, Retrieval, Researcher, and Responder agents"
+      ],
+      "relevant_chunk_ids": [
+        "d0b62a83-2ce4-40f9-a6a9-c465a95054c7",
+        "e09cc72b-d317-4dad-ba44-38f3e9743e61"
+      ],
+      "relevant_document_ids": [
+        "9145ecc6-e8f8-4c8b-88b5-25b87b6b3015",
+        "e1d75337-7c25-4f8a-8dc0-474b23c7c477"
+      ],
+      "chunks_verified_in_corpus": 2,
+      "expected_citations": [
+        {
+          "filename": "enterprise_arch.txt",
+          "page_number": 1
+        }
+      ],
+      "evidence_snippet": "Antigravity Enterprise Architecture Specification 0d57bb53.\n\nSection 1: The system uses LangGraph for coordinating Plann",
+      "audit_verdict": "VERIFIED_SUPPORTED",
+      "audit_notes": "Ground-truth evidence verified present in corpus and textually supports expected facts"
+    },
+    {
+      "case_id": "CASE-A03",
+      "category": "answerable",
+      "question": "How is high throughput messaging managed according to Section 2 of the enterprise architecture?",
+      "answerable": true,
+      "expected_facts_count": 1,
+      "expected_answer_facts": [
+        "High throughput messaging is managed via durable PostgreSQL state persistence"
+      ],
+      "relevant_chunk_ids": [
+        "d0b62a83-2ce4-40f9-a6a9-c465a95054c7"
+      ],
+      "relevant_document_ids": [
+        "9145ecc6-e8f8-4c8b-88b5-25b87b6b3015"
+      ],
+      "chunks_verified_in_corpus": 1,
+      "expected_citations": [
+        {
+          "filename": "enterprise_arch.txt",
+          "page_number": 1
+        }
+      ],
+      "evidence_snippet": "Antigravity Enterprise Architecture Specification 0d57bb53.\n\nSection 1: The system uses LangGraph for coordinating Plann",
+      "audit_verdict": "VERIFIED_SUPPORTED",
+      "audit_notes": "Ground-truth evidence verified present in corpus and textually supports expected facts"
+    },
+    {
+      "case_id": "CASE-A04",
+      "category": "answerable",
+      "question": "List the four core agents coordinated by LangGraph in Section 1.",
+      "answerable": true,
+      "expected_facts_count": 4,
+      "expected_answer_facts": [
+        "Planner",
+        "Retrieval",
+        "Researcher",
+        "Responder"
+      ],
+      "relevant_chunk_ids": [
+        "d0b62a83-2ce4-40f9-a6a9-c465a95054c7"
+      ],
+      "relevant_document_ids": [
+        "9145ecc6-e8f8-4c8b-88b5-25b87b6b3015"
+      ],
+      "chunks_verified_in_corpus": 1,
+      "expected_citations": [
+        {
+          "filename": "enterprise_arch.txt",
+          "page_number": 1
+        }
+      ],
+      "evidence_snippet": "Antigravity Enterprise Architecture Specification 0d57bb53.\n\nSection 1: The system uses LangGraph for coordinating Plann",
+      "audit_verdict": "VERIFIED_SUPPORTED",
+      "audit_notes": "Ground-truth evidence verified present in corpus and textually supports expected facts"
+    },
+    {
+      "case_id": "CASE-A05",
+      "category": "answerable",
+      "question": "Is PostgreSQL open-source according to the database guide?",
+      "answerable": true,
+      "expected_facts_count": 1,
+      "expected_answer_facts": [
+        "PostgreSQL is open-source"
+      ],
+      "relevant_chunk_ids": [
+        "acf57f4c-104c-40bd-aa65-9ec3026597ed"
+      ],
+      "relevant_document_ids": [
+        "ac680340-c135-4fb9-a092-48e9681569de"
+      ],
+      "chunks_verified_in_corpus": 1,
+      "expected_citations": [
+        {
+          "filename": "database_guide.txt",
+          "page_number": 1
+        }
+      ],
+      "evidence_snippet": "PostgreSQL is a powerful, open-source object-relational database system.",
+      "audit_verdict": "VERIFIED_SUPPORTED",
+      "audit_notes": "Ground-truth evidence verified present in corpus and textually supports expected facts"
+    },
+    {
+      "case_id": "CASE-A06",
+      "category": "answerable",
+      "question": "What role does PostgreSQL play in the platform's messaging and state architecture?",
+      "answerable": true,
+      "expected_facts_count": 1,
+      "expected_answer_facts": [
+        "PostgreSQL provides durable state persistence for messaging"
+      ],
+      "relevant_chunk_ids": [
+        "d0b62a83-2ce4-40f9-a6a9-c465a95054c7"
+      ],
+      "relevant_document_ids": [
+        "9145ecc6-e8f8-4c8b-88b5-25b87b6b3015"
+      ],
+      "chunks_verified_in_corpus": 1,
+      "expected_citations": [
+        {
+          "filename": "enterprise_arch.txt",
+          "page_number": 1
+        }
+      ],
+      "evidence_snippet": "Antigravity Enterprise Architecture Specification 0d57bb53.\n\nSection 1: The system uses LangGraph for coordinating Plann",
+      "audit_verdict": "VERIFIED_SUPPORTED",
+      "audit_notes": "Ground-truth evidence verified present in corpus and textually supports expected facts"
+    },
+    {
+      "case_id": "CASE-A07",
+      "category": "answerable",
+      "question": "What technology is designated for agent coordination in the enterprise architecture specification?",
+      "answerable": true,
+      "expected_facts_count": 1,
+      "expected_answer_facts": [
+        "LangGraph"
+      ],
+      "relevant_chunk_ids": [
+        "d0b62a83-2ce4-40f9-a6a9-c465a95054c7"
+      ],
+      "relevant_document_ids": [
+        "9145ecc6-e8f8-4c8b-88b5-25b87b6b3015"
+      ],
+      "chunks_verified_in_corpus": 1,
+      "expected_citations": [
+        {
+          "filename": "enterprise_arch.txt",
+          "page_number": 1
+        }
+      ],
+      "evidence_snippet": "Antigravity Enterprise Architecture Specification 0d57bb53.\n\nSection 1: The system uses LangGraph for coordinating Plann",
+      "audit_verdict": "VERIFIED_SUPPORTED",
+      "audit_notes": "Ground-truth evidence verified present in corpus and textually supports expected facts"
+    },
+    {
+      "case_id": "CASE-B01",
+      "category": "multi_hop",
+      "question": "How does PostgreSQL function both as a general database system and specifically within the enterprise messaging architecture?",
+      "answerable": true,
+      "expected_facts_count": 2,
+      "expected_answer_facts": [
+        "PostgreSQL is an object-relational database system",
+        "PostgreSQL provides durable state persistence for high throughput messaging"
+      ],
+      "relevant_chunk_ids": [
+        "acf57f4c-104c-40bd-aa65-9ec3026597ed",
+        "d0b62a83-2ce4-40f9-a6a9-c465a95054c7"
+      ],
+      "relevant_document_ids": [
+        "ac680340-c135-4fb9-a092-48e9681569de",
+        "9145ecc6-e8f8-4c8b-88b5-25b87b6b3015"
+      ],
+      "chunks_verified_in_corpus": 2,
+      "expected_citations": [
+        {
+          "filename": "database_guide.txt",
+          "page_number": 1
+        },
+        {
+          "filename": "enterprise_arch.txt",
+          "page_number": 1
+        }
+      ],
+      "evidence_snippet": "PostgreSQL is a powerful, open-source object-relational database system.",
+      "audit_verdict": "VERIFIED_SUPPORTED",
+      "audit_notes": "Ground-truth evidence verified present in corpus and textually supports expected facts"
+    },
+    {
+      "case_id": "CASE-B02",
+      "category": "multi_hop",
+      "question": "Explain the interaction between LangGraph agent orchestration and the persistence mechanism that preserves their state.",
+      "answerable": true,
+      "expected_facts_count": 2,
+      "expected_answer_facts": [
+        "LangGraph coordinates the agents",
+        "Durable PostgreSQL persistence manages state"
+      ],
+      "relevant_chunk_ids": [
+        "d0b62a83-2ce4-40f9-a6a9-c465a95054c7"
+      ],
+      "relevant_document_ids": [
+        "9145ecc6-e8f8-4c8b-88b5-25b87b6b3015"
+      ],
+      "chunks_verified_in_corpus": 1,
+      "expected_citations": [
+        {
+          "filename": "enterprise_arch.txt",
+          "page_number": 1
+        }
+      ],
+      "evidence_snippet": "Antigravity Enterprise Architecture Specification 0d57bb53.\n\nSection 1: The system uses LangGraph for coordinating Plann",
+      "audit_verdict": "VERIFIED_SUPPORTED",
+      "audit_notes": "Ground-truth evidence verified present in corpus and textually supports expected facts"
+    },
+    {
+      "case_id": "CASE-B03",
+      "category": "multi_hop",
+      "question": "Compare the role of LangGraph in coordinating agents with the role of PostgreSQL in state persistence.",
+      "answerable": true,
+      "expected_facts_count": 2,
+      "expected_answer_facts": [
+        "LangGraph handles agent orchestration",
+        "PostgreSQL handles durable state persistence"
+      ],
+      "relevant_chunk_ids": [
+        "d0b62a83-2ce4-40f9-a6a9-c465a95054c7"
+      ],
+      "relevant_document_ids": [
+        "9145ecc6-e8f8-4c8b-88b5-25b87b6b3015"
+      ],
+      "chunks_verified_in_corpus": 1,
+      "expected_citations": [
+        {
+          "filename": "enterprise_arch.txt",
+          "page_number": 1
+        }
+      ],
+      "evidence_snippet": "Antigravity Enterprise Architecture Specification 0d57bb53.\n\nSection 1: The system uses LangGraph for coordinating Plann",
+      "audit_verdict": "VERIFIED_SUPPORTED",
+      "audit_notes": "Ground-truth evidence verified present in corpus and textually supports expected facts"
+    },
+    {
+      "case_id": "CASE-B04",
+      "category": "multi_hop",
+      "question": "If an agent in LangGraph needs to persist high throughput messaging, which database does it rely on according to the architecture specification?",
+      "answerable": true,
+      "expected_facts_count": 1,
+      "expected_answer_facts": [
+        "PostgreSQL durable state persistence"
+      ],
+      "relevant_chunk_ids": [
+        "d0b62a83-2ce4-40f9-a6a9-c465a95054c7"
+      ],
+      "relevant_document_ids": [
+        "9145ecc6-e8f8-4c8b-88b5-25b87b6b3015"
+      ],
+      "chunks_verified_in_corpus": 1,
+      "expected_citations": [
+        {
+          "filename": "enterprise_arch.txt",
+          "page_number": 1
+        }
+      ],
+      "evidence_snippet": "Antigravity Enterprise Architecture Specification 0d57bb53.\n\nSection 1: The system uses LangGraph for coordinating Plann",
+      "audit_verdict": "VERIFIED_SUPPORTED",
+      "audit_notes": "Ground-truth evidence verified present in corpus and textually supports expected facts"
+    },
+    {
+      "case_id": "CASE-B05",
+      "category": "multi_hop",
+      "question": "Summarize the complete enterprise architecture pipeline from agent coordination through state persistence and database classification.",
+      "answerable": true,
+      "expected_facts_count": 3,
+      "expected_answer_facts": [
+        "LangGraph coordinates Planner, Retrieval, Researcher, and Responder",
+        "PostgreSQL provides durable state persistence",
+        "PostgreSQL is an open-source object-relational database"
+      ],
+      "relevant_chunk_ids": [
+        "d0b62a83-2ce4-40f9-a6a9-c465a95054c7",
+        "acf57f4c-104c-40bd-aa65-9ec3026597ed"
+      ],
+      "relevant_document_ids": [
+        "9145ecc6-e8f8-4c8b-88b5-25b87b6b3015",
+        "ac680340-c135-4fb9-a092-48e9681569de"
+      ],
+      "chunks_verified_in_corpus": 2,
+      "expected_citations": [
+        {
+          "filename": "enterprise_arch.txt",
+          "page_number": 1
+        },
+        {
+          "filename": "database_guide.txt",
+          "page_number": 1
+        }
+      ],
+      "evidence_snippet": "Antigravity Enterprise Architecture Specification 0d57bb53.\n\nSection 1: The system uses LangGraph for coordinating Plann",
+      "audit_verdict": "VERIFIED_SUPPORTED",
+      "audit_notes": "Ground-truth evidence verified present in corpus and textually supports expected facts"
+    },
+    {
+      "case_id": "CASE-C01",
+      "category": "unanswerable",
+      "question": "What is the secret quantum encryption key used by the platform according to the specification?",
+      "answerable": false,
+      "expected_facts_count": 0,
+      "expected_answer_facts": [],
+      "relevant_chunk_ids": [],
+      "relevant_document_ids": [],
+      "chunks_verified_in_corpus": 0,
+      "expected_citations": [],
+      "evidence_snippet": "N/A (unanswerable)",
+      "audit_verdict": "VERIFIED_UNANSWERABLE",
+      "audit_notes": "Negative control: Topic strictly absent from enterprise specification and database guide"
+    },
+    {
+      "case_id": "CASE-C02",
+      "category": "unanswerable",
+      "question": "What is the official support telephone number for Antigravity Enterprise?",
+      "answerable": false,
+      "expected_facts_count": 0,
+      "expected_answer_facts": [],
+      "relevant_chunk_ids": [],
+      "relevant_document_ids": [],
+      "chunks_verified_in_corpus": 0,
+      "expected_citations": [],
+      "evidence_snippet": "N/A (unanswerable)",
+      "audit_verdict": "VERIFIED_UNANSWERABLE",
+      "audit_notes": "Negative control: Topic strictly absent from enterprise specification and database guide"
+    },
+    {
+      "case_id": "CASE-C03",
+      "category": "unanswerable",
+      "question": "How many petabytes of NVMe storage were provisioned in datacenter cluster gamma?",
+      "answerable": false,
+      "expected_facts_count": 0,
+      "expected_answer_facts": [],
+      "relevant_chunk_ids": [],
+      "relevant_document_ids": [],
+      "chunks_verified_in_corpus": 0,
+      "expected_citations": [],
+      "evidence_snippet": "N/A (unanswerable)",
+      "audit_verdict": "VERIFIED_UNANSWERABLE",
+      "audit_notes": "Negative control: Topic strictly absent from enterprise specification and database guide"
+    },
+    {
+      "case_id": "CASE-C04",
+      "category": "unanswerable",
+      "question": "What is the warranty policy for hardware servers deployed in 2021?",
+      "answerable": false,
+      "expected_facts_count": 0,
+      "expected_answer_facts": [],
+      "relevant_chunk_ids": [],
+      "relevant_document_ids": [],
+      "chunks_verified_in_corpus": 0,
+      "expected_citations": [],
+      "evidence_snippet": "N/A (unanswerable)",
+      "audit_verdict": "VERIFIED_UNANSWERABLE",
+      "audit_notes": "Negative control: Topic strictly absent from enterprise specification and database guide"
+    },
+    {
+      "case_id": "CASE-C05",
+      "category": "unanswerable",
+      "question": "Who was named the lead architect of the Redis cluster in Section 9?",
+      "answerable": false,
+      "expected_facts_count": 0,
+      "expected_answer_facts": [],
+      "relevant_chunk_ids": [],
+      "relevant_document_ids": [],
+      "chunks_verified_in_corpus": 0,
+      "expected_citations": [],
+      "evidence_snippet": "N/A (unanswerable)",
+      "audit_verdict": "VERIFIED_UNANSWERABLE",
+      "audit_notes": "Negative control: Topic strictly absent from enterprise specification and database guide"
+    },
+    {
+      "case_id": "CASE-D01",
+      "category": "ambiguous",
+      "question": "Explain the architecture.",
+      "answerable": true,
+      "expected_facts_count": 2,
+      "expected_answer_facts": [
+        "LangGraph",
+        "PostgreSQL"
+      ],
+      "relevant_chunk_ids": [
+        "d0b62a83-2ce4-40f9-a6a9-c465a95054c7"
+      ],
+      "relevant_document_ids": [
+        "9145ecc6-e8f8-4c8b-88b5-25b87b6b3015"
+      ],
+      "chunks_verified_in_corpus": 1,
+      "expected_citations": [
+        {
+          "filename": "enterprise_arch.txt",
+          "page_number": 1
+        }
+      ],
+      "evidence_snippet": "Antigravity Enterprise Architecture Specification 0d57bb53.\n\nSection 1: The system uses LangGraph for coordinating Plann",
+      "audit_verdict": "VERIFIED_SUPPORTED",
+      "audit_notes": "Ground-truth evidence verified present in corpus and textually supports expected facts"
+    },
+    {
+      "case_id": "CASE-D02",
+      "category": "ambiguous",
+      "question": "Tell me about the database.",
+      "answerable": true,
+      "expected_facts_count": 1,
+      "expected_answer_facts": [
+        "PostgreSQL"
+      ],
+      "relevant_chunk_ids": [
+        "acf57f4c-104c-40bd-aa65-9ec3026597ed"
+      ],
+      "relevant_document_ids": [
+        "ac680340-c135-4fb9-a092-48e9681569de"
+      ],
+      "chunks_verified_in_corpus": 1,
+      "expected_citations": [
+        {
+          "filename": "database_guide.txt",
+          "page_number": 1
+        }
+      ],
+      "evidence_snippet": "PostgreSQL is a powerful, open-source object-relational database system.",
+      "audit_verdict": "VERIFIED_SUPPORTED",
+      "audit_notes": "Ground-truth evidence verified present in corpus and textually supports expected facts"
+    },
+    {
+      "case_id": "CASE-D03",
+      "category": "ambiguous",
+      "question": "What does section one say?",
+      "answerable": true,
+      "expected_facts_count": 2,
+      "expected_answer_facts": [
+        "LangGraph",
+        "agents"
+      ],
+      "relevant_chunk_ids": [
+        "d0b62a83-2ce4-40f9-a6a9-c465a95054c7"
+      ],
+      "relevant_document_ids": [
+        "9145ecc6-e8f8-4c8b-88b5-25b87b6b3015"
+      ],
+      "chunks_verified_in_corpus": 1,
+      "expected_citations": [
+        {
+          "filename": "enterprise_arch.txt",
+          "page_number": 1
+        }
+      ],
+      "evidence_snippet": "Antigravity Enterprise Architecture Specification 0d57bb53.\n\nSection 1: The system uses LangGraph for coordinating Plann",
+      "audit_verdict": "VERIFIED_SUPPORTED",
+      "audit_notes": "Ground-truth evidence verified present in corpus and textually supports expected facts"
+    },
+    {
+      "case_id": "CASE-D04",
+      "category": "ambiguous",
+      "question": "What is the coordination mechanism?",
+      "answerable": true,
+      "expected_facts_count": 1,
+      "expected_answer_facts": [
+        "LangGraph"
+      ],
+      "relevant_chunk_ids": [
+        "d0b62a83-2ce4-40f9-a6a9-c465a95054c7"
+      ],
+      "relevant_document_ids": [
+        "9145ecc6-e8f8-4c8b-88b5-25b87b6b3015"
+      ],
+      "chunks_verified_in_corpus": 1,
+      "expected_citations": [
+        {
+          "filename": "enterprise_arch.txt",
+          "page_number": 1
+        }
+      ],
+      "evidence_snippet": "Antigravity Enterprise Architecture Specification 0d57bb53.\n\nSection 1: The system uses LangGraph for coordinating Plann",
+      "audit_verdict": "VERIFIED_SUPPORTED",
+      "audit_notes": "Ground-truth evidence verified present in corpus and textually supports expected facts"
+    },
+    {
+      "case_id": "CASE-E01",
+      "category": "citation_sensitive",
+      "question": "Provide the exact citation for the database definition in database_guide.txt.",
+      "answerable": true,
+      "expected_facts_count": 1,
+      "expected_answer_facts": [
+        "PostgreSQL is a powerful, open-source object-relational database system"
+      ],
+      "relevant_chunk_ids": [
+        "acf57f4c-104c-40bd-aa65-9ec3026597ed"
+      ],
+      "relevant_document_ids": [
+        "ac680340-c135-4fb9-a092-48e9681569de"
+      ],
+      "chunks_verified_in_corpus": 1,
+      "expected_citations": [
+        {
+          "filename": "database_guide.txt",
+          "page_number": 1
+        }
+      ],
+      "evidence_snippet": "PostgreSQL is a powerful, open-source object-relational database system.",
+      "audit_verdict": "VERIFIED_SUPPORTED",
+      "audit_notes": "Ground-truth evidence verified present in corpus and textually supports expected facts"
+    },
+    {
+      "case_id": "CASE-E02",
+      "category": "citation_sensitive",
+      "question": "Cite the source proving that LangGraph coordinates the four workflow agents.",
+      "answerable": true,
+      "expected_facts_count": 1,
+      "expected_answer_facts": [
+        "LangGraph coordinates Planner, Retrieval, Researcher, and Responder"
+      ],
+      "relevant_chunk_ids": [
+        "d0b62a83-2ce4-40f9-a6a9-c465a95054c7"
+      ],
+      "relevant_document_ids": [
+        "9145ecc6-e8f8-4c8b-88b5-25b87b6b3015"
+      ],
+      "chunks_verified_in_corpus": 1,
+      "expected_citations": [
+        {
+          "filename": "enterprise_arch.txt",
+          "page_number": 1
+        }
+      ],
+      "evidence_snippet": "Antigravity Enterprise Architecture Specification 0d57bb53.\n\nSection 1: The system uses LangGraph for coordinating Plann",
+      "audit_verdict": "VERIFIED_SUPPORTED",
+      "audit_notes": "Ground-truth evidence verified present in corpus and textually supports expected facts"
+    },
+    {
+      "case_id": "CASE-E03",
+      "category": "citation_sensitive",
+      "question": "Cite the document describing high throughput messaging and state persistence.",
+      "answerable": true,
+      "expected_facts_count": 1,
+      "expected_answer_facts": [
+        "High throughput messaging is managed via durable PostgreSQL state persistence"
+      ],
+      "relevant_chunk_ids": [
+        "d0b62a83-2ce4-40f9-a6a9-c465a95054c7"
+      ],
+      "relevant_document_ids": [
+        "9145ecc6-e8f8-4c8b-88b5-25b87b6b3015"
+      ],
+      "chunks_verified_in_corpus": 1,
+      "expected_citations": [
+        {
+          "filename": "enterprise_arch.txt",
+          "page_number": 1
+        }
+      ],
+      "evidence_snippet": "Antigravity Enterprise Architecture Specification 0d57bb53.\n\nSection 1: The system uses LangGraph for coordinating Plann",
+      "audit_verdict": "VERIFIED_SUPPORTED",
+      "audit_notes": "Ground-truth evidence verified present in corpus and textually supports expected facts"
+    },
+    {
+      "case_id": "CASE-E04",
+      "category": "citation_sensitive",
+      "question": "Give the exact source citations for both the database definition and the messaging architecture.",
+      "answerable": true,
+      "expected_facts_count": 2,
+      "expected_answer_facts": [
+        "database_guide.txt",
+        "enterprise_arch.txt"
+      ],
+      "relevant_chunk_ids": [
+        "acf57f4c-104c-40bd-aa65-9ec3026597ed",
+        "d0b62a83-2ce4-40f9-a6a9-c465a95054c7"
+      ],
+      "relevant_document_ids": [
+        "ac680340-c135-4fb9-a092-48e9681569de",
+        "9145ecc6-e8f8-4c8b-88b5-25b87b6b3015"
+      ],
+      "chunks_verified_in_corpus": 2,
+      "expected_citations": [
+        {
+          "filename": "database_guide.txt",
+          "page_number": 1
+        },
+        {
+          "filename": "enterprise_arch.txt",
+          "page_number": 1
+        }
+      ],
+      "evidence_snippet": "PostgreSQL is a powerful, open-source object-relational database system.",
+      "audit_verdict": "VERIFIED_SUPPORTED",
+      "audit_notes": "Ground-truth evidence verified present in corpus and textually supports expected facts"
+    },
+    {
+      "case_id": "CASE-E05",
+      "category": "citation_sensitive",
+      "question": "Which document verifies that PostgreSQL is an object-relational system?",
+      "answerable": true,
+      "expected_facts_count": 1,
+      "expected_answer_facts": [
+        "database_guide.txt"
+      ],
+      "relevant_chunk_ids": [
+        "acf57f4c-104c-40bd-aa65-9ec3026597ed"
+      ],
+      "relevant_document_ids": [
+        "ac680340-c135-4fb9-a092-48e9681569de"
+      ],
+      "chunks_verified_in_corpus": 1,
+      "expected_citations": [
+        {
+          "filename": "database_guide.txt",
+          "page_number": 1
+        }
+      ],
+      "evidence_snippet": "PostgreSQL is a powerful, open-source object-relational database system.",
+      "audit_verdict": "VERIFIED_SUPPORTED",
+      "audit_notes": "Ground-truth evidence verified present in corpus and textually supports expected facts"
+    },
+    {
+      "case_id": "CASE-F01",
+      "category": "unsupported_premise",
+      "question": "Why does the architecture specification mandate Redis instead of PostgreSQL for durable messaging?",
+      "answerable": true,
+      "expected_facts_count": 2,
+      "expected_answer_facts": [
+        "The architecture specification does not mandate Redis",
+        "PostgreSQL is used for durable state persistence"
+      ],
+      "relevant_chunk_ids": [
+        "d0b62a83-2ce4-40f9-a6a9-c465a95054c7"
+      ],
+      "relevant_document_ids": [
+        "9145ecc6-e8f8-4c8b-88b5-25b87b6b3015"
+      ],
+      "chunks_verified_in_corpus": 1,
+      "expected_citations": [
+        {
+          "filename": "enterprise_arch.txt",
+          "page_number": 1
+        }
+      ],
+      "evidence_snippet": "Antigravity Enterprise Architecture Specification 0d57bb53.\n\nSection 1: The system uses LangGraph for coordinating Plann",
+      "audit_verdict": "VERIFIED_SUPPORTED",
+      "audit_notes": "Ground-truth evidence verified present in corpus and textually supports expected facts"
+    },
+    {
+      "case_id": "CASE-F02",
+      "category": "unsupported_premise",
+      "question": "Why is Celery used to coordinate the Planner and Retrieval agents according to Section 1?",
+      "answerable": true,
+      "expected_facts_count": 2,
+      "expected_answer_facts": [
+        "Celery is not used",
+        "LangGraph is used for coordinating Planner and Retrieval agents"
+      ],
+      "relevant_chunk_ids": [
+        "d0b62a83-2ce4-40f9-a6a9-c465a95054c7"
+      ],
+      "relevant_document_ids": [
+        "9145ecc6-e8f8-4c8b-88b5-25b87b6b3015"
+      ],
+      "chunks_verified_in_corpus": 1,
+      "expected_citations": [
+        {
+          "filename": "enterprise_arch.txt",
+          "page_number": 1
+        }
+      ],
+      "evidence_snippet": "Antigravity Enterprise Architecture Specification 0d57bb53.\n\nSection 1: The system uses LangGraph for coordinating Plann",
+      "audit_verdict": "VERIFIED_SUPPORTED",
+      "audit_notes": "Ground-truth evidence verified present in corpus and textually supports expected facts"
+    },
+    {
+      "case_id": "CASE-F03",
+      "category": "unsupported_premise",
+      "question": "Given that PostgreSQL is a closed-source proprietary database, what licensing applies to it?",
+      "answerable": true,
+      "expected_facts_count": 1,
+      "expected_answer_facts": [
+        "PostgreSQL is open-source, not closed-source or proprietary"
+      ],
+      "relevant_chunk_ids": [
+        "acf57f4c-104c-40bd-aa65-9ec3026597ed"
+      ],
+      "relevant_document_ids": [
+        "ac680340-c135-4fb9-a092-48e9681569de"
+      ],
+      "chunks_verified_in_corpus": 1,
+      "expected_citations": [
+        {
+          "filename": "database_guide.txt",
+          "page_number": 1
+        }
+      ],
+      "evidence_snippet": "PostgreSQL is a powerful, open-source object-relational database system.",
+      "audit_verdict": "VERIFIED_SUPPORTED",
+      "audit_notes": "Ground-truth evidence verified present in corpus and textually supports expected facts"
+    },
+    {
+      "case_id": "CASE-F04",
+      "category": "unsupported_premise",
+      "question": "Why did Section 2 replace PostgreSQL persistence with SQLite in memory?",
+      "answerable": true,
+      "expected_facts_count": 2,
+      "expected_answer_facts": [
+        "Section 2 does not use SQLite",
+        "High throughput messaging is managed via durable PostgreSQL state persistence"
+      ],
+      "relevant_chunk_ids": [
+        "d0b62a83-2ce4-40f9-a6a9-c465a95054c7"
+      ],
+      "relevant_document_ids": [
+        "9145ecc6-e8f8-4c8b-88b5-25b87b6b3015"
+      ],
+      "chunks_verified_in_corpus": 1,
+      "expected_citations": [
+        {
+          "filename": "enterprise_arch.txt",
+          "page_number": 1
+        }
+      ],
+      "evidence_snippet": "Antigravity Enterprise Architecture Specification 0d57bb53.\n\nSection 1: The system uses LangGraph for coordinating Plann",
+      "audit_verdict": "VERIFIED_SUPPORTED",
+      "audit_notes": "Ground-truth evidence verified present in corpus and textually supports expected facts"
+    },
+    {
+      "case_id": "CASE-F05",
+      "category": "unsupported_premise",
+      "question": "Why does the platform prohibit multi-agent workflows from using a planner agent?",
+      "answerable": true,
+      "expected_facts_count": 2,
+      "expected_answer_facts": [
+        "The platform does not prohibit planner agents",
+        "Planner is explicitly one of the four agents coordinated by LangGraph"
+      ],
+      "relevant_chunk_ids": [
+        "d0b62a83-2ce4-40f9-a6a9-c465a95054c7"
+      ],
+      "relevant_document_ids": [
+        "9145ecc6-e8f8-4c8b-88b5-25b87b6b3015"
+      ],
+      "chunks_verified_in_corpus": 1,
+      "expected_citations": [
+        {
+          "filename": "enterprise_arch.txt",
+          "page_number": 1
+        }
+      ],
+      "evidence_snippet": "Antigravity Enterprise Architecture Specification 0d57bb53.\n\nSection 1: The system uses LangGraph for coordinating Plann",
+      "audit_verdict": "VERIFIED_SUPPORTED",
+      "audit_notes": "Ground-truth evidence verified present in corpus and textually supports expected facts"
+    },
+    {
+      "case_id": "CASE-G01",
+      "category": "retrieval_edge_case",
+      "question": "postgrsql object relatsnl systm",
+      "answerable": true,
+      "expected_facts_count": 1,
+      "expected_answer_facts": [
+        "PostgreSQL is an open-source object-relational database system"
+      ],
+      "relevant_chunk_ids": [
+        "acf57f4c-104c-40bd-aa65-9ec3026597ed"
+      ],
+      "relevant_document_ids": [
+        "ac680340-c135-4fb9-a092-48e9681569de"
+      ],
+      "chunks_verified_in_corpus": 1,
+      "expected_citations": [
+        {
+          "filename": "database_guide.txt",
+          "page_number": 1
+        }
+      ],
+      "evidence_snippet": "PostgreSQL is a powerful, open-source object-relational database system.",
+      "audit_verdict": "VERIFIED_SUPPORTED",
+      "audit_notes": "Ground-truth evidence verified present in corpus and textually supports expected facts"
+    },
+    {
+      "case_id": "CASE-G02",
+      "category": "retrieval_edge_case",
+      "question": "LangGraph!??? Section 1???",
+      "answerable": true,
+      "expected_facts_count": 1,
+      "expected_answer_facts": [
+        "LangGraph coordinates Planner, Retrieval, Researcher, and Responder"
+      ],
+      "relevant_chunk_ids": [
+        "d0b62a83-2ce4-40f9-a6a9-c465a95054c7"
+      ],
+      "relevant_document_ids": [
+        "9145ecc6-e8f8-4c8b-88b5-25b87b6b3015"
+      ],
+      "chunks_verified_in_corpus": 1,
+      "expected_citations": [
+        {
+          "filename": "enterprise_arch.txt",
+          "page_number": 1
+        }
+      ],
+      "evidence_snippet": "Antigravity Enterprise Architecture Specification 0d57bb53.\n\nSection 1: The system uses LangGraph for coordinating Plann",
+      "audit_verdict": "VERIFIED_SUPPORTED",
+      "audit_notes": "Ground-truth evidence verified present in corpus and textually supports expected facts"
+    },
+    {
+      "case_id": "CASE-G03",
+      "category": "retrieval_edge_case",
+      "question": "0d57bb53",
+      "answerable": true,
+      "expected_facts_count": 1,
+      "expected_answer_facts": [
+        "Enterprise Architecture Specification"
+      ],
+      "relevant_chunk_ids": [
+        "d0b62a83-2ce4-40f9-a6a9-c465a95054c7"
+      ],
+      "relevant_document_ids": [
+        "9145ecc6-e8f8-4c8b-88b5-25b87b6b3015"
+      ],
+      "chunks_verified_in_corpus": 1,
+      "expected_citations": [
+        {
+          "filename": "enterprise_arch.txt",
+          "page_number": 1
+        }
+      ],
+      "evidence_snippet": "Antigravity Enterprise Architecture Specification 0d57bb53.\n\nSection 1: The system uses LangGraph for coordinating Plann",
+      "audit_verdict": "VERIFIED_SUPPORTED",
+      "audit_notes": "Ground-truth evidence verified present in corpus and textually supports expected facts"
+    },
+    {
+      "case_id": "CASE-G04",
+      "category": "retrieval_edge_case",
+      "question": "What is the detailed specification regarding how the system uses LangGraph for coordinating Planner, Retrieval, Researcher, and Responder agents and high throughput messaging is managed via durable PostgreSQL state persistence in modern enterprise architectures?",
+      "answerable": true,
+      "expected_facts_count": 2,
+      "expected_answer_facts": [
+        "LangGraph coordinates Planner, Retrieval, Researcher, and Responder",
+        "PostgreSQL manages high throughput messaging"
+      ],
+      "relevant_chunk_ids": [
+        "d0b62a83-2ce4-40f9-a6a9-c465a95054c7"
+      ],
+      "relevant_document_ids": [
+        "9145ecc6-e8f8-4c8b-88b5-25b87b6b3015"
+      ],
+      "chunks_verified_in_corpus": 1,
+      "expected_citations": [
+        {
+          "filename": "enterprise_arch.txt",
+          "page_number": 1
+        }
+      ],
+      "evidence_snippet": "Antigravity Enterprise Architecture Specification 0d57bb53.\n\nSection 1: The system uses LangGraph for coordinating Plann",
+      "audit_verdict": "VERIFIED_SUPPORTED",
+      "audit_notes": "Ground-truth evidence verified present in corpus and textually supports expected facts"
+    }
+  ]
+}
