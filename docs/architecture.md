@@ -378,3 +378,69 @@ flowchart TD
    - `PendingApprovals`: Dedicated queue monitoring paused workflows with quick action triggers.
    - `RunDetailModal`: Visualizes full human approval audit trail with reviewer notes and timestamps.
 
+---
+
+## 9. Milestone 9A — Evaluation Engine & Deterministic Benchmarking
+
+Milestone 9A introduces a standalone, reproducible evaluation harness measuring retrieval quality, citation integrity, atomic fact coverage, and guardrail decisions without external paid LLM dependencies.
+
+### 9.1 Component Architecture
+
+```mermaid
+flowchart TD
+    Client([Evaluation Client / CI Runner])
+    API["Evaluation REST API\n(/api/v1/evaluations)"]
+    Service["EvaluationService\n(Background task & DB orchestrator)"]
+    
+    subgraph RunnerModule ["Controlled Evaluation Runner"]
+        direction TB
+        DatasetLoader["Dataset Loader & Validator\n(benchmark_v1.json, SHA256 checksum)"]
+        Semaphore["Concurrency Semaphore\n(default: 4 concurrent cases)"]
+        TimeoutGate["Per-Case Timeout Guard\n(default: 30s timeout)"]
+        
+        subgraph Metrics ["Deterministic Metric Calculators"]
+            RetrievalM["Retrieval Metrics\n(Recall@k, Precision@k, HitRate, MRR, MAP)"]
+            CitationM["Citation Integrity\n(Presence, Identifiers, Source/Page Validity)"]
+            AnswerM["Answer Quality\n(Normalized Fact Coverage, Abstention Accuracy)"]
+            GuardrailM["Guardrail Metrics\n(ValidationService, TPR, FPR, FNR, Accuracy)"]
+        end
+        
+        DatasetLoader --> Semaphore
+        Semaphore --> TimeoutGate
+        TimeoutGate --> Metrics
+    end
+    
+    DB[("PostgreSQL 16 Persistence\n(evaluation_runs, evaluation_case_results)")]
+    Report["EvaluationRunReport\n(Standalone Machine-Readable JSON)"]
+    Compare["Run Comparison Engine\n(Metric Deltas, Improvements, Regressions)"]
+
+    Client -->|POST /api/v1/evaluations| API
+    API --> Service
+    Service --> RunnerModule
+    Metrics --> DB
+    Service --> Report
+    Client -->|POST /api/v1/evaluations/compare| API
+    API --> Compare
+```
+
+### 9.2 Key Design Highlights
+
+1. **Grounded Benchmark Fixture (35 Cases)**:
+   - Categorized into 7 operational domains: Answerable, Multi-Hop, Unanswerable, Ambiguous, Citation Sensitive, Unsupported Premise, and Retrieval Edge Cases.
+   - Ground-truthed with atomic fact lists, ground-truth document and chunk IDs, citation metadata, and expected validation behavior.
+
+2. **Undefined Denominator Safety**:
+   - For unanswerable queries where ground-truth relevant chunks are 0, Recall@k evaluates to `None` rather than `0.0`, preventing skew in macro aggregations.
+   - Similarly, TPR/FPR/FNR handle empty positive or negative condition sets safely with `None`.
+
+3. **Dual Execution Modes**:
+   - `METRIC_ONLY`: Fast, offline, deterministic scoring against fixture ground truth.
+   - `INTEGRATION`: Invokes live native FAISS index and PostgreSQL chunk metadata via non-destructive adapter.
+
+4. **Persistence & Migration 006**:
+   - `evaluation_runs` stores execution metadata, configuration snapshots, and macro summaries.
+   - `evaluation_case_results` stores per-case durations, errors, and detailed metric JSON payloads.
+
+5. **Run Comparison Engine**:
+   - Computes per-metric deltas, classifies improvements vs regressions with a 0.5% significance threshold, and yields an automated verdict (`IMPROVED`, `REGRESSED`, `NEUTRAL`).
+

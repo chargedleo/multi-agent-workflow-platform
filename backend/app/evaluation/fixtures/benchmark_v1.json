@@ -1,0 +1,649 @@
+{
+  "name": "enterprise_workflow_benchmark",
+  "version": "1.0.0",
+  "description": "Standardized benchmark suite for Multi-Agent AI Workflow Automation Platform testing retrieval, citation integrity, reference-based fact matching, and guardrails across 7 canonical categories.",
+  "cases": [
+    {
+      "case_id": "CASE-A01",
+      "dataset_version": "1.0.0",
+      "category": "answerable",
+      "question": "What kind of database system is PostgreSQL according to the documentation?",
+      "expected_answer_facts": [
+        "PostgreSQL is an open-source object-relational database system"
+      ],
+      "relevant_document_ids": ["ac680340-c135-4fb9-a092-48e9681569de", "c58942cb-446d-4b84-9043-aa74827a41b6"],
+      "relevant_chunk_ids": ["acf57f4c-104c-40bd-aa65-9ec3026597ed", "73544533-c7b6-452c-af82-cc0c9eccb693"],
+      "expected_citations": [
+        {
+          "filename": "database_guide.txt",
+          "page_number": 1
+        }
+      ],
+      "answerable": true,
+      "expected_validation_behavior": "PASS",
+      "evaluation_notes": "Direct factual extraction from database_guide.txt"
+    },
+    {
+      "case_id": "CASE-A02",
+      "dataset_version": "1.0.0",
+      "category": "answerable",
+      "question": "Which framework coordinates the Planner, Retrieval, Researcher, and Responder agents in the system architecture?",
+      "expected_answer_facts": [
+        "LangGraph is used for coordinating Planner, Retrieval, Researcher, and Responder agents"
+      ],
+      "relevant_document_ids": ["9145ecc6-e8f8-4c8b-88b5-25b87b6b3015", "e1d75337-7c25-4f8a-8dc0-474b23c7c477"],
+      "relevant_chunk_ids": ["d0b62a83-2ce4-40f9-a6a9-c465a95054c7", "e09cc72b-d317-4dad-ba44-38f3e9743e61"],
+      "expected_citations": [
+        {
+          "filename": "enterprise_arch.txt",
+          "page_number": 1
+        }
+      ],
+      "answerable": true,
+      "expected_validation_behavior": "PASS",
+      "evaluation_notes": "Section 1 architecture fact verification"
+    },
+    {
+      "case_id": "CASE-A03",
+      "dataset_version": "1.0.0",
+      "category": "answerable",
+      "question": "How is high throughput messaging managed according to Section 2 of the enterprise architecture?",
+      "expected_answer_facts": [
+        "High throughput messaging is managed via durable PostgreSQL state persistence"
+      ],
+      "relevant_document_ids": ["9145ecc6-e8f8-4c8b-88b5-25b87b6b3015"],
+      "relevant_chunk_ids": ["d0b62a83-2ce4-40f9-a6a9-c465a95054c7"],
+      "expected_citations": [
+        {
+          "filename": "enterprise_arch.txt",
+          "page_number": 1
+        }
+      ],
+      "answerable": true,
+      "expected_validation_behavior": "PASS",
+      "evaluation_notes": "Section 2 messaging architecture verification"
+    },
+    {
+      "case_id": "CASE-A04",
+      "dataset_version": "1.0.0",
+      "category": "answerable",
+      "question": "List the four core agents coordinated by LangGraph in Section 1.",
+      "expected_answer_facts": [
+        "Planner",
+        "Retrieval",
+        "Researcher",
+        "Responder"
+      ],
+      "relevant_document_ids": ["9145ecc6-e8f8-4c8b-88b5-25b87b6b3015"],
+      "relevant_chunk_ids": ["d0b62a83-2ce4-40f9-a6a9-c465a95054c7"],
+      "expected_citations": [
+        {
+          "filename": "enterprise_arch.txt",
+          "page_number": 1
+        }
+      ],
+      "answerable": true,
+      "expected_validation_behavior": "PASS",
+      "evaluation_notes": "Multi-entity fact extraction"
+    },
+    {
+      "case_id": "CASE-A05",
+      "dataset_version": "1.0.0",
+      "category": "answerable",
+      "question": "Is PostgreSQL open-source according to the database guide?",
+      "expected_answer_facts": [
+        "PostgreSQL is open-source"
+      ],
+      "relevant_document_ids": ["ac680340-c135-4fb9-a092-48e9681569de"],
+      "relevant_chunk_ids": ["acf57f4c-104c-40bd-aa65-9ec3026597ed"],
+      "expected_citations": [
+        {
+          "filename": "database_guide.txt",
+          "page_number": 1
+        }
+      ],
+      "answerable": true,
+      "expected_validation_behavior": "PASS",
+      "evaluation_notes": "Boolean property verification"
+    },
+    {
+      "case_id": "CASE-A06",
+      "dataset_version": "1.0.0",
+      "category": "answerable",
+      "question": "What role does PostgreSQL play in the platform's messaging and state architecture?",
+      "expected_answer_facts": [
+        "PostgreSQL provides durable state persistence for messaging"
+      ],
+      "relevant_document_ids": ["9145ecc6-e8f8-4c8b-88b5-25b87b6b3015"],
+      "relevant_chunk_ids": ["d0b62a83-2ce4-40f9-a6a9-c465a95054c7"],
+      "expected_citations": [
+        {
+          "filename": "enterprise_arch.txt",
+          "page_number": 1
+        }
+      ],
+      "answerable": true,
+      "expected_validation_behavior": "PASS",
+      "evaluation_notes": "Architecture role identification"
+    },
+    {
+      "case_id": "CASE-A07",
+      "dataset_version": "1.0.0",
+      "category": "answerable",
+      "question": "What technology is designated for agent coordination in the enterprise architecture specification?",
+      "expected_answer_facts": [
+        "LangGraph"
+      ],
+      "relevant_document_ids": ["9145ecc6-e8f8-4c8b-88b5-25b87b6b3015"],
+      "relevant_chunk_ids": ["d0b62a83-2ce4-40f9-a6a9-c465a95054c7"],
+      "expected_citations": [
+        {
+          "filename": "enterprise_arch.txt",
+          "page_number": 1
+        }
+      ],
+      "answerable": true,
+      "expected_validation_behavior": "PASS",
+      "evaluation_notes": "Core technology entity retrieval"
+    },
+    {
+      "case_id": "CASE-B01",
+      "dataset_version": "1.0.0",
+      "category": "multi_hop",
+      "question": "How does PostgreSQL function both as a general database system and specifically within the enterprise messaging architecture?",
+      "expected_answer_facts": [
+        "PostgreSQL is an object-relational database system",
+        "PostgreSQL provides durable state persistence for high throughput messaging"
+      ],
+      "relevant_document_ids": [
+        "ac680340-c135-4fb9-a092-48e9681569de",
+        "9145ecc6-e8f8-4c8b-88b5-25b87b6b3015"
+      ],
+      "relevant_chunk_ids": [
+        "acf57f4c-104c-40bd-aa65-9ec3026597ed",
+        "d0b62a83-2ce4-40f9-a6a9-c465a95054c7"
+      ],
+      "expected_citations": [
+        { "filename": "database_guide.txt", "page_number": 1 },
+        { "filename": "enterprise_arch.txt", "page_number": 1 }
+      ],
+      "answerable": true,
+      "expected_validation_behavior": "PASS",
+      "evaluation_notes": "Requires combining knowledge across database_guide and enterprise_arch"
+    },
+    {
+      "case_id": "CASE-B02",
+      "dataset_version": "1.0.0",
+      "category": "multi_hop",
+      "question": "Explain the interaction between LangGraph agent orchestration and the persistence mechanism that preserves their state.",
+      "expected_answer_facts": [
+        "LangGraph coordinates the agents",
+        "Durable PostgreSQL persistence manages state"
+      ],
+      "relevant_document_ids": ["9145ecc6-e8f8-4c8b-88b5-25b87b6b3015"],
+      "relevant_chunk_ids": ["d0b62a83-2ce4-40f9-a6a9-c465a95054c7"],
+      "expected_citations": [
+        { "filename": "enterprise_arch.txt", "page_number": 1 }
+      ],
+      "answerable": true,
+      "expected_validation_behavior": "PASS",
+      "evaluation_notes": "Cross-section synthesis between Section 1 and Section 2"
+    },
+    {
+      "case_id": "CASE-B03",
+      "dataset_version": "1.0.0",
+      "category": "multi_hop",
+      "question": "Compare the role of LangGraph in coordinating agents with the role of PostgreSQL in state persistence.",
+      "expected_answer_facts": [
+        "LangGraph handles agent orchestration",
+        "PostgreSQL handles durable state persistence"
+      ],
+      "relevant_document_ids": ["9145ecc6-e8f8-4c8b-88b5-25b87b6b3015"],
+      "relevant_chunk_ids": ["d0b62a83-2ce4-40f9-a6a9-c465a95054c7"],
+      "expected_citations": [
+        { "filename": "enterprise_arch.txt", "page_number": 1 }
+      ],
+      "answerable": true,
+      "expected_validation_behavior": "PASS",
+      "evaluation_notes": "Comparative role analysis within enterprise specification"
+    },
+    {
+      "case_id": "CASE-B04",
+      "dataset_version": "1.0.0",
+      "category": "multi_hop",
+      "question": "If an agent in LangGraph needs to persist high throughput messaging, which database does it rely on according to the architecture specification?",
+      "expected_answer_facts": [
+        "PostgreSQL durable state persistence"
+      ],
+      "relevant_document_ids": ["9145ecc6-e8f8-4c8b-88b5-25b87b6b3015"],
+      "relevant_chunk_ids": ["d0b62a83-2ce4-40f9-a6a9-c465a95054c7"],
+      "expected_citations": [
+        { "filename": "enterprise_arch.txt", "page_number": 1 }
+      ],
+      "answerable": true,
+      "expected_validation_behavior": "PASS",
+      "evaluation_notes": "Conditional multi-hop dependency query"
+    },
+    {
+      "case_id": "CASE-B05",
+      "dataset_version": "1.0.0",
+      "category": "multi_hop",
+      "question": "Summarize the complete enterprise architecture pipeline from agent coordination through state persistence and database classification.",
+      "expected_answer_facts": [
+        "LangGraph coordinates Planner, Retrieval, Researcher, and Responder",
+        "PostgreSQL provides durable state persistence",
+        "PostgreSQL is an open-source object-relational database"
+      ],
+      "relevant_document_ids": [
+        "9145ecc6-e8f8-4c8b-88b5-25b87b6b3015",
+        "ac680340-c135-4fb9-a092-48e9681569de"
+      ],
+      "relevant_chunk_ids": [
+        "d0b62a83-2ce4-40f9-a6a9-c465a95054c7",
+        "acf57f4c-104c-40bd-aa65-9ec3026597ed"
+      ],
+      "expected_citations": [
+        { "filename": "enterprise_arch.txt", "page_number": 1 },
+        { "filename": "database_guide.txt", "page_number": 1 }
+      ],
+      "answerable": true,
+      "expected_validation_behavior": "PASS",
+      "evaluation_notes": "Full multi-source architecture synthesis"
+    },
+    {
+      "case_id": "CASE-C01",
+      "dataset_version": "1.0.0",
+      "category": "unanswerable",
+      "question": "What is the secret quantum encryption key used by the platform according to the specification?",
+      "expected_answer_facts": [],
+      "relevant_document_ids": [],
+      "relevant_chunk_ids": [],
+      "expected_citations": [],
+      "answerable": false,
+      "expected_validation_behavior": "PASS",
+      "evaluation_notes": "Information not in corpus; model must abstain from answering"
+    },
+    {
+      "case_id": "CASE-C02",
+      "dataset_version": "1.0.0",
+      "category": "unanswerable",
+      "question": "What is the official support telephone number for Antigravity Enterprise?",
+      "expected_answer_facts": [],
+      "relevant_document_ids": [],
+      "relevant_chunk_ids": [],
+      "expected_citations": [],
+      "answerable": false,
+      "expected_validation_behavior": "PASS",
+      "evaluation_notes": "Out of domain fact; correct behavior is abstention"
+    },
+    {
+      "case_id": "CASE-C03",
+      "dataset_version": "1.0.0",
+      "category": "unanswerable",
+      "question": "How many petabytes of NVMe storage were provisioned in datacenter cluster gamma?",
+      "expected_answer_facts": [],
+      "relevant_document_ids": [],
+      "relevant_chunk_ids": [],
+      "expected_citations": [],
+      "answerable": false,
+      "expected_validation_behavior": "PASS",
+      "evaluation_notes": "Fabricated entity outside corpus; model must abstain"
+    },
+    {
+      "case_id": "CASE-C04",
+      "dataset_version": "1.0.0",
+      "category": "unanswerable",
+      "question": "What is the warranty policy for hardware servers deployed in 2021?",
+      "expected_answer_facts": [],
+      "relevant_document_ids": [],
+      "relevant_chunk_ids": [],
+      "expected_citations": [],
+      "answerable": false,
+      "expected_validation_behavior": "PASS",
+      "evaluation_notes": "Non-existent hardware documentation"
+    },
+    {
+      "case_id": "CASE-C05",
+      "dataset_version": "1.0.0",
+      "category": "unanswerable",
+      "question": "Who was named the lead architect of the Redis cluster in Section 9?",
+      "expected_answer_facts": [],
+      "relevant_document_ids": [],
+      "relevant_chunk_ids": [],
+      "expected_citations": [],
+      "answerable": false,
+      "expected_validation_behavior": "PASS",
+      "evaluation_notes": "Non-existent Section 9 and non-existent person"
+    },
+    {
+      "case_id": "CASE-D01",
+      "dataset_version": "1.0.0",
+      "category": "ambiguous",
+      "question": "Explain the architecture.",
+      "expected_answer_facts": [
+        "LangGraph",
+        "PostgreSQL"
+      ],
+      "relevant_document_ids": ["9145ecc6-e8f8-4c8b-88b5-25b87b6b3015"],
+      "relevant_chunk_ids": ["d0b62a83-2ce4-40f9-a6a9-c465a95054c7"],
+      "expected_citations": [
+        { "filename": "enterprise_arch.txt", "page_number": 1 }
+      ],
+      "answerable": true,
+      "expected_validation_behavior": "PASS",
+      "evaluation_notes": "Under-specified single-concept question"
+    },
+    {
+      "case_id": "CASE-D02",
+      "dataset_version": "1.0.0",
+      "category": "ambiguous",
+      "question": "Tell me about the database.",
+      "expected_answer_facts": [
+        "PostgreSQL"
+      ],
+      "relevant_document_ids": ["ac680340-c135-4fb9-a092-48e9681569de"],
+      "relevant_chunk_ids": ["acf57f4c-104c-40bd-aa65-9ec3026597ed"],
+      "expected_citations": [
+        { "filename": "database_guide.txt", "page_number": 1 }
+      ],
+      "answerable": true,
+      "expected_validation_behavior": "PASS",
+      "evaluation_notes": "Vague entity reference resolved to PostgreSQL"
+    },
+    {
+      "case_id": "CASE-D03",
+      "dataset_version": "1.0.0",
+      "category": "ambiguous",
+      "question": "What does section one say?",
+      "expected_answer_facts": [
+        "LangGraph",
+        "agents"
+      ],
+      "relevant_document_ids": ["9145ecc6-e8f8-4c8b-88b5-25b87b6b3015"],
+      "relevant_chunk_ids": ["d0b62a83-2ce4-40f9-a6a9-c465a95054c7"],
+      "expected_citations": [
+        { "filename": "enterprise_arch.txt", "page_number": 1 }
+      ],
+      "answerable": true,
+      "expected_validation_behavior": "PASS",
+      "evaluation_notes": "Omitted document title; resolved by section heading"
+    },
+    {
+      "case_id": "CASE-D04",
+      "dataset_version": "1.0.0",
+      "category": "ambiguous",
+      "question": "What is the coordination mechanism?",
+      "expected_answer_facts": [
+        "LangGraph"
+      ],
+      "relevant_document_ids": ["9145ecc6-e8f8-4c8b-88b5-25b87b6b3015"],
+      "relevant_chunk_ids": ["d0b62a83-2ce4-40f9-a6a9-c465a95054c7"],
+      "expected_citations": [
+        { "filename": "enterprise_arch.txt", "page_number": 1 }
+      ],
+      "answerable": true,
+      "expected_validation_behavior": "PASS",
+      "evaluation_notes": "Abstract concept mapped to LangGraph"
+    },
+    {
+      "case_id": "CASE-E01",
+      "dataset_version": "1.0.0",
+      "category": "citation_sensitive",
+      "question": "Provide the exact citation for the database definition in database_guide.txt.",
+      "expected_answer_facts": [
+        "PostgreSQL is a powerful, open-source object-relational database system"
+      ],
+      "relevant_document_ids": ["ac680340-c135-4fb9-a092-48e9681569de"],
+      "relevant_chunk_ids": ["acf57f4c-104c-40bd-aa65-9ec3026597ed"],
+      "expected_citations": [
+        {
+          "filename": "database_guide.txt",
+          "page_number": 1
+        }
+      ],
+      "answerable": true,
+      "expected_validation_behavior": "PASS",
+      "evaluation_notes": "Requires strictly verified citation provenance"
+    },
+    {
+      "case_id": "CASE-E02",
+      "dataset_version": "1.0.0",
+      "category": "citation_sensitive",
+      "question": "Cite the source proving that LangGraph coordinates the four workflow agents.",
+      "expected_answer_facts": [
+        "LangGraph coordinates Planner, Retrieval, Researcher, and Responder"
+      ],
+      "relevant_document_ids": ["9145ecc6-e8f8-4c8b-88b5-25b87b6b3015"],
+      "relevant_chunk_ids": ["d0b62a83-2ce4-40f9-a6a9-c465a95054c7"],
+      "expected_citations": [
+        {
+          "filename": "enterprise_arch.txt",
+          "page_number": 1
+        }
+      ],
+      "answerable": true,
+      "expected_validation_behavior": "PASS",
+      "evaluation_notes": "Strict citation attribution to Section 1"
+    },
+    {
+      "case_id": "CASE-E03",
+      "dataset_version": "1.0.0",
+      "category": "citation_sensitive",
+      "question": "Cite the document describing high throughput messaging and state persistence.",
+      "expected_answer_facts": [
+        "High throughput messaging is managed via durable PostgreSQL state persistence"
+      ],
+      "relevant_document_ids": ["9145ecc6-e8f8-4c8b-88b5-25b87b6b3015"],
+      "relevant_chunk_ids": ["d0b62a83-2ce4-40f9-a6a9-c465a95054c7"],
+      "expected_citations": [
+        {
+          "filename": "enterprise_arch.txt",
+          "page_number": 1
+        }
+      ],
+      "answerable": true,
+      "expected_validation_behavior": "PASS",
+      "evaluation_notes": "Strict citation attribution to Section 2"
+    },
+    {
+      "case_id": "CASE-E04",
+      "dataset_version": "1.0.0",
+      "category": "citation_sensitive",
+      "question": "Give the exact source citations for both the database definition and the messaging architecture.",
+      "expected_answer_facts": [
+        "database_guide.txt",
+        "enterprise_arch.txt"
+      ],
+      "relevant_document_ids": [
+        "ac680340-c135-4fb9-a092-48e9681569de",
+        "9145ecc6-e8f8-4c8b-88b5-25b87b6b3015"
+      ],
+      "relevant_chunk_ids": [
+        "acf57f4c-104c-40bd-aa65-9ec3026597ed",
+        "d0b62a83-2ce4-40f9-a6a9-c465a95054c7"
+      ],
+      "expected_citations": [
+        { "filename": "database_guide.txt", "page_number": 1 },
+        { "filename": "enterprise_arch.txt", "page_number": 1 }
+      ],
+      "answerable": true,
+      "expected_validation_behavior": "PASS",
+      "evaluation_notes": "Dual citation verification"
+    },
+    {
+      "case_id": "CASE-E05",
+      "dataset_version": "1.0.0",
+      "category": "citation_sensitive",
+      "question": "Which document verifies that PostgreSQL is an object-relational system?",
+      "expected_answer_facts": [
+        "database_guide.txt"
+      ],
+      "relevant_document_ids": ["ac680340-c135-4fb9-a092-48e9681569de"],
+      "relevant_chunk_ids": ["acf57f4c-104c-40bd-aa65-9ec3026597ed"],
+      "expected_citations": [
+        { "filename": "database_guide.txt", "page_number": 1 }
+      ],
+      "answerable": true,
+      "expected_validation_behavior": "PASS",
+      "evaluation_notes": "Provenance verification for database model"
+    },
+    {
+      "case_id": "CASE-F01",
+      "dataset_version": "1.0.0",
+      "category": "unsupported_premise",
+      "question": "Why does the architecture specification mandate Redis instead of PostgreSQL for durable messaging?",
+      "expected_answer_facts": [
+        "The architecture specification does not mandate Redis",
+        "PostgreSQL is used for durable state persistence"
+      ],
+      "relevant_document_ids": ["9145ecc6-e8f8-4c8b-88b5-25b87b6b3015"],
+      "relevant_chunk_ids": ["d0b62a83-2ce4-40f9-a6a9-c465a95054c7"],
+      "expected_citations": [
+        { "filename": "enterprise_arch.txt", "page_number": 1 }
+      ],
+      "answerable": true,
+      "expected_validation_behavior": "PASS",
+      "evaluation_notes": "False premise correction regarding Redis vs PostgreSQL"
+    },
+    {
+      "case_id": "CASE-F02",
+      "dataset_version": "1.0.0",
+      "category": "unsupported_premise",
+      "question": "Why is Celery used to coordinate the Planner and Retrieval agents according to Section 1?",
+      "expected_answer_facts": [
+        "Celery is not used",
+        "LangGraph is used for coordinating Planner and Retrieval agents"
+      ],
+      "relevant_document_ids": ["9145ecc6-e8f8-4c8b-88b5-25b87b6b3015"],
+      "relevant_chunk_ids": ["d0b62a83-2ce4-40f9-a6a9-c465a95054c7"],
+      "expected_citations": [
+        { "filename": "enterprise_arch.txt", "page_number": 1 }
+      ],
+      "answerable": true,
+      "expected_validation_behavior": "PASS",
+      "evaluation_notes": "False premise correction regarding Celery vs LangGraph"
+    },
+    {
+      "case_id": "CASE-F03",
+      "dataset_version": "1.0.0",
+      "category": "unsupported_premise",
+      "question": "Given that PostgreSQL is a closed-source proprietary database, what licensing applies to it?",
+      "expected_answer_facts": [
+        "PostgreSQL is open-source, not closed-source or proprietary"
+      ],
+      "relevant_document_ids": ["ac680340-c135-4fb9-a092-48e9681569de"],
+      "relevant_chunk_ids": ["acf57f4c-104c-40bd-aa65-9ec3026597ed"],
+      "expected_citations": [
+        { "filename": "database_guide.txt", "page_number": 1 }
+      ],
+      "answerable": true,
+      "expected_validation_behavior": "PASS",
+      "evaluation_notes": "Refutation of false premise about proprietary licensing"
+    },
+    {
+      "case_id": "CASE-F04",
+      "dataset_version": "1.0.0",
+      "category": "unsupported_premise",
+      "question": "Why did Section 2 replace PostgreSQL persistence with SQLite in memory?",
+      "expected_answer_facts": [
+        "Section 2 does not use SQLite",
+        "High throughput messaging is managed via durable PostgreSQL state persistence"
+      ],
+      "relevant_document_ids": ["9145ecc6-e8f8-4c8b-88b5-25b87b6b3015"],
+      "relevant_chunk_ids": ["d0b62a83-2ce4-40f9-a6a9-c465a95054c7"],
+      "expected_citations": [
+        { "filename": "enterprise_arch.txt", "page_number": 1 }
+      ],
+      "answerable": true,
+      "expected_validation_behavior": "PASS",
+      "evaluation_notes": "Refutation of false premise about SQLite in Section 2"
+    },
+    {
+      "case_id": "CASE-F05",
+      "dataset_version": "1.0.0",
+      "category": "unsupported_premise",
+      "question": "Why does the platform prohibit multi-agent workflows from using a planner agent?",
+      "expected_answer_facts": [
+        "The platform does not prohibit planner agents",
+        "Planner is explicitly one of the four agents coordinated by LangGraph"
+      ],
+      "relevant_document_ids": ["9145ecc6-e8f8-4c8b-88b5-25b87b6b3015"],
+      "relevant_chunk_ids": ["d0b62a83-2ce4-40f9-a6a9-c465a95054c7"],
+      "expected_citations": [
+        { "filename": "enterprise_arch.txt", "page_number": 1 }
+      ],
+      "answerable": true,
+      "expected_validation_behavior": "PASS",
+      "evaluation_notes": "Refutation of false prohibition premise"
+    },
+    {
+      "case_id": "CASE-G01",
+      "dataset_version": "1.0.0",
+      "category": "retrieval_edge_case",
+      "question": "postgrsql object relatsnl systm",
+      "expected_answer_facts": [
+        "PostgreSQL is an open-source object-relational database system"
+      ],
+      "relevant_document_ids": ["ac680340-c135-4fb9-a092-48e9681569de"],
+      "relevant_chunk_ids": ["acf57f4c-104c-40bd-aa65-9ec3026597ed"],
+      "expected_citations": [
+        { "filename": "database_guide.txt", "page_number": 1 }
+      ],
+      "answerable": true,
+      "expected_validation_behavior": "PASS",
+      "evaluation_notes": "Heavy spelling typos robustness test"
+    },
+    {
+      "case_id": "CASE-G02",
+      "dataset_version": "1.0.0",
+      "category": "retrieval_edge_case",
+      "question": "LangGraph!??? Section 1???",
+      "expected_answer_facts": [
+        "LangGraph coordinates Planner, Retrieval, Researcher, and Responder"
+      ],
+      "relevant_document_ids": ["9145ecc6-e8f8-4c8b-88b5-25b87b6b3015"],
+      "relevant_chunk_ids": ["d0b62a83-2ce4-40f9-a6a9-c465a95054c7"],
+      "expected_citations": [
+        { "filename": "enterprise_arch.txt", "page_number": 1 }
+      ],
+      "answerable": true,
+      "expected_validation_behavior": "PASS",
+      "evaluation_notes": "Excessive punctuation and non-alphanumeric characters"
+    },
+    {
+      "case_id": "CASE-G03",
+      "dataset_version": "1.0.0",
+      "category": "retrieval_edge_case",
+      "question": "0d57bb53",
+      "expected_answer_facts": [
+        "Enterprise Architecture Specification"
+      ],
+      "relevant_document_ids": ["9145ecc6-e8f8-4c8b-88b5-25b87b6b3015"],
+      "relevant_chunk_ids": ["d0b62a83-2ce4-40f9-a6a9-c465a95054c7"],
+      "expected_citations": [
+        { "filename": "enterprise_arch.txt", "page_number": 1 }
+      ],
+      "answerable": true,
+      "expected_validation_behavior": "PASS",
+      "evaluation_notes": "Exact hash code identifier query"
+    },
+    {
+      "case_id": "CASE-G04",
+      "dataset_version": "1.0.0",
+      "category": "retrieval_edge_case",
+      "question": "What is the detailed specification regarding how the system uses LangGraph for coordinating Planner, Retrieval, Researcher, and Responder agents and high throughput messaging is managed via durable PostgreSQL state persistence in modern enterprise architectures?",
+      "expected_answer_facts": [
+        "LangGraph coordinates Planner, Retrieval, Researcher, and Responder",
+        "PostgreSQL manages high throughput messaging"
+      ],
+      "relevant_document_ids": ["9145ecc6-e8f8-4c8b-88b5-25b87b6b3015"],
+      "relevant_chunk_ids": ["d0b62a83-2ce4-40f9-a6a9-c465a95054c7"],
+      "expected_citations": [
+        { "filename": "enterprise_arch.txt", "page_number": 1 }
+      ],
+      "answerable": true,
+      "expected_validation_behavior": "PASS",
+      "evaluation_notes": "Extremely verbose query matching near-entire chunk text"
+    }
+  ]
+}

@@ -14,6 +14,7 @@ from fastapi.responses import JSONResponse
 from backend.app.api.routes.analytics import router as analytics_router
 from backend.app.api.routes.approvals import router as approvals_router
 from backend.app.api.routes.documents import router as documents_router
+from backend.app.api.routes.evaluation import router as evaluation_router
 from backend.app.api.routes.health import router as health_router, get_readiness
 from backend.app.api.routes.workflow import router as workflow_router
 from backend.app.core.config import get_settings
@@ -127,6 +128,7 @@ def create_app() -> FastAPI:
     app.include_router(documents_router, prefix=api_v1_prefix)
     app.include_router(analytics_router, prefix=api_v1_prefix)
     app.include_router(approvals_router, prefix=api_v1_prefix)
+    app.include_router(evaluation_router, prefix=api_v1_prefix)
 
     # Root diagnostic and readiness endpoints
     @app.get("/", tags=["Root"])

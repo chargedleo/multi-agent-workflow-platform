@@ -11,12 +11,12 @@ An enterprise-ready **Multi-Agent AI Workflow Automation Platform** that decompo
 
 ---
 
-## Current Status: Milestone 8 — Production Hardening & Operational Observability
+## Current Status: Milestone 9A — Evaluation Engine & Deterministic Benchmarking
 
-**Milestone 8** hardens the entire multi-agent platform into a reliable, observable, resilient, and production-ready system:
+**Milestone 9A** establishes a reproducible, offline-capable evaluation harness measuring retrieval performance, citation provenance, atomic fact coverage, and guardrail accuracy without requiring external paid LLM APIs:
 
 ```text
-User / Orchestrator / Load Balancer
+User / Orchestrator / Evaluation Client
     ↓
 React Production Frontend (Nginx Reverse Proxy, Port 5173)
     ├── ErrorBoundary Resilience & Graceful Fallback UI
@@ -25,38 +25,44 @@ React Production Frontend (Nginx Reverse Proxy, Port 5173)
     ↓
 FastAPI Backend (Port 8000)
     ├── Request Correlation Middleware (X-Request-ID propagation & logging)
-    ├── Probes: Liveness (/api/v1/health/live) & Readiness (/api/v1/health/ready, HTTP 503 on DB disconnect)
-    ├── Production Exception Masking (Sanitized 500s with correlated request IDs)
-    ├── Sensitive Log Sanitization (Masks passwords, bearer tokens, API keys, Postgres URLs)
-    ├── Configurable Timeouts (LLM, Workflow execution, DB pools)
-    └── Bounded Connection Pools & Leak-Free AsyncPostgresSaver Checkpointer Lifecycle
+    ├── Probes: Liveness (/api/v1/health/live) & Readiness (/api/v1/health/ready)
+    ├── Production Exception Masking & Sensitive Log Sanitization
+    └── Evaluation Engine REST APIs (/api/v1/evaluations)
+        ├── Start Benchmark (/api/v1/evaluations, 201 Created)
+        ├── Run Inspection & Per-Case Results (/results)
+        ├── Standalone Machine-Readable Report (/report)
+        └── Automated Run Comparison & Regression Detection (/compare)
     ↓
-LangGraph Multi-Agent Engine & PostgreSQL 16 Persistence
-    ├── 6 Specialized Agents (Planner → Retrieval → Analytics → Researcher → Responder → Validation)
-    ├── Native FAISS 1.15.1 Vector Search & Grounded Citations
-    ├── MCP PostgreSQL Analytics Tooling
-    └── Durable Human-in-the-Loop Checkpoints (Survives container restarts)
+Controlled Evaluation Runner (Bounded Concurrency & Per-Case Timeouts)
+    ├── Versioned Grounded Fixture (benchmark_v1.json, 35 Cases across 7 Categories)
+    ├── Deterministic Metrics: Recall@k, Precision@k, HitRate@k, MRR, MAP, Latency
+    ├── Citation Integrity: Presence, Identifiers, Source/Page Validity, Attribution
+    ├── Answer Quality: Normalized Fact Matching, Abstention Accuracy
+    └── Guardrails Assessment: Confusion Matrix, TPR, FPR, FNR, Accuracy
+    ↓
+PostgreSQL 16 Persistence (Alembic 006)
+    ├── evaluation_runs (Run metadata, snapshots, macro summaries)
+    └── evaluation_case_results (Per-case metric results, timings, safe errors)
 ```
 
-### Capabilities Delivered in Milestone 8:
-- **Liveness & Readiness Probes (`/health/live`, `/health/ready`)**:
-  - Distinct endpoints for container orchestrators (Kubernetes / Docker Compose).
-  - Readiness probe actively validates PostgreSQL connectivity and LangGraph checkpointer health, returning HTTP 503 Service Unavailable when dependencies are unreachable.
-- **Request Correlation (`X-Request-ID`)**:
-  - Automatically generates or propagates incoming `X-Request-ID` across HTTP response headers, ASGI state, and all structured log outputs (`[req:<id>] [run:<id>]`).
-- **Secrets & Log Sanitization**:
-  - Regex-based masking protects logs from leaking database passwords, bearer tokens, API keys, and LLM credentials.
-  - Production environment mode (`APP_ENV=production`) masks unhandled 500 errors to avoid exposing internal stack traces.
-- **Engine Reliability & Lifecycle Controls**:
-  - `pool_pre_ping=True` and configurable connection timeouts (`DB_POOL_TIMEOUT`, `CHECKPOINTER_POOL_TIMEOUT`).
-  - Thread-safe, leak-free `AsyncPostgresSaver` checkpointer lifecycle with guaranteed connection pool disposal on startup failures or shutdown.
-- **Configurable Execution Timeouts**:
-  - `WORKFLOW_TIMEOUT_SECONDS` (180s default) enforces bounded LangGraph execution; `LLM_TIMEOUT` (60s default) bounds external model inference.
-- **Frontend Production Hardening**:
-  - Production React build served via Nginx with relative reverse proxying (`/api/v1`), removing localhost coupling.
-  - Root `ErrorBoundary` gracefully catches unhandled UI errors.
-- **124 Automated Tests**:
-  - 100% test pass rate across host environment and Docker container, validating all M1–M8 capabilities without external paid APIs.
+### Capabilities Delivered in Milestone 9A:
+- **Versioned Ground-Truth Benchmark Fixture (`benchmark_v1.json`)**:
+  - 35 grounded, verified test cases across 7 operational categories: `answerable` (7), `multi_hop` (5), `unanswerable` (5), `ambiguous` (4), `citation_sensitive` (5), `unsupported_premise` (5), and `retrieval_edge_case` (4).
+  - SHA256 integrity verification upon load with strict schema and category validation.
+- **Deterministic Metrics Engine**:
+  - **Retrieval**: Recall@1/3/5 (with undefined denominator safety for unanswerable queries), Precision@1/3/5, Hit Rate@1/3/5, MRR, MAP, and latency profiling.
+  - **Citation Integrity**: Citation presence, identifier validity, source reference validity (against retrieved docs), page reference validity, and attribution matching.
+  - **Answer Quality**: Normalized key-term fact matching, missing fact tracking, and correct abstention accuracy.
+  - **Guardrail Evaluation**: Validation status matching, confusion matrix (TP, FP, TN, FN), and calculated TPR/FPR/FNR rates.
+- **Controlled Evaluation Runner**:
+  - Dual operational modes: `METRIC_ONLY` (sub-second offline fixture simulation) and `INTEGRATION` (calls live `RetrievalService` and native FAISS index).
+  - Concurrency bounding via `asyncio.Semaphore` and per-case timeout isolation via `asyncio.wait_for`.
+- **Database Persistence & Migration 006**:
+  - PostgreSQL tables `evaluation_runs` and `evaluation_case_results` with foreign keys and cascade cleanup.
+- **Evaluation REST APIs & Run Comparison**:
+  - Full suite of endpoints for starting evaluations, listing datasets, inspecting runs, querying case results, exporting standalone JSON reports, and calculating metric deltas (`compare`) with regression detection.
+- **Comprehensive Test Suite (172 passing tests)**:
+  - 48 dedicated evaluation tests covering schemas, loaders, metrics, runners, and REST APIs, alongside all 124 existing M1–M8 regression tests.
 
 ---
 
