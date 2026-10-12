@@ -71,7 +71,6 @@ export function WorkflowTable({
         {/* Search input form */}
         <form className="search-form" onSubmit={handleSearchSubmit}>
           <div className="search-input-wrapper">
-            <span className="search-icon" aria-hidden="true">🔍</span>
             <input
               type="text"
               className="search-input"
@@ -120,12 +119,12 @@ export function WorkflowTable({
           </div>
 
           <button
-            className="btn-refresh"
+            className="btn-text-action"
             onClick={onRefresh}
             disabled={isLoading}
             title="Refresh runs"
           >
-            {isLoading ? '↻ Refreshing...' : '↻ Refresh'}
+            {isLoading ? 'Refreshing...' : 'Refresh'}
           </button>
         </div>
       </div>
@@ -221,25 +220,25 @@ export function WorkflowTable({
                     <td className="duration-cell">{durationText}</td>
                     <td>
                       {run.validation_status ? (
-                        <span className={`status-badge status-${run.validation_status.toLowerCase()} status-badge-sm`}>
+                        <span className={`status-label status-val-${run.validation_status.toLowerCase()}`}>
                           {run.validation_status}
                         </span>
                       ) : (
-                        <span className="text-muted" style={{ fontSize: '0.75rem' }}>—</span>
+                        <span className="text-muted" style={{ fontSize: '0.85rem' }}>—</span>
                       )}
                     </td>
                     <td>
                       {run.approval_status ? (
-                        <span className={`status-badge status-${run.approval_status.toLowerCase()} status-badge-sm`}>
+                        <span className={`status-label status-appr-${run.approval_status.toLowerCase()}`}>
                           {run.approval_status}
                         </span>
                       ) : (
-                        <span className="text-muted" style={{ fontSize: '0.75rem' }}>NONE</span>
+                        <span className="text-muted" style={{ fontSize: '0.85rem' }}>None</span>
                       )}
                     </td>
                     <td style={{ textAlign: 'center' }}>
                       <button
-                        className="btn-table-action"
+                        className="btn-text-action"
                         onClick={(e) => {
                           e.stopPropagation();
                           onSelectRun && onSelectRun(runId);

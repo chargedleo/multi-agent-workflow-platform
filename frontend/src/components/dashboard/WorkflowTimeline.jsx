@@ -2,22 +2,21 @@ import React, { useState } from 'react';
 
 /**
  * Stage definition for the multi-agent orchestration architecture.
+ * Clean, restrained text without decorative emoji icons.
  */
 const PIPELINE_STAGES = [
   {
     id: 'planner',
     agentName: 'planner',
     label: 'Planner',
-    role: 'Strategic Decomposition',
-    icon: '📋',
+    role: 'Decomposition',
     description: 'Decomposes query into execution strategy and assigns agent sub-tasks.',
   },
   {
     id: 'document_retrieval',
     agentName: 'document_retrieval',
     label: 'Retrieval',
-    role: 'FAISS Knowledge RAG',
-    icon: '📚',
+    role: 'Vector Search',
     description: 'Performs semantic vector search across ingested documents via FAISS.',
   },
   {
@@ -25,47 +24,41 @@ const PIPELINE_STAGES = [
     agentName: 'data_analysis',
     label: 'Data Analysis',
     role: 'MCP Analytics',
-    icon: '📈',
     description: 'Executes verified analytics queries against PostgreSQL through MCP tools.',
   },
   {
     id: 'researcher',
     agentName: 'researcher',
     label: 'Researcher',
-    role: 'Context Synthesis',
-    icon: '🔍',
+    role: 'Synthesis',
     description: 'Synthesizes domain evidence, retrieved chunks, and quantitative trends.',
   },
   {
     id: 'responder',
     agentName: 'responder',
     label: 'Responder',
-    role: 'Draft Formulation',
-    icon: '✨',
+    role: 'Formulation',
     description: 'Compiles structured executive summary, key points, and citation references.',
   },
   {
     id: 'validation',
     agentName: 'validation',
     label: 'Validation',
-    role: 'Guardrails Evaluation',
-    icon: '🛡️',
+    role: 'Guardrails',
     description: 'Validates claims, numerical bounds, citations, and hallucination guardrails.',
   },
   {
     id: 'human_approval',
     agentName: 'human_approval',
     label: 'Approval Gate',
-    role: 'HITL Review & Control',
-    icon: '👤',
+    role: 'Human Review',
     description: 'Suspends execution for human oversight, accepting Approve / Reject / Changes.',
   },
   {
     id: 'finalization',
     agentName: 'finalization',
     label: 'Verified Output',
-    role: 'Durable Completion',
-    icon: '📊',
+    role: 'Completion',
     description: 'Final verified release persisted in PostgreSQL run record.',
   },
 ];
@@ -85,7 +78,6 @@ export function WorkflowTimeline({ run, interactive = true }) {
 
   // Helper to determine status and step data for each stage
   const getStageState = (stage) => {
-    // 1. Direct agent step match from run.steps
     const step = steps.find((s) => s.agent_name === stage.agentName);
 
     // Human Approval special gate
@@ -129,13 +121,11 @@ export function WorkflowTimeline({ run, interactive = true }) {
       }
     }
 
-    // If run is completed, previous steps that weren't recorded were either fast or bypassed
     if (isCompleted) {
       return { status: 'completed', duration: null, step: null };
     }
 
     if (isWaitingApproval) {
-      // stages before approval gate are completed
       const approvalIndex = PIPELINE_STAGES.findIndex((s) => s.id === 'human_approval');
       const currentIndex = PIPELINE_STAGES.findIndex((s) => s.id === stage.id);
       if (currentIndex < approvalIndex) {
@@ -173,7 +163,7 @@ export function WorkflowTimeline({ run, interactive = true }) {
                 role={interactive ? 'button' : undefined}
                 tabIndex={interactive ? 0 : undefined}
               >
-                <div className="timeline-node-icon">{stage.icon}</div>
+                <span className="timeline-node-step">{idx + 1}</span>
                 <div className="timeline-node-content">
                   <span className="timeline-node-label">{stage.label}</span>
                   <span className="timeline-node-role">{stage.role}</span>
@@ -198,9 +188,8 @@ export function WorkflowTimeline({ run, interactive = true }) {
         <div className="timeline-stage-detail-card">
           <div className="stage-detail-header">
             <div className="stage-detail-title-group">
-              <span className="stage-detail-icon">{selectedStage.stage.icon}</span>
               <div>
-                <h4 className="stage-detail-title">{selectedStage.stage.label} ({selectedStage.stage.role})</h4>
+                <h4 className="stage-detail-title">{selectedStage.stage.label} — {selectedStage.stage.role}</h4>
                 <p className="stage-detail-desc">{selectedStage.stage.description}</p>
               </div>
             </div>
@@ -232,7 +221,7 @@ export function WorkflowTimeline({ run, interactive = true }) {
 
             {selectedStage.step?.output_data && (
               <details style={{ marginTop: '0.5rem' }}>
-                <summary style={{ cursor: 'pointer', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                <summary style={{ cursor: 'pointer', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
                   View Step Output Data
                 </summary>
                 <pre className="json-preview" style={{ maxHeight: '180px', marginTop: '0.35rem' }}>

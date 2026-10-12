@@ -50,11 +50,10 @@ export function ApprovalCard({ runId, result, onDecisionSubmitted }) {
     <div className="approval-card">
       <div className="approval-header">
         <div className="approval-title-group">
-          <span className="approval-gate-icon">🛡️</span>
           <div>
-            <h3 className="approval-title">Human-in-the-Loop Review Gate</h3>
+            <h3 className="approval-title">Human-in-the-Loop Review</h3>
             <p className="approval-subtitle">
-              Workflow suspended at approval checkpoint. Review the synthesized output and guardrail metrics before releasing to production.
+              Workflow suspended at approval checkpoint. Review the synthesized output and guardrail metrics before releasing.
             </p>
           </div>
         </div>
@@ -138,31 +137,28 @@ export function ApprovalCard({ runId, result, onDecisionSubmitted }) {
       <div className="approval-actions-bar">
         <button
           type="button"
-          className="btn-decision btn-approve"
+          className="btn-primary"
           onClick={() => handleDecision('APPROVE')}
           disabled={isSubmitting}
         >
-          <span className="btn-icon">✓</span>
           {isSubmitting ? 'Resuming...' : 'Approve & Finalize'}
         </button>
 
         <button
           type="button"
-          className="btn-decision btn-changes"
+          className="btn-secondary"
           onClick={() => handleDecision('CHANGES_REQUESTED')}
           disabled={isSubmitting}
         >
-          <span className="btn-icon">↺</span>
           {isSubmitting ? 'Resuming...' : 'Request Changes'}
         </button>
 
         <button
           type="button"
-          className="btn-decision btn-reject"
+          className="btn-danger-outline"
           onClick={() => handleDecision('REJECT')}
           disabled={isSubmitting}
         >
-          <span className="btn-icon">✕</span>
           {isSubmitting ? 'Resuming...' : 'Reject Workflow'}
         </button>
       </div>

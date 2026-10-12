@@ -7,11 +7,11 @@ import React from 'react';
 export function PendingApprovals({ pendingApprovals = [], isLoading = false, onSelectApproval, onRefresh }) {
   if (isLoading && (!pendingApprovals || pendingApprovals.length === 0)) {
     return (
-      <div className="section-card pending-card">
+      <div className="section-container pending-section">
         <div className="pending-header">
-          <div className="pending-title-group">
-            <span className="pending-icon">⏳</span>
-            <h3 className="section-title">Pending Human Approvals</h3>
+          <div>
+            <h2 className="dashboard-section-title">Pending Human Approvals</h2>
+            <p className="dashboard-section-subtitle">Workflows suspended at review gate</p>
           </div>
         </div>
         <p className="empty-subtext">Loading pending approval requests...</p>
@@ -20,89 +20,88 @@ export function PendingApprovals({ pendingApprovals = [], isLoading = false, onS
   }
 
   return (
-    <div className="section-card pending-card">
+    <div className="section-container pending-section">
       <div className="pending-header">
-        <div className="pending-title-group">
-          <span className="pending-icon">⏳</span>
-          <h3 className="section-title">Pending Human Approvals</h3>
-          <span className={`badge ${pendingApprovals.length > 0 ? 'badge-amber-pill' : 'badge-neutral'}`}>
-            {pendingApprovals.length} Waiting
-          </span>
+        <div>
+          <h2 className="dashboard-section-title">Pending Human Approvals</h2>
+          <p className="dashboard-section-subtitle">
+            {pendingApprovals.length} {pendingApprovals.length === 1 ? 'workflow awaiting decision' : 'workflows awaiting decision'}
+          </p>
         </div>
         <button
           type="button"
-          className="btn-refresh"
+          className="btn-text-action"
           onClick={onRefresh}
           disabled={isLoading}
           title="Refresh pending approvals"
         >
-          {isLoading ? 'Refreshing...' : '↻ Refresh'}
+          {isLoading ? 'Refreshing...' : 'Refresh'}
         </button>
       </div>
 
       {pendingApprovals.length === 0 ? (
         <div className="pending-empty-state">
-          <span className="empty-icon">✓</span>
           <p className="empty-title">All Workflows Approved or Completed</p>
           <p className="empty-subtext">
             No workflows are currently paused at the human review checkpoint. Workflows executed with approval enabled will appear here for review.
           </p>
         </div>
       ) : (
-        <div className="pending-table-container">
-          <table className="pending-table">
+        <div className="table-responsive">
+          <table className="workflow-runs-table">
             <thead>
               <tr>
-                <th>Run ID</th>
+                <th style={{ width: '130px' }}>Run ID</th>
                 <th>Query</th>
-                <th>Validation</th>
-                <th>Revision</th>
-                <th>Requested At</th>
-                <th>Action</th>
+                <th style={{ width: '140px' }}>Validation</th>
+                <th style={{ width: '110px' }}>Revision</th>
+                <th style={{ width: '130px' }}>Requested At</th>
+                <th style={{ width: '110px', textAlign: 'center' }}>Action</th>
               </tr>
             </thead>
             <tbody>
               {pendingApprovals.map((item) => {
                 const runId = item.run_id;
-                const reqId = item.request_id || item.run_id;
                 const valStatus = (item.validation_status || 'pass').toLowerCase();
                 const formattedTime = item.created_at
                   ? new Date(item.created_at).toLocaleTimeString()
                   : 'Just now';
 
                 return (
-                  <tr key={runId} className="pending-row">
+                  <tr key={runId} className="workflow-run-row">
                     <td className="pending-id-cell">
-                      <span className="mono-badge" title={runId}>
-                        {runId ? runId.slice(0, 8) + '...' : 'N/A'}
+                      <span className="mono-subtext" title={runId}>
+                        {runId ? runId.slice(0, 10) + '...' : 'N/A'}
                       </span>
                     </td>
                     <td className="pending-query-cell" title={item.query}>
-                      {item.query
-                        ? item.query.length > 60
-                          ? item.query.slice(0, 60) + '...'
-                          : item.query
-                        : 'No query text'}
+                      <span className="query-text-primary">
+                        {item.query
+                          ? item.query.length > 70
+                            ? item.query.slice(0, 70) + '...'
+                            : item.query
+                          : 'No query text'}
+                      </span>
                     </td>
                     <td>
-                      <span className={`badge badge-val-${valStatus}`}>
+                      <span className={`status-label status-val-${valStatus}`}>
                         {item.validation_status || 'PASS'}
                         {item.validation_score != null ? ` (${Math.round(item.validation_score * 100)}%)` : ''}
                       </span>
                     </td>
                     <td>
-                      <span className="badge badge-tech">
+                      <span className="text-secondary" style={{ fontSize: '0.85rem' }}>
                         Rev {item.approval_revision ?? 1}
                       </span>
                     </td>
-                    <td className="pending-time-cell">{formattedTime}</td>
-                    <td>
+                    <td className="timestamp-cell">{formattedTime}</td>
+                    <td style={{ textAlign: 'center' }}>
                       <button
                         type="button"
-                        className="btn-review-action"
+                        className="btn-text-action"
                         onClick={() => onSelectApproval(runId)}
                       >
-                        Inspect & Decide →
+                        Review
                       </button>
                     </td>
                   </tr>

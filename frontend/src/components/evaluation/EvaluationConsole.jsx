@@ -155,33 +155,33 @@ export function EvaluationConsole() {
           className={`eval-subnav-btn ${activeTab === 'overview' ? 'active' : ''}`}
           onClick={() => setActiveTab('overview')}
         >
-          <span>🚀</span> Overview & Launch
+          Overview & Launch
         </button>
         <button
           className={`eval-subnav-btn ${activeTab === 'history' ? 'active' : ''}`}
           onClick={() => setActiveTab('history')}
         >
-          <span>📋</span> Evaluation History ({totalRuns})
+          Evaluation History ({totalRuns})
         </button>
         <button
           className={`eval-subnav-btn ${activeTab === 'details' ? 'active' : ''}`}
           onClick={() => setActiveTab('details')}
           disabled={!selectedRun}
         >
-          <span>📊</span> Run Details {selectedRun ? `(${selectedRun.id.slice(0, 6)}...)` : ''}
+          Run Details {selectedRun ? `(${selectedRun.id.slice(0, 6)}...)` : ''}
         </button>
         <button
           className={`eval-subnav-btn ${activeTab === 'compare' ? 'active' : ''}`}
           onClick={() => setActiveTab('compare')}
         >
-          <span>⚖️</span> Compare Runs
+          Compare Runs
         </button>
         <button
           className={`eval-subnav-btn ${activeTab === 'report' ? 'active' : ''}`}
           onClick={() => setActiveTab('report')}
           disabled={!reportData && !selectedRun}
         >
-          <span>📄</span> JSON Report
+          JSON Report
         </button>
       </nav>
 
@@ -246,7 +246,7 @@ export function EvaluationConsole() {
             <div className="eval-panel">
               <div className="eval-panel-header">
                 <div className="eval-panel-title">
-                  <span>🕒</span> Most Recent Evaluation Runs
+                  Most Recent Evaluation Runs
                 </div>
                 <button
                   className="eval-btn eval-btn-secondary eval-btn-sm"
@@ -312,13 +312,13 @@ export function EvaluationConsole() {
         <div className="eval-panel">
           <div className="eval-panel-header">
             <div className="eval-panel-title">
-              <span>📋</span> Complete Evaluation Run History
+              Complete Evaluation Run History
             </div>
             <button
               className="eval-btn eval-btn-secondary eval-btn-sm"
               onClick={() => loadRuns(page, pageSize)}
             >
-              🔄 Refresh
+              Refresh
             </button>
           </div>
 
@@ -328,7 +328,6 @@ export function EvaluationConsole() {
             </div>
           ) : runs.length === 0 ? (
             <div className="eval-empty">
-              <span className="eval-empty-icon">📭</span>
               <p>No evaluation runs recorded yet.</p>
               <button className="eval-btn" onClick={() => setActiveTab('overview')}>
                 Launch First Benchmark
@@ -448,7 +447,7 @@ export function EvaluationConsole() {
         <div className="eval-panel">
           <div className="eval-panel-header">
             <div className="eval-panel-title">
-              <span>📄</span> Standalone Evaluation JSON Report
+              Standalone Evaluation JSON Report
             </div>
             {reportData && (
               <div className="eval-panel-actions">
@@ -468,7 +467,7 @@ export function EvaluationConsole() {
                     URL.revokeObjectURL(url);
                   }}
                 >
-                  ⬇ Download JSON Report
+                  Download JSON Report
                 </button>
               </div>
             )}

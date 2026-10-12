@@ -72,7 +72,6 @@ export function EvaluationRunDetails({
     return (
       <div className="eval-panel">
         <div className="eval-empty">
-          <span className="eval-empty-icon">🔍</span>
           <p>No evaluation run selected. Choose a run from history.</p>
           <button className="eval-btn eval-btn-secondary" onClick={onBackToHistory}>
             View Run History
@@ -122,26 +121,26 @@ export function EvaluationRunDetails({
               className="eval-btn eval-btn-secondary eval-btn-sm"
               onClick={onBackToHistory}
             >
-              ← Back to History
+              Back to History
             </button>
             <button
               className="eval-btn eval-btn-secondary eval-btn-sm"
               onClick={() => onCompareRequest && onCompareRequest(run)}
             >
-              ⚖️ Compare Run
+              Compare Run
             </button>
             <button
               className="eval-btn eval-btn-secondary eval-btn-sm"
               onClick={() => onViewReportRequest && onViewReportRequest(run)}
             >
-              📄 View Raw JSON
+              View Raw JSON
             </button>
             <button
               className="eval-btn eval-btn-sm"
               onClick={handleDownloadReport}
               disabled={isDownloadingReport}
             >
-              {isDownloadingReport ? 'Downloading...' : '⬇ Download Report'}
+              {isDownloadingReport ? 'Downloading...' : 'Download Report'}
             </button>
           </div>
         </div>
@@ -157,7 +156,7 @@ export function EvaluationRunDetails({
       {/* Aggregate Metric Groups */}
       <div className="eval-panel">
         <div className="eval-panel-title">
-          <span>📊</span> Deterministic Performance Summary
+          Deterministic Performance Summary
         </div>
 
         {/* 1. Retrieval Metrics */}
@@ -233,7 +232,7 @@ export function EvaluationRunDetails({
       <div className="eval-panel">
         <div className="eval-panel-header">
           <div className="eval-panel-title">
-            <span>🔬</span> Benchmark Case Diagnostics ({totalCases} Cases)
+            Benchmark Case Diagnostics ({totalCases} Cases)
           </div>
           <div className="eval-panel-actions">
             <select
@@ -362,7 +361,7 @@ export function EvaluationRunDetails({
                               {ans.matched_facts && ans.matched_facts.length > 0 && (
                                 <div className="eval-case-detail-block">
                                   <span className="eval-case-detail-label" style={{ color: 'var(--success)' }}>
-                                    ✓ Matched Ground-Truth Facts ({ans.matched_facts.length})
+                                    Matched Ground-Truth Facts ({ans.matched_facts.length})
                                   </span>
                                   <ul style={{ paddingLeft: '1.25rem', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                                     {ans.matched_facts.map((f, idx) => (
@@ -375,7 +374,7 @@ export function EvaluationRunDetails({
                               {ans.missing_facts && ans.missing_facts.length > 0 && (
                                 <div className="eval-case-detail-block">
                                   <span className="eval-case-detail-label" style={{ color: 'var(--danger)' }}>
-                                    ✗ Missing Expected Facts ({ans.missing_facts.length})
+                                    Missing Expected Facts ({ans.missing_facts.length})
                                   </span>
                                   <ul style={{ paddingLeft: '1.25rem', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                                     {ans.missing_facts.map((f, idx) => (

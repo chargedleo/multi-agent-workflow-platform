@@ -14,7 +14,7 @@ export function WorkflowHistory({ runs, isLoading, onSelectRun, onRefresh }) {
           disabled={isLoading}
           title="Refresh run history"
         >
-          {isLoading ? 'Refreshing...' : '↻ Refresh History'}
+          {isLoading ? 'Refreshing...' : 'Refresh History'}
         </button>
       </div>
 

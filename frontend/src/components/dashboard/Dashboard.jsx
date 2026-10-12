@@ -40,21 +40,20 @@ export function Dashboard({
       {pendingApprovals && pendingApprovals.length > 0 && (
         <div className="pending-approvals-alert-banner">
           <div className="alert-banner-left">
-            <span className="alert-banner-icon" aria-hidden="true">⚠️</span>
             <div>
-              <h4 className="alert-banner-title">
+              <h3 className="alert-banner-title">
                 {pendingApprovals.length} {pendingApprovals.length === 1 ? 'Workflow Run Requires' : 'Workflow Runs Require'} Human Review
-              </h4>
+              </h3>
               <p className="alert-banner-desc">
-                High-impact workflows are safely suspended awaiting reviewer authorization before verified final release.
+                Workflows suspended at the checkpoint awaiting reviewer authorization.
               </p>
             </div>
           </div>
           <button
-            className="btn-review-now"
+            className="btn-primary"
             onClick={onNavigateToApprovals}
           >
-            Review Pending Queue ({pendingApprovals.length}) →
+            Review Pending Queue ({pendingApprovals.length})
           </button>
         </div>
       )}

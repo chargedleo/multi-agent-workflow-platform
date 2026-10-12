@@ -49,31 +49,31 @@ export function RunDetailModal({ run, onClose, onApprovalDone }) {
             className={`modal-tab ${activeTab === 'all' ? 'active' : ''}`}
             onClick={() => setActiveTab('all')}
           >
-            📋 Comprehensive View
+            Comprehensive View
           </button>
           <button
             className={`modal-tab ${activeTab === 'timeline' ? 'active' : ''}`}
             onClick={() => setActiveTab('timeline')}
           >
-            ⚡ Execution Stages ({stepsCount})
+            Execution Stages ({stepsCount})
           </button>
           <button
             className={`modal-tab ${activeTab === 'results' ? 'active' : ''}`}
             onClick={() => setActiveTab('results')}
           >
-            ✨ Output & Synthesis
+            Output & Synthesis
           </button>
           <button
             className={`modal-tab ${activeTab === 'guardrails' ? 'active' : ''}`}
             onClick={() => setActiveTab('guardrails')}
           >
-            🛡️ Guardrails & MCP
+            Guardrails & MCP
           </button>
           <button
             className={`modal-tab ${activeTab === 'approvals' ? 'active' : ''}`}
             onClick={() => setActiveTab('approvals')}
           >
-            👤 HITL Approval ({approvalsCount})
+            HITL Approval ({approvalsCount})
           </button>
         </div>
 
@@ -245,7 +245,6 @@ export function RunDetailModal({ run, onClose, onApprovalDone }) {
                 </div>
                 {analysis.summary && (
                   <div className="analysis-summary-box" style={{ marginBottom: '0.75rem' }}>
-                    <span className="analysis-icon">📊</span>
                     <span>{analysis.summary}</span>
                   </div>
                 )}
@@ -309,7 +308,6 @@ export function RunDetailModal({ run, onClose, onApprovalDone }) {
                   </div>
                 ) : (
                   <div className="validation-clean-box">
-                    <span className="validation-clean-icon">✅</span>
                     <span>All automated guardrails passed: Response schema, numerical consistency, citation provenance, tool outputs, and claim assertions verified.</span>
                   </div>
                 )}
@@ -326,7 +324,6 @@ export function RunDetailModal({ run, onClose, onApprovalDone }) {
                 {(run.sources || run.metadata?.sources || []).map((src, idx) => (
                   <div key={idx} className="source-card">
                     <div className="source-card-header">
-                      <span className="source-icon">📄</span>
                       <strong className="source-doc-name">{src.filename || 'Document'}</strong>
                       {src.page_number && <span className="source-page-badge">Page {src.page_number}</span>}
                       {src.similarity_score != null && (

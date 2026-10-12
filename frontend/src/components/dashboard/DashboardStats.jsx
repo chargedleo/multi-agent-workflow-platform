@@ -1,28 +1,24 @@
 import React from 'react';
 
 /**
- * Metric card displaying aggregated operational indicators.
+ * Clean analytical metric indicator without decorative boxes or icons.
  */
-function MetricCard({ title, value, subtitle, icon, variant = 'default', badgeText }) {
+function MetricItem({ title, value, subtitle, badgeText }) {
   return (
-    <div className={`metric-card metric-card-${variant}`}>
-      <div className="metric-card-header">
-        <span className="metric-card-title">{title}</span>
-        <span className="metric-card-icon">{icon}</span>
+    <div className="metric-stat-item">
+      <div className="metric-stat-value-row">
+        <div className="metric-stat-value">{value}</div>
+        {badgeText && <span className="metric-stat-badge">{badgeText}</span>}
       </div>
-      <div className="metric-card-body">
-        <div className="metric-card-value">{value}</div>
-        {badgeText && (
-          <span className="metric-card-badge">{badgeText}</span>
-        )}
-      </div>
-      {subtitle && <div className="metric-card-subtitle">{subtitle}</div>}
+      <div className="metric-stat-label">{title}</div>
+      {subtitle && <div className="metric-stat-subtitle">{subtitle}</div>}
     </div>
   );
 }
 
 /**
- * Executive Metrics Bar showing real-time PostgreSQL operational statistics.
+ * Analytical Metrics Summary bar showing real-time PostgreSQL operational statistics.
+ * Formatted as a unified, clean horizontal analytical report rather than separate boxed cards.
  */
 export function DashboardStats({ stats, isLoading, onRefresh }) {
   const s = stats || {
@@ -40,77 +36,63 @@ export function DashboardStats({ stats, isLoading, onRefresh }) {
     : '—';
 
   return (
-    <div className="dashboard-stats-container">
+    <section className="dashboard-stats-section">
       <div className="dashboard-stats-header">
-        <div className="stats-header-left">
-          <h3 className="dashboard-section-title">Executive Workflow Metrics</h3>
-          <span className="dashboard-section-subtitle">Real-time metrics aggregated across PostgreSQL run history</span>
+        <div>
+          <h2 className="dashboard-section-title">Workflow Metrics</h2>
+          <p className="dashboard-section-subtitle">Real-time indicators aggregated across PostgreSQL run history</p>
         </div>
         {onRefresh && (
           <button
-            className="btn-stats-refresh"
+            className="btn-text-action"
             onClick={onRefresh}
             disabled={isLoading}
             title="Refresh metrics"
           >
-            {isLoading ? '↻ Refreshing...' : '↻ Refresh Metrics'}
+            {isLoading ? 'Refreshing...' : 'Refresh'}
           </button>
         )}
       </div>
 
-      <div className="dashboard-stats-grid">
-        <MetricCard
+      <div className="dashboard-metrics-summary">
+        <MetricItem
           title="Total Runs"
           value={s.total_runs.toLocaleString()}
-          subtitle="All recorded executions"
-          icon="⚡"
-          variant="primary"
+          subtitle="All recorded runs"
         />
-        <MetricCard
+        <MetricItem
           title="Active / Running"
           value={s.active_runs.toLocaleString()}
           subtitle="Processing in LangGraph"
-          icon="🔄"
-          variant={s.active_runs > 0 ? 'running' : 'default'}
         />
-        <MetricCard
+        <MetricItem
           title="Awaiting Approval"
           value={s.awaiting_approval.toLocaleString()}
           subtitle="Suspended at HITL gate"
-          icon="👤"
-          variant={s.awaiting_approval > 0 ? 'warning' : 'default'}
-          badgeText={s.awaiting_approval > 0 ? 'Action Needed' : undefined}
+          badgeText={s.awaiting_approval > 0 ? 'Action needed' : undefined}
         />
-        <MetricCard
+        <MetricItem
           title="Completed"
           value={s.completed_runs.toLocaleString()}
           subtitle={s.total_runs > 0 ? `${Math.round((s.completed_runs / s.total_runs) * 100)}% success rate` : 'Finished cleanly'}
-          icon="✓"
-          variant="success"
         />
-        <MetricCard
+        <MetricItem
           title="Failed"
           value={s.failed_runs.toLocaleString()}
-          subtitle="Guardrail or execution failure"
-          icon="✕"
-          variant={s.failed_runs > 0 ? 'danger' : 'default'}
+          subtitle="Execution errors"
         />
-        <MetricCard
-          title="Rejected / Cancelled"
+        <MetricItem
+          title="Rejected"
           value={s.rejected_runs.toLocaleString()}
           subtitle="Disapproved by reviewer"
-          icon="⊘"
-          variant={s.rejected_runs > 0 ? 'muted-danger' : 'default'}
         />
-        <MetricCard
-          title="Avg Duration"
+        <MetricItem
+          title="Average Duration"
           value={avgDurationText}
-          subtitle="Completed runs latency"
-          icon="⏱"
-          variant="info"
+          subtitle="Completed latency"
         />
       </div>
-    </div>
+    </section>
   );
 }
 

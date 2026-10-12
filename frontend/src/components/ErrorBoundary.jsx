@@ -35,8 +35,7 @@ export class ErrorBoundary extends React.Component {
       return (
         <div className="error-boundary-container" style={{ padding: '3rem 1.5rem', maxWidth: '650px', margin: '4rem auto' }}>
           <div className="card error-card" style={{ background: 'var(--bg-card, #ffffff)', border: '1px solid var(--border-color, #e5e5e5)', borderRadius: '8px', padding: '2rem', textAlign: 'center', boxShadow: 'var(--shadow-md)' }}>
-            <div style={{ fontSize: '2.5rem', marginBottom: '1rem', color: 'var(--text-primary)' }} aria-hidden="true">■</div>
-            <h2 style={{ fontSize: '1.4rem', fontWeight: '700', fontFamily: 'var(--font-serif)', color: 'var(--text-primary, #111111)', margin: '0 0 0.5rem 0' }}>
+            <h2 style={{ fontSize: '1.35rem', fontWeight: '600', letterSpacing: '-0.02em', fontFamily: 'var(--font-sans)', color: 'var(--text-primary, #111111)', margin: '0 0 0.5rem 0' }}>
               Something Went Wrong
             </h2>
             <p style={{ color: 'var(--text-secondary, #666666)', fontSize: '0.9rem', marginBottom: '1.5rem', lineHeight: '1.5' }}>

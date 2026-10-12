@@ -82,10 +82,10 @@
 
 .eval-stat-value {
   font-size: 2rem;
-  font-weight: 700;
+  font-weight: 600;
   color: #111111;
-  font-family: var(--font-serif);
-  letter-spacing: -0.025em;
+  font-family: var(--font-sans);
+  letter-spacing: -0.03em;
 }
 
 .eval-stat-subtext {
@@ -116,9 +116,10 @@
 }
 
 .eval-panel-title {
-  font-family: var(--font-serif);
-  font-size: 1.25rem;
-  font-weight: 700;
+  font-family: var(--font-sans);
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
   color: var(--text-primary);
   display: flex;
   align-items: center;

@@ -111,7 +111,6 @@ export function WorkflowResult({ result, onApprovalDone }) {
 
           {analysis_results.summary && (
             <div className="analysis-summary-box">
-              <span className="analysis-icon">📊</span>
               <span>{analysis_results.summary}</span>
             </div>
           )}
@@ -220,7 +219,6 @@ export function WorkflowResult({ result, onApprovalDone }) {
             </div>
           ) : (
             <div className="validation-clean-box">
-              <span className="validation-clean-icon">✅</span>
               <span>All automated guardrails passed: Response schema, numerical consistency, citation provenance, tool outputs, and claim assertions verified.</span>
             </div>
           )}
@@ -237,7 +235,6 @@ export function WorkflowResult({ result, onApprovalDone }) {
               <div key={idx} className="source-card">
                 <div className="source-card-header">
                   <div className="source-title-group">
-                    <span className="source-icon">📄</span>
                     <strong className="source-doc-name">{src.filename || 'Document'}</strong>
                     {src.page_number && (
                       <span className="source-page-badge">Page {src.page_number}</span>

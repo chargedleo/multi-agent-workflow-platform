@@ -73,7 +73,7 @@ export function EvaluationCompareView({ runs, initialBaselineRun, initialCompari
       <div className="eval-panel">
         <div className="eval-panel-header">
           <div className="eval-panel-title">
-            <span>⚖️</span> Compare Benchmark Evaluation Runs
+            Compare Benchmark Evaluation Runs
           </div>
         </div>
 
@@ -137,10 +137,7 @@ export function EvaluationCompareView({ runs, initialBaselineRun, initialCompari
                 <span>Calculating Metric Deltas...</span>
               </>
             ) : (
-              <>
-                <span>⚖️</span>
-                <span>Compare Selected Runs</span>
-              </>
+              <span>Compare Selected Runs</span>
             )}
           </button>
         </div>
@@ -152,9 +149,6 @@ export function EvaluationCompareView({ runs, initialBaselineRun, initialCompari
           {/* Verdict Banner */}
           <div className={`eval-verdict-banner ${getVerdictClass(comparisonReport.summary_verdict)}`}>
             <div>
-              <span style={{ fontSize: '1.1rem', marginRight: '0.5rem' }}>
-                {comparisonReport.summary_verdict === 'IMPROVED' ? '🎉' : comparisonReport.summary_verdict === 'REGRESSED' ? '⚠️' : '⚖️'}
-              </span>
               <span>Overall Verdict: <strong>{comparisonReport.summary_verdict}</strong></span>
             </div>
             <div style={{ fontSize: '0.8rem' }}>

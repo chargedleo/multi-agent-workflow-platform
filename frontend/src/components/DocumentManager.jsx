@@ -73,22 +73,22 @@ export function DocumentManager({ documents, isLoading, onRefresh }) {
             id="doc-file-input"
           />
           <label htmlFor="doc-file-input" className={`btn-primary ${isUploading ? 'disabled' : ''}`} style={{ cursor: isUploading ? 'not-allowed' : 'pointer' }}>
-            {isUploading ? 'Uploading & Indexing...' : '📄 Upload Document'}
+            {isUploading ? 'Uploading & Indexing...' : 'Upload Document'}
           </label>
           <button
-            className="refresh-btn"
+            className="btn-text-action"
             onClick={onRefresh}
             disabled={isLoading || isUploading}
             title="Refresh documents list"
           >
-            ↻
+            Refresh
           </button>
         </div>
       </div>
 
       {uploadSuccess && (
         <div className="success-banner" style={{ margin: '0.75rem 0' }}>
-          ✓ {uploadSuccess}
+          {uploadSuccess}
         </div>
       )}
 
@@ -108,7 +108,6 @@ export function DocumentManager({ documents, isLoading, onRefresh }) {
         </div>
       ) : documents.length === 0 ? (
         <div className="empty-state">
-          <div className="empty-icon">📁</div>
           <div className="empty-title">No Documents Ingested</div>
           <p className="empty-subtext">
             Upload your first reference document (PDF, TXT, or MD) to enable retrieval-grounded multi-agent reasoning.
@@ -137,7 +136,6 @@ export function DocumentManager({ documents, isLoading, onRefresh }) {
                   <tr key={doc.document_id}>
                     <td>
                       <div className="doc-name-cell">
-                        <span className="doc-icon">📄</span>
                         <strong title={doc.original_filename}>{doc.original_filename}</strong>
                       </div>
                     </td>

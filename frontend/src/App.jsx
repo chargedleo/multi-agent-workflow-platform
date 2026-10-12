@@ -259,18 +259,17 @@ export function App() {
       <header className="app-header">
         <div className="header-top">
           <div className="header-title-group">
-            <div className="logo-badge">M</div>
             <div>
               <h1 className="header-title">Multi-Agent AI Workflow Automation Platform</h1>
-              <span className="header-subtitle-text">
-                Autonomous LangGraph Orchestration • PostgreSQL Persistence • FAISS RAG • MCP Tools • HITL Control
-              </span>
+              <p className="header-subtitle-text">
+                Autonomous LangGraph orchestration, PostgreSQL persistence, FAISS retrieval, and human-in-the-loop control.
+              </p>
             </div>
           </div>
-          <div className="header-badges">
-            <span className="badge badge-milestone">Milestone 9B • Evaluation Console & Release</span>
-            <span className={`badge badge-status ${healthInfo.status !== 'healthy' ? 'disconnected' : ''}`}>
-              <span className="status-dot"></span>
+          <div className="header-meta">
+            <span className="header-meta-item">Milestone 9B</span>
+            <span className="header-meta-divider">/</span>
+            <span className={`header-health-status ${healthInfo.status !== 'healthy' ? 'disconnected' : ''}`}>
               API: {healthInfo.status}
             </span>
           </div>

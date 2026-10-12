@@ -78,7 +78,7 @@ export function EvaluationLaunchForm({ onRunStarted, activeRunningRun }) {
     <div className="eval-panel">
       <div className="eval-panel-header">
         <div className="eval-panel-title">
-          <span>🚀</span> Launch Benchmark Evaluation
+          Launch Benchmark Evaluation
         </div>
         {selectedMeta && (
           <div className="eval-panel-actions">
@@ -215,10 +215,7 @@ export function EvaluationLaunchForm({ onRunStarted, activeRunningRun }) {
                 <span>Evaluation in Progress ({activeRunningRun.id.slice(0, 8)})...</span>
               </>
             ) : (
-              <>
-                <span>▶</span>
-                <span>Execute Benchmark Run</span>
-              </>
+              <span>Execute Benchmark Run</span>
             )}
           </button>
         </div>
