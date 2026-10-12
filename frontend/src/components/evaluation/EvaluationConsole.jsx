@@ -257,18 +257,18 @@ export function EvaluationConsole() {
               </div>
 
               <div className="eval-table-container">
-                <table className="eval-table">
+                <table className="eval-table eval-recent-table">
                   <thead>
                     <tr>
-                      <th>Run ID</th>
-                      <th>Dataset</th>
-                      <th>Mode</th>
-                      <th>Status</th>
-                      <th>Recall@1</th>
-                      <th>Precision@1</th>
-                      <th>MRR</th>
-                      <th>Duration</th>
-                      <th>Actions</th>
+                      <th className="col-eval-id">Run ID</th>
+                      <th className="col-eval-dataset">Dataset</th>
+                      <th className="col-eval-mode">Mode</th>
+                      <th className="col-eval-status">Status</th>
+                      <th className="col-eval-recall">Recall@1</th>
+                      <th className="col-eval-prec">Precision@1</th>
+                      <th className="col-eval-mrr">MRR</th>
+                      <th className="col-eval-dur">Duration</th>
+                      <th className="col-eval-act" style={{ textAlign: 'center' }}>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -276,19 +276,19 @@ export function EvaluationConsole() {
                       const sum = r.summary || r.aggregate_metrics || {};
                       return (
                         <tr key={r.id}>
-                          <td className="eval-mono" style={{ fontWeight: 600 }}>{r.id.slice(0, 8)}...</td>
-                          <td>{r.dataset_name}</td>
-                          <td><span className="eval-badge eval-badge-mode">{r.mode}</span></td>
-                          <td>
+                          <td className="col-eval-id eval-id-cell">{r.id.slice(0, 8)}...</td>
+                          <td className="col-eval-dataset">{r.dataset_name}</td>
+                          <td className="col-eval-mode"><span className="eval-badge eval-badge-mode">{r.mode}</span></td>
+                          <td className="col-eval-status">
                             <span className={`eval-badge eval-badge-status-${(r.status || '').toLowerCase()}`}>
                               {r.status}
                             </span>
                           </td>
-                          <td className="eval-mono">{sum.mean_recall_at_1 ? `${(sum.mean_recall_at_1 * 100).toFixed(1)}%` : '—'}</td>
-                          <td className="eval-mono">{sum.mean_precision_at_1 ? `${(sum.mean_precision_at_1 * 100).toFixed(1)}%` : '—'}</td>
-                          <td className="eval-mono">{sum.mrr ? Number(sum.mrr).toFixed(3) : '—'}</td>
-                          <td className="eval-mono">{r.duration_ms ? `${r.duration_ms.toFixed(0)}ms` : '—'}</td>
-                          <td>
+                          <td className="col-eval-recall">{sum.mean_recall_at_1 ? `${(sum.mean_recall_at_1 * 100).toFixed(1)}%` : '—'}</td>
+                          <td className="col-eval-prec">{sum.mean_precision_at_1 ? `${(sum.mean_precision_at_1 * 100).toFixed(1)}%` : '—'}</td>
+                          <td className="col-eval-mrr">{sum.mrr ? Number(sum.mrr).toFixed(3) : '—'}</td>
+                          <td className="col-eval-dur">{r.duration_ms ? `${r.duration_ms.toFixed(0)}ms` : '—'}</td>
+                          <td className="col-eval-act" style={{ textAlign: 'center' }}>
                             <button
                               className="eval-btn eval-btn-secondary eval-btn-sm"
                               onClick={() => handleSelectRun(r.id)}
@@ -336,19 +336,19 @@ export function EvaluationConsole() {
           ) : (
             <>
               <div className="eval-table-container">
-                <table className="eval-table">
+                <table className="eval-table eval-history-table">
                   <thead>
                     <tr>
-                      <th>Run ID</th>
-                      <th>Dataset</th>
-                      <th>Mode</th>
-                      <th>Status</th>
-                      <th>Started At</th>
-                      <th>Duration</th>
-                      <th>Recall@1</th>
-                      <th>MRR</th>
-                      <th>Guardrail Acc</th>
-                      <th>Actions</th>
+                      <th className="col-hist-id">Run ID</th>
+                      <th className="col-hist-dataset">Dataset</th>
+                      <th className="col-hist-mode">Mode</th>
+                      <th className="col-hist-status">Status</th>
+                      <th className="col-hist-date">Started At</th>
+                      <th className="col-hist-dur">Duration</th>
+                      <th className="col-hist-recall">Recall@1</th>
+                      <th className="col-hist-mrr">MRR</th>
+                      <th className="col-hist-guard">Guardrail Acc</th>
+                      <th className="col-hist-act" style={{ textAlign: 'center' }}>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -356,23 +356,23 @@ export function EvaluationConsole() {
                       const sum = r.summary || r.aggregate_metrics || {};
                       return (
                         <tr key={r.id}>
-                          <td className="eval-mono" style={{ fontWeight: 600 }}>{r.id.slice(0, 8)}...</td>
-                          <td>{r.dataset_name} (v{r.dataset_version})</td>
-                          <td><span className="eval-badge eval-badge-mode">{r.mode}</span></td>
-                          <td>
+                          <td className="col-hist-id eval-id-cell">{r.id.slice(0, 8)}...</td>
+                          <td className="col-hist-dataset">{r.dataset_name} (v{r.dataset_version})</td>
+                          <td className="col-hist-mode"><span className="eval-badge eval-badge-mode">{r.mode}</span></td>
+                          <td className="col-hist-status">
                             <span className={`eval-badge eval-badge-status-${(r.status || '').toLowerCase()}`}>
                               {r.status}
                             </span>
                           </td>
-                          <td style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                          <td className="col-hist-date" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                             {r.created_at ? new Date(r.created_at).toLocaleString() : '—'}
                           </td>
-                          <td className="eval-mono">{r.duration_ms ? `${r.duration_ms.toFixed(0)}ms` : '—'}</td>
-                          <td className="eval-mono">{sum.mean_recall_at_1 ? `${(sum.mean_recall_at_1 * 100).toFixed(1)}%` : '—'}</td>
-                          <td className="eval-mono">{sum.mrr ? Number(sum.mrr).toFixed(3) : '—'}</td>
-                          <td className="eval-mono">{sum.guardrail_accuracy ? `${(sum.guardrail_accuracy * 100).toFixed(1)}%` : '—'}</td>
-                          <td>
-                            <div style={{ display: 'flex', gap: '0.35rem' }}>
+                          <td className="col-hist-dur">{r.duration_ms ? `${r.duration_ms.toFixed(0)}ms` : '—'}</td>
+                          <td className="col-hist-recall">{sum.mean_recall_at_1 ? `${(sum.mean_recall_at_1 * 100).toFixed(1)}%` : '—'}</td>
+                          <td className="col-hist-mrr">{sum.mrr ? Number(sum.mrr).toFixed(3) : '—'}</td>
+                          <td className="col-hist-guard">{sum.guardrail_accuracy ? `${(sum.guardrail_accuracy * 100).toFixed(1)}%` : '—'}</td>
+                          <td className="col-hist-act" style={{ textAlign: 'center' }}>
+                            <div style={{ display: 'flex', gap: '0.35rem', justifyContent: 'center' }}>
                               <button
                                 className="eval-btn eval-btn-secondary eval-btn-sm"
                                 onClick={() => handleSelectRun(r.id)}

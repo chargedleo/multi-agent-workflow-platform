@@ -48,15 +48,15 @@ export function PendingApprovals({ pendingApprovals = [], isLoading = false, onS
         </div>
       ) : (
         <div className="table-responsive">
-          <table className="workflow-runs-table">
+          <table className="workflow-runs-table pending-runs-table">
             <thead>
               <tr>
-                <th style={{ width: '130px' }}>Run ID</th>
-                <th>Query</th>
-                <th style={{ width: '140px' }}>Validation</th>
-                <th style={{ width: '110px' }}>Revision</th>
-                <th style={{ width: '130px' }}>Requested At</th>
-                <th style={{ width: '110px', textAlign: 'center' }}>Action</th>
+                <th className="col-pending-id">Run ID</th>
+                <th className="col-pending-query">Query</th>
+                <th className="col-pending-val">Validation</th>
+                <th className="col-pending-rev">Revision</th>
+                <th className="col-pending-time">Requested At</th>
+                <th className="col-pending-action" style={{ textAlign: 'center' }}>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -69,12 +69,12 @@ export function PendingApprovals({ pendingApprovals = [], isLoading = false, onS
 
                 return (
                   <tr key={runId} className="workflow-run-row">
-                    <td className="pending-id-cell">
+                    <td className="col-pending-id pending-id-cell">
                       <span className="mono-subtext" title={runId}>
                         {runId ? runId.slice(0, 10) + '...' : 'N/A'}
                       </span>
                     </td>
-                    <td className="pending-query-cell" title={item.query}>
+                    <td className="col-pending-query pending-query-cell" title={item.query}>
                       <span className="query-text-primary">
                         {item.query
                           ? item.query.length > 70
@@ -83,19 +83,19 @@ export function PendingApprovals({ pendingApprovals = [], isLoading = false, onS
                           : 'No query text'}
                       </span>
                     </td>
-                    <td>
+                    <td className="col-pending-val">
                       <span className={`status-label status-val-${valStatus}`}>
                         {item.validation_status || 'PASS'}
                         {item.validation_score != null ? ` (${Math.round(item.validation_score * 100)}%)` : ''}
                       </span>
                     </td>
-                    <td>
+                    <td className="col-pending-rev">
                       <span className="text-secondary" style={{ fontSize: '0.85rem' }}>
                         Rev {item.approval_revision ?? 1}
                       </span>
                     </td>
-                    <td className="timestamp-cell">{formattedTime}</td>
-                    <td style={{ textAlign: 'center' }}>
+                    <td className="col-pending-time timestamp-cell">{formattedTime}</td>
+                    <td className="col-pending-action" style={{ textAlign: 'center' }}>
                       <button
                         type="button"
                         className="btn-text-action"

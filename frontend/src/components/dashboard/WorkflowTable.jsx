@@ -162,14 +162,14 @@ export function WorkflowTable({
           <table className="workflow-runs-table">
             <thead>
               <tr>
-                <th style={{ width: '130px' }}>Status</th>
-                <th>Query & Run ID</th>
-                <th style={{ width: '130px' }}>Stage</th>
-                <th style={{ width: '110px' }}>Executed</th>
-                <th style={{ width: '100px' }}>Duration</th>
-                <th style={{ width: '110px' }}>Guardrails</th>
-                <th style={{ width: '120px' }}>Approval</th>
-                <th style={{ width: '90px', textAlign: 'center' }}>Action</th>
+                <th className="col-status">Status</th>
+                <th className="col-query">Query & Run ID</th>
+                <th className="col-stage">Stage</th>
+                <th className="col-time">Executed</th>
+                <th className="col-duration">Duration</th>
+                <th className="col-guardrail">Guardrails</th>
+                <th className="col-approval">Approval</th>
+                <th className="col-action" style={{ textAlign: 'center' }}>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -192,10 +192,10 @@ export function WorkflowTable({
                     className="workflow-run-row"
                     onClick={() => onSelectRun && onSelectRun(runId)}
                   >
-                    <td>
+                    <td className="col-status">
                       <WorkflowStatusBadge status={run.status} size="small" />
                     </td>
-                    <td className="query-cell">
+                    <td className="col-query query-cell">
                       <div className="query-text-primary" title={run.query || run.user_query}>
                         {run.query || run.user_query}
                       </div>
@@ -211,14 +211,14 @@ export function WorkflowTable({
                         </button>
                       </div>
                     </td>
-                    <td>
+                    <td className="col-stage">
                       <span className="stage-pill">
                         {stageName}
                       </span>
                     </td>
-                    <td className="timestamp-cell">{timeText}</td>
-                    <td className="duration-cell">{durationText}</td>
-                    <td>
+                    <td className="col-time timestamp-cell">{timeText}</td>
+                    <td className="col-duration duration-cell">{durationText}</td>
+                    <td className="col-guardrail">
                       {run.validation_status ? (
                         <span className={`status-label status-val-${run.validation_status.toLowerCase()}`}>
                           {run.validation_status}
@@ -227,7 +227,7 @@ export function WorkflowTable({
                         <span className="text-muted" style={{ fontSize: '0.85rem' }}>—</span>
                       )}
                     </td>
-                    <td>
+                    <td className="col-approval">
                       {run.approval_status ? (
                         <span className={`status-label status-appr-${run.approval_status.toLowerCase()}`}>
                           {run.approval_status}
@@ -236,7 +236,7 @@ export function WorkflowTable({
                         <span className="text-muted" style={{ fontSize: '0.85rem' }}>None</span>
                       )}
                     </td>
-                    <td style={{ textAlign: 'center' }}>
+                    <td className="col-action" style={{ textAlign: 'center' }}>
                       <button
                         className="btn-text-action"
                         onClick={(e) => {

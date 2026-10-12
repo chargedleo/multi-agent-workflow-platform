@@ -115,17 +115,17 @@ export function DocumentManager({ documents, isLoading, onRefresh }) {
         </div>
       ) : (
         <div className="table-responsive">
-          <table className="history-table">
+          <table className="history-table doc-table">
             <thead>
               <tr>
-                <th>Document Name</th>
-                <th>Format</th>
-                <th>Size</th>
-                <th>Pages</th>
-                <th>Chunks</th>
-                <th>Status</th>
-                <th>Uploaded</th>
-                <th style={{ textAlign: 'right' }}>Actions</th>
+                <th className="col-doc-name">Document Name</th>
+                <th className="col-doc-format">Format</th>
+                <th className="col-doc-size">Size</th>
+                <th className="col-doc-pages">Pages</th>
+                <th className="col-doc-chunks">Chunks</th>
+                <th className="col-doc-status">Status</th>
+                <th className="col-doc-time">Uploaded</th>
+                <th className="col-doc-action" style={{ textAlign: 'right' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -134,28 +134,28 @@ export function DocumentManager({ documents, isLoading, onRefresh }) {
                 const ext = doc.original_filename?.split('.').pop()?.toUpperCase() || 'FILE';
                 return (
                   <tr key={doc.document_id}>
-                    <td>
+                    <td className="col-doc-name">
                       <div className="doc-name-cell">
                         <strong title={doc.original_filename}>{doc.original_filename}</strong>
                       </div>
                     </td>
-                    <td>
+                    <td className="col-doc-format">
                       <span className="mono-badge">{ext}</span>
                     </td>
-                    <td>{formatFileSize(doc.file_size)}</td>
-                    <td>{doc.page_count}</td>
-                    <td>
+                    <td className="col-doc-size">{formatFileSize(doc.file_size)}</td>
+                    <td className="col-doc-pages">{doc.page_count}</td>
+                    <td className="col-doc-chunks">
                       <span className="chunk-badge">{doc.chunk_count} chunks</span>
                     </td>
-                    <td>
+                    <td className="col-doc-status">
                       <span className={`status-badge status-${statusClass}`}>
                         {doc.status}
                       </span>
                     </td>
-                    <td className="time-cell">
+                    <td className="col-doc-time time-cell">
                       {doc.created_at ? new Date(doc.created_at).toLocaleDateString() : 'N/A'}
                     </td>
-                    <td style={{ textAlign: 'right' }}>
+                    <td className="col-doc-action" style={{ textAlign: 'right' }}>
                       <button
                         className="btn-delete"
                         onClick={() => handleDelete(doc.document_id, doc.original_filename)}

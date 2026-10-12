@@ -29,12 +29,12 @@ export function WorkflowHistory({ runs, isLoading, onSelectRun, onRefresh }) {
           <table className="runs-table">
             <thead>
               <tr>
-                <th>Status</th>
-                <th>Query</th>
-                <th>Duration</th>
-                <th>Executed At</th>
-                <th>Steps</th>
-                <th>Action</th>
+                <th className="col-hist-status">Status</th>
+                <th className="col-hist-query">Query</th>
+                <th className="col-hist-duration">Duration</th>
+                <th className="col-hist-time">Executed At</th>
+                <th className="col-hist-steps">Steps</th>
+                <th className="col-hist-action" style={{ textAlign: 'center' }}>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -46,21 +46,21 @@ export function WorkflowHistory({ runs, isLoading, onSelectRun, onRefresh }) {
 
                 return (
                   <tr key={runId} className="run-row" onClick={() => onSelectRun(runId)}>
-                    <td>
+                    <td className="col-hist-status">
                       <span className={`status-badge status-${statusClass}`}>
                         {run.status}
                       </span>
                     </td>
-                    <td className="query-cell" title={run.user_query}>
+                    <td className="col-hist-query query-cell" title={run.user_query}>
                       <span className="query-text-truncate">{run.user_query}</span>
                       <span className="mono-subtext">ID: {String(runId).substring(0, 8)}...</span>
                     </td>
-                    <td>{durationText}</td>
-                    <td>{createdDate}</td>
-                    <td>{run.step_count ?? 3} steps</td>
-                    <td>
+                    <td className="col-hist-duration">{durationText}</td>
+                    <td className="col-hist-time">{createdDate}</td>
+                    <td className="col-hist-steps">{run.step_count ?? 3} steps</td>
+                    <td className="col-hist-action" style={{ textAlign: 'center' }}>
                       <button 
-                        className="btn-table-action"
+                        className="btn-text-action"
                         onClick={(e) => {
                           e.stopPropagation();
                           onSelectRun(runId);

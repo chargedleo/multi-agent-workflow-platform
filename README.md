@@ -1,492 +1,485 @@
 # Multi-Agent AI Workflow Automation Platform
 
-[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat&logo=python&logoColor=white)](https://python.org)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688?style=flat&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
-[![LangGraph](https://img.shields.io/badge/LangGraph-0.2+-FF6F00?style=flat)](https://github.com/langchain-ai/langgraph)
-[![React](https://img.shields.io/badge/React-18+-61DAFB?style=flat&logo=react&logoColor=black)](https://reactjs.org)
-[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat&logo=docker&logoColor=white)](https://docker.com)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/Python-3.11+-111111?style=flat&logo=python&logoColor=white)](https://python.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-111111?style=flat&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![LangGraph](https://img.shields.io/badge/LangGraph-0.2+-111111?style=flat)](https://github.com/langchain-ai/langgraph)
+[![React](https://img.shields.io/badge/React-18+-111111?style=flat&logo=react&logoColor=white)](https://reactjs.org)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-111111?style=flat&logo=postgresql&logoColor=white)](https://www.postgresql.org)
+[![FAISS](https://img.shields.io/badge/FAISS-1.15.1-111111?style=flat)](https://github.com/facebookresearch/faiss)
+[![Docker](https://img.shields.io/badge/Docker-Compose-111111?style=flat&logo=docker&logoColor=white)](https://docker.com)
+[![Tests](https://img.shields.io/badge/Tests-202%2F202%20Passed-111111?style=flat)](tests)
+[![License](https://img.shields.io/badge/License-MIT-111111.svg)](LICENSE)
 
-An enterprise-ready **Multi-Agent AI Workflow Automation Platform** that decomposes complex business and technical queries into collaborative, specialized AI agent workflows orchestrating via **LangGraph**, **FastAPI**, **PostgreSQL**, **FAISS Vector Search**, and **Model Context Protocol (MCP)** tools.
+An enterprise-ready **Multi-Agent AI Workflow Automation Platform** that decomposes complex business and technical queries into collaborative, specialized AI agent workflows. Orchestrated with **LangGraph**, backed by **PostgreSQL 16** with **AsyncPostgresSaver** durable checkpointing, augmented by **native FAISS 1.15.1** vector retrieval and **Model Context Protocol (MCP)** tools, and governed by a self-correcting **Validation Guardrails** layer with **Human-in-the-Loop (HITL)** approval gates.
+
+Features a modern, high-contrast monochrome user interface inspired by **Google Antigravity** across both the React web application and FastAPI Swagger documentation.
 
 ---
 
-## Current Status: Milestone 9B — React Evaluation Console & Final Release
+## 1. High-Level System Architecture
 
-**Milestone 9B** is the final mandatory milestone of the platform, delivering the **React Evaluation Console**, full end-to-end multi-agent verification, durable HITL approval controls, complete test parity across Host and Docker, and portfolio-ready documentation.
-
-```text
-User / Reviewer / Evaluation Client
-    ↓
-React 18 Production Frontend (Port 5173, Nginx Reverse Proxy)
-    ├── 📊 Monitoring Dashboard (Macro stats, live run history, execution timeline)
-    ├── ⚡ Query Runner (Interactive business query execution & source citations)
-    ├── ⏳ Approvals Queue (Durable HITL approval/rejection/revision flow)
-    ├── 📁 Knowledge Base (PDF, TXT, MD document ingestion & FAISS indexing)
-    └── 🧪 Evaluation Console (Milestone 9B)
-        ├── Launch Benchmark (metric_only & integration modes, concurrency, timeouts)
-        ├── Evaluation History (Paginated run tracking, status, duration, macro metrics)
-        ├── Run Details & Diagnostics (Retrieval, citation, fact coverage, guardrail matrix)
-        ├── Per-Case Diagnostics (Expandable 35-case audit table with atomic fact diffs)
-        ├── Side-by-Side Run Comparison (Metric deltas, regression detection, verdict)
-        └── Standalone Report Export (Standardized machine-readable JSON reports)
-    ↓
-FastAPI Backend (Port 8000)
-    ├── Correlation Middleware (X-Request-ID propagation) & Health/Readiness Probes
-    ├── Workflow REST APIs (/api/v1/workflows)
-    ├── HITL Approvals REST APIs (/api/v1/approvals)
-    ├── Document Ingestion REST APIs (/api/v1/documents)
-    └── Evaluation Engine REST APIs (/api/v1/evaluations)
-    ↓
-LangGraph Multi-Agent Orchestration Pipeline
-    Planner → Document Retrieval → Data Analysis (MCP) → Researcher → Responder → Validation
-    ↓
-PostgreSQL 16 Persistence (Alembic 006) & Native FAISS 1.15.1 Store (IndexFlatIP)
+```mermaid
+flowchart TD
+    User([User / Client Application]) -->|Inbound Query| Gateway[FastAPI API Gateway :8000]
+    
+    subgraph Frontend["React 18 Production Web Application (:5173)"]
+        UI_Runner[⚡ Query Runner]
+        UI_Dash[📊 Monitoring Dashboard]
+        UI_HITL[⏳ Approvals Queue]
+        UI_Docs[📁 Knowledge Base]
+        UI_Eval[🧪 Evaluation Console]
+    end
+    
+    User <-->|HTTP / JSON| Frontend
+    Frontend <-->|REST API / JSON| Gateway
+    
+    subgraph LangGraph["LangGraph Multi-Agent StateGraph"]
+        Planner[Planner Agent]
+        Retrieval[Document Retrieval Agent]
+        Analysis[Data Analysis Agent]
+        Researcher[Research Agent]
+        Responder[Response Agent]
+        Validator[Validation & Guardrails Agent]
+    end
+    
+    Gateway --> Planner
+    Planner --> Retrieval
+    Retrieval --> Analysis
+    Analysis --> Researcher
+    Researcher --> Responder
+    Responder --> Validator
+    
+    subgraph Integrations["Platform Infrastructure & Tooling"]
+        FAISS[(Native FAISS 1.15.1 Store<br/>IndexFlatIP Cosine Similarity)]
+        MCP[MCP Server : Tools<br/>Read-only Analytical SQL]
+        PG[(PostgreSQL 16 Database<br/>Runs, Steps, History)]
+        Saver[(AsyncPostgresSaver<br/>Durable Thread Checkpoints)]
+    end
+    
+    Retrieval <-->|Semantic Search| FAISS
+    Analysis <-->|Tool Calling| MCP
+    MCP <-->|Analytical SQL| PG
+    Gateway <-->|Persistence| PG
+    
+    Validator --> GuardrailCheck{Validation Passed?}
+    GuardrailCheck -- Recoverable Error &lt; 2 Retries --> Planner
+    GuardrailCheck -- Passed --> ApprovalCheck{Requires Approval?}
+    
+    ApprovalCheck -- Yes --> Interrupt[LangGraph Interrupt Gate]
+    Interrupt <-->|Checkpoint / Resume| Saver
+    Interrupt <-->|Pending Action| UI_HITL
+    
+    ApprovalCheck -- No --> Output[Final Workflow Response]
+    Interrupt -- Approved --> Output
 ```
 
-### Capabilities Delivered Across All Milestones:
-- **LangGraph Multi-Agent Flow**: Structured collaboration across Planner, Document Retrieval, MCP Data Analysis, Researcher, Responder, and Validation agents.
-- **Native FAISS 1.15.1 Vector Search**: Normalized inner-product (`IndexFlatIP`) cosine similarity with atomic persistence in `./data/faiss`.
-- **Model Context Protocol (MCP)**: Analytical SQL tools querying PostgreSQL for structured mathematical and business data analysis.
-- **Validation & Guardrails Layer**: Bounded correction loop verifying citations, numerical calculations, format schemas, and response confidence.
-- **Durable HITL Approval Engine**: LangGraph PostgreSQL checkpointer (`AsyncPostgresSaver`) providing interrupt/resume control across server restarts with `APPROVE`, `REJECT`, and `CHANGES_REQUESTED` flows.
-- **React Monitoring Dashboard**: Live workflow metrics, run filtering, pagination, and multi-agent execution timeline visualization.
-- **React Evaluation Console (Milestone 9B)**: Benchmark execution, run history, macro metrics, per-case diagnostics, run comparison with regression alerts, and JSON export.
-- **202 Automated Tests (100% Passing)**: 189 backend tests passing on both host and Docker, plus 13 frontend service tests.
+---
+
+## 2. Key Features & Capabilities
+
+- **LangGraph Multi-Agent Orchestration**: Six collaborating agents (Planner, Document Retrieval, MCP Data Analysis, Researcher, Responder, Validator) executing across a compiled, stateful LangGraph graph.
+- **Durable Human-in-the-Loop (HITL) Execution**: Interruption and resumption backed by PostgreSQL (`AsyncPostgresSaver`). Workflows can pause at critical review points, survive server reboots, and resume without repeating earlier steps.
+- **Enterprise RAG via Native FAISS 1.15.1**: Multi-format document ingestion (PDF, TXT, Markdown) with sliding chunking and inner-product cosine similarity search (`IndexFlatIP`).
+- **Model Context Protocol (MCP) Integration**: Analytical SQL tools querying PostgreSQL for verified mathematical operations and business metric calculations.
+- **Validation Guardrails with Self-Correction**: Bounded loop (up to 2 retries) checking citation provenance, calculation accuracy, Pydantic format compliance, and confidence score thresholds.
+- **React 18 Monitoring Dashboard**: Real-time KPI cards, searchable workflow run table, execution timeline visualizer, and detailed step inspector.
+- **Deterministic Evaluation & Benchmarking Engine (M9A/M9B)**: Evaluates 35 benchmark cases across 6 metric categories (Recall@k, MRR, NDCG, citation coverage, factual accuracy, and guardrail resistance) with dual `metric_only` and live `integration` modes.
+- **Side-by-Side Benchmark Run Comparison**: Compares candidate and baseline benchmark runs with automated regression detection and downloadable standardized JSON reports.
+- **Google Antigravity-Inspired Monochrome UI**: Clean, modern sans-serif typography, solid opaque surfaces, minimal borders, and fixed-layout tables with horizontal scroll resilience.
+- **100% Deterministic Testing**: 202 automated tests (189 backend + 13 frontend) passing on both host and Docker Compose environments with zero external paid API dependencies.
 
 ---
 
-## Technology Stack
+## 3. Technology Stack
 
-- **Backend**: Python 3.11.17, FastAPI, Uvicorn
-- **Orchestration**: LangGraph 0.2+, LangChain Core
-- **MCP Tool Layer**: Model Context Protocol (`mcp` 2.x `MCPServer`)
-- **Vector Search & RAG**: FAISS (native 1.15.1), IndexFlatIP cosine similarity, PyMuPDF (fitz)
-- **Database & Persistence**: PostgreSQL 16 Alpine, SQLAlchemy 2.x (async), Alembic, asyncpg
-- **Checkpointer**: LangGraph `AsyncPostgresSaver` for durable interrupt/resume
-- **Frontend**: React 18, Vite, dark-mode CSS design system
-- **Testing**: pytest, pytest-asyncio, HTTPX, node:test (202 automated tests passing)
-- **DevOps**: Docker, Docker Compose (PostgreSQL, FastAPI Backend, React Frontend)
+| Domain | Technology | Version | Purpose |
+|---|---|---|---|
+| **Backend Framework** | Python / FastAPI | 3.11+ / 0.110+ | Asynchronous REST API, middleware, lifecycle probes |
+| **Agent Orchestration** | LangGraph / LangChain Core | 0.2+ | Stateful multi-agent graph compilation and transitions |
+| **Persistence & ORM** | PostgreSQL / SQLAlchemy / asyncpg | 16 / 2.0+ | Relational run history, intermediate step logs, pooling |
+| **Durable Checkpointing** | LangGraph `AsyncPostgresSaver` | 0.2+ | Cross-restart HITL thread interruption and resumption |
+| **Database Migrations** | Alembic | 1.13+ | Schema management (001 through 006 head) |
+| **Vector Search & RAG** | Native FAISS | 1.15.1 | `IndexFlatIP` normalized cosine similarity vector search |
+| **Document Processing** | PyMuPDF (`fitz`) | 1.23+ | High-fidelity PDF, TXT, and Markdown parsing |
+| **Analytical Tool Layer** | Model Context Protocol (`mcp`) | 2.0+ | Standardized, read-only analytical SQL execution |
+| **Validation Layer** | Pydantic v2 | 2.6+ | Strict type validation and guardrail compliance checking |
+| **Web Frontend** | React / Vite | 18.2 / 5.4 | Single-page application, monitoring dashboard, console |
+| **Design System** | Pure Sans-Serif Monochrome | Custom CSS | High-contrast Antigravity aesthetic, zero-blur surfaces |
+| **Testing Framework** | pytest / pytest-asyncio / node:test | 8.0+ / 0.23+ | 189 backend tests + 13 frontend tests |
+| **Containerization** | Docker / Docker Compose | Compose v2 | Multi-container stack (backend, frontend, database) |
 
 ---
 
-## Repository Structure
+## 4. Repository Structure
 
 ```text
-multi-agent-workflow-platform/
-│
+Multi-Agent AI Workflow Automation Platform/
 ├── backend/
+│   ├── alembic/
+│   │   ├── versions/                 # Migrations 001 through 006
+│   │   └── env.py
 │   ├── app/
-│   │   ├── api/
-│   │   │   ├── routes/
-│   │   │   │   ├── health.py         # GET /api/v1/health
-│   │   │   │   └── workflow.py       # POST /api/v1/workflows
-│   │   │   └── __init__.py
-│   │   │
-│   │   ├── agents/
-│   │   │   ├── planner.py            # Planner Agent (Plan schema)
-│   │   │   ├── researcher.py         # Research Agent (ResearchResult schema)
-│   │   │   └── responder.py          # Response Agent (WorkflowResponse schema)
-│   │   │
-│   │   ├── graph/
+│   │   ├── agents/                   # Agent implementations
+│   │   │   ├── planner.py            # Planner Agent
+│   │   │   ├── retrieval.py          # Document Retrieval Agent
+│   │   │   ├── data_analysis.py      # Data Analysis Agent (MCP)
+│   │   │   ├── researcher.py         # Research Agent
+│   │   │   ├── responder.py          # Response Agent
+│   │   │   └── validator.py          # Validation & Guardrails Agent
+│   │   ├── api/                      # REST API routing
+│   │   │   └── routes/
+│   │   │       ├── health.py         # Liveness and readiness probes
+│   │   │       ├── workflow.py       # Workflow execution & stats
+│   │   │       ├── approval.py       # Human-in-the-Loop review & resume
+│   │   │       ├── document.py       # Document ingestion & management
+│   │   │       └── evaluation.py     # Evaluation & benchmarking APIs
+│   │   ├── core/                     # Application settings & logging
+│   │   │   ├── config.py
+│   │   │   └── logging.py
+│   │   ├── evaluation/               # Milestone 9A Evaluation Engine
+│   │   │   ├── dataset.py            # 35-case benchmark loader
+│   │   │   ├── metrics.py            # Answer & guardrail metrics
+│   │   │   ├── retrieval_metrics.py  # Recall@k, MRR, NDCG math
+│   │   │   ├── retrieval_adapter.py  # Live FAISS query adapter
+│   │   │   ├── runner.py             # Benchmark concurrency runner
+│   │   │   ├── comparison.py         # Delta comparison & regression engine
+│   │   │   └── service.py            # Evaluation persistence service
+│   │   ├── graph/                    # LangGraph orchestration
 │   │   │   ├── state.py              # Shared WorkflowState TypedDict
-│   │   │   └── workflow.py           # Compiled LangGraph StateGraph pipeline
-│   │   │
-│   │   ├── models/
-│   │   │   └── schemas.py            # Pydantic schemas for agents and API
-│   │   │
-│   │   ├── services/
-│   │   │   ├── llm.py                # LLM factory (OpenAI, Azure, Ollama, Mock)
-│   │   │   └── database.py           # Async PostgreSQL engine and health check
-│   │   │
-│   │   ├── core/
-│   │   │   ├── config.py             # Pydantic Settings & environment parsing
-│   │   │   └── logging.py            # Standardized request-aware logging
-│   │   │
-│   │   └── main.py                   # FastAPI factory, CORS, and lifecycle
-│   │
-│   ├── tests/
-│   │   ├── conftest.py               # Shared pytest fixtures & test config
-│   │   ├── test_api.py               # API endpoint integration tests
-│   │   ├── test_config.py            # Configuration & CORS parsing tests
-│   │   ├── test_health.py            # Health check & root endpoint tests
-│   │   ├── test_llm.py               # LLM abstraction & MockChatModel tests
-│   │   ├── test_schemas.py           # Pydantic schema validation tests
-│   │   └── test_workflow.py          # LangGraph state transitions & error handling
-│   │
-│   ├── requirements.txt
-│   └── Dockerfile
-│
+│   │   │   └── workflow.py           # Compiled StateGraph pipeline
+│   │   ├── mcp/                      # Model Context Protocol tools
+│   │   │   └── server.py             # Read-only analytical SQL tools
+│   │   ├── models/                   # SQLAlchemy ORM models & Pydantic schemas
+│   │   ├── services/                 # Database, FAISS, and LLM services
+│   │   ├── static/                   # Monochrome Swagger CSS overrides
+│   │   └── main.py                   # FastAPI entrypoint
+│   ├── tests/                        # 189 automated backend tests
+│   ├── Dockerfile
+│   └── requirements.txt
 ├── frontend/
 │   ├── src/
 │   │   ├── components/
-│   │   │   ├── QueryInput.jsx        # Query input, quick prompts, hotkeys
-│   │   │   └── WorkflowResult.jsx    # Formatted response, badges, key points
-│   │   ├── services/
-│   │   │   └── api.js                # API service layer (fetch client)
-│   │   ├── App.jsx                   # Main application container
-│   │   ├── App.css                   # Custom responsive styling
-│   │   ├── index.css                 # Design tokens and resets
-│   │   └── main.jsx                  # React DOM mount point
-│   ├── package.json
-│   ├── vite.config.js
+│   │   │   ├── dashboard/            # Monitoring dashboard & timeline
+│   │   │   ├── evaluation/           # M9B React Evaluation Console
+│   │   │   ├── DocumentManager.jsx   # Document upload & chunk viewer
+│   │   │   ├── PendingApprovals.jsx  # HITL approval review queue
+│   │   │   ├── QueryInput.jsx        # Interactive query prompt runner
+│   │   │   ├── WorkflowHistory.jsx   # Paginated run history
+│   │   │   └── WorkflowResult.jsx    # Formatted response view
+│   │   ├── services/                 # Frontend API client
+│   │   ├── App.jsx                   # Application navigation
+│   │   ├── App.css                   # Component styles & fixed tables
+│   │   └── index.css                 # Base design tokens
+│   ├── test/                         # 13 automated frontend tests
 │   ├── nginx.conf
-│   └── Dockerfile
-│
-├── docker-compose.yml                # Multi-service stack (backend, frontend, postgres)
-├── .env.example                      # Environment variables template
-├── .gitignore                        # Git ignore rules
-├── pytest.ini                        # Pytest configuration
-├── README.md                         # Project documentation
-└── docs/
-    └── architecture.md               # Detailed architecture & Mermaid diagrams
+│   ├── vite.config.js
+│   ├── Dockerfile
+│   └── package.json
+├── docs/                             # Engineering documentation
+│   ├── PROJECT_COMPLETION_REPORT.md  # Detailed milestone-by-milestone audit
+│   ├── architecture.md               # Architecture specification
+│   ├── deployment.md                 # Production deployment guide
+│   └── evaluation.md                 # Evaluation engine design
+├── docker-compose.yml                # Multi-service stack definition
+└── README.md
 ```
 
 ---
 
-## Configuration & Environment Variables
+## 5. Quick Start with Docker (PowerShell)
 
-Copy `.env.example` to `.env` to configure your environment:
+Launch the complete stack (PostgreSQL, FastAPI Backend, React Frontend) in isolated containers:
 
-```bash
-cp .env.example .env
+```powershell
+# 1. Clone or navigate to the repository
+cd "D:\Projects\Multi-Agent AI Workflow Automation Platform"
+
+# 2. Build and start all services in the background
+docker compose up --build -d
+
+# 3. Verify container status
+docker compose ps
+
+# 4. Check backend health
+curl http://localhost:8000/api/v1/health
+
+# 5. Access the applications
+# Frontend Dashboard:  http://localhost:5173
+# FastAPI Swagger Docs: http://localhost:8000/docs
 ```
 
-| Variable | Description | Default |
-|---|---|---|
-| `APP_NAME` | Name of the platform | `Multi-Agent AI Workflow Platform` |
-| `APP_ENV` | Environment (`development`, `test`, `production`) | `development` |
-| `API_HOST` | Host for the FastAPI server | `0.0.0.0` |
-| `API_PORT` | Port for the FastAPI server | `8000` |
-| `LOG_LEVEL` | Logging level (`DEBUG`, `INFO`, `WARNING`, `ERROR`) | `INFO` |
-| `CORS_ORIGINS` | Allowed CORS origins (comma-separated or JSON list) | `http://localhost:5173,http://localhost:3000` |
-| `LLM_PROVIDER` | LLM provider: `openai`, `azure`, `ollama`, or `mock` | `mock` (works offline with zero keys) |
-| `LLM_MODEL` | Model identifier | `gpt-4o-mini` |
-| `LLM_API_KEY` | Provider API key | `""` |
-| `LLM_BASE_URL` | Optional custom base URL for OpenAI-compatible APIs | `""` |
-| `DATABASE_URL` | PostgreSQL connection string | `postgresql+asyncpg://postgres:postgres@localhost:5432/workflow_db` |
-| `POSTGRES_USER` | PostgreSQL user | `postgres` |
-| `POSTGRES_PASSWORD`| PostgreSQL password | `postgres` |
-| `POSTGRES_DB` | PostgreSQL database name | `workflow_db` |
+To view logs or shut down the stack:
 
-> **Note**: If `LLM_PROVIDER="mock"` is selected, the platform runs completely offline using a deterministic mock chat model. To use OpenAI or local Ollama, set `LLM_PROVIDER="openai"` and provide your `LLM_API_KEY` or `LLM_BASE_URL`.
+```powershell
+# View live container logs
+docker compose logs -f backend
 
----
-
-## Getting Started
-
-### Prerequisites
-
-- Python 3.11+
-- Node.js 18+ and npm
-- Docker and Docker Compose (optional for containerized run)
-
----
-
-### Local Development Setup
-
-#### 1. Backend Setup
-
-```bash
-# Navigate to the project root
-cd "multi-agent-workflow-platform"
-
-# Create and activate virtual environment
-python -m venv backend/.venv
-# Windows:
-.\backend\.venv\Scripts\activate
-# Linux/macOS:
-source backend/.venv/bin/activate
-
-# Install dependencies
-pip install -r backend/requirements.txt
-
-# Run the FastAPI server
-uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 --reload
-```
-
-The backend will be available at:
-- **API URL**: [http://localhost:8000](http://localhost:8000)
-- **Interactive OpenAPI Docs (Swagger)**: [http://localhost:8000/docs](http://localhost:8000/docs)
-- **Alternative Docs (ReDoc)**: [http://localhost:8000/redoc](http://localhost:8000/redoc)
-
-#### 2. Frontend Setup
-
-In a new terminal:
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-The frontend will be available at [http://localhost:5173](http://localhost:5173).
-
----
-
-### Running with Docker Compose
-
-You can launch the entire stack (PostgreSQL, FastAPI Backend, and React Frontend) with a single command:
-
-```bash
-docker compose up --build
-```
-
-Services started:
-- **Frontend**: [http://localhost:5173](http://localhost:5173) (served via Nginx)
-- **Backend**: [http://localhost:8000](http://localhost:8000)
-- **PostgreSQL**: `localhost:5432` (with persistent volume `workflow_postgres_data`)
-
-To stop the services:
-
-```bash
+# Stop all containers and preserve database volumes
 docker compose down
 ```
 
 ---
 
-## Database Architecture & Migrations
+## 6. Local Development Setup
 
-Milestone 2 introduces durable PostgreSQL persistence using **SQLAlchemy 2.x async ORM** and **Alembic** migrations.
+### Prerequisites
+- Python 3.11+
+- Node.js 18+ and npm
+- PostgreSQL 16 (or running via `docker compose up -d postgres`)
 
-### Tables
-1. **`workflow_runs`**:
-   - `id` (UUID, primary key)
-   - `request_id` (UUID, indexed)
-   - `user_query` (Text)
-   - `status` (VARCHAR, indexed: `PENDING`, `RUNNING`, `COMPLETED`, `FAILED`)
-   - `started_at`, `completed_at`, `created_at`, `updated_at` (TIMESTAMPTZ)
-   - `duration_ms` (BIGINT)
-   - `final_answer` (TEXT)
-   - `key_points` (JSONB)
-   - `confidence` (FLOAT)
-   - `plan`, `research_results` (JSONB)
-   - `errors` (JSONB)
-   - `metadata` (JSONB)
+### 1. Backend Setup
 
-2. **`workflow_steps`**:
-   - `id` (UUID, primary key)
-   - `run_id` (UUID, foreign key referencing `workflow_runs.id` on delete cascade)
-   - `agent_name` (VARCHAR: `planner`, `researcher`, `responder`)
-   - `step_order` (INTEGER, indexed with `run_id`)
-   - `status` (VARCHAR: `PENDING`, `RUNNING`, `COMPLETED`, `FAILED`)
-   - `started_at`, `completed_at`, `created_at` (TIMESTAMPTZ)
-   - `duration_ms` (BIGINT)
-   - `input_data`, `output_data` (JSONB)
-   - `error` (TEXT)
+```powershell
+# Navigate to the backend directory
+cd backend
 
-### Running Migrations
+# Create and activate virtual environment
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
 
-```bash
-# Run latest migrations
+# Install dependencies
+pip install -r requirements.txt
+
+# Run database migrations
 alembic upgrade head
 
-# Roll back the most recent migration
-alembic downgrade -1
+# Start the FastAPI development server
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+```
 
-# Generate a new migration revision
-alembic revision --autogenerate -m "description_of_change"
+### 2. Frontend Setup
+
+```powershell
+# In a separate terminal, navigate to the frontend directory
+cd frontend
+
+# Install dependencies
+npm install
+
+# Start the Vite development server
+npm run dev
 ```
 
 ---
 
-## API Reference
+## 7. Environment Configuration & Mock/Fallback Transparency
 
-### Health Check
+Copy `.env.example` to `.env` to configure application settings:
 
-```http
-GET /api/v1/health
+```powershell
+cp .env.example .env
 ```
 
-**Response (`200 OK`):**
-```json
-{
-  "status": "healthy",
-  "database": "connected",
-  "app_env": "development",
-  "version": "0.1.0"
-}
+| Variable | Description | Default | Production Setting |
+|---|---|---|---|
+| `APP_ENV` | Application environment mode | `development` | `production` |
+| `DATABASE_URL` | Async PostgreSQL connection string | `postgresql+asyncpg://postgres:postgres@localhost:5432/workflow_db` | Your PostgreSQL cluster URI |
+| `LLM_PROVIDER` | LLM backend: `mock`, `openai`, `azure`, `ollama` | `mock` | `openai` or `azure` |
+| `LLM_MODEL` | Model identifier | `gpt-4o-mini` | `gpt-4o` or `gpt-4o-mini` |
+| `LLM_API_KEY` | Provider API key | `""` | `sk-...` |
+| `CORS_ORIGINS` | Permitted browser origins | `http://localhost:5173,http://localhost:3000` | Domain URL |
+| `FAISS_INDEX_PATH`| Directory for FAISS index persistence | `./data/faiss` | Mounted persistent volume |
+
+### Transparent Mock & Production Disclosures
+- **Deterministic Offline Execution**: By default, the system runs with `LLM_PROVIDER="mock"`, requiring **zero external API keys** and **zero internet access**. All 6 agents transition deterministically, calculating verified answers and testing guardrails.
+- **Production LLM Compatibility**: Switching to live models (OpenAI, Azure OpenAI, Ollama) requires only updating `LLM_PROVIDER="openai"` and setting `LLM_API_KEY`. The state graph and agent prompts transition seamlessly.
+- **Live Vector & Database Infrastructure**: The vector store uses **real native FAISS 1.15.1** (`IndexFlatIP`), real **PostgreSQL 16**, and real **AsyncPostgresSaver** checkpoints in both mock and production modes.
+
+---
+
+## 8. API Reference
+
+All endpoints return JSON and propagate the `X-Request-ID` header.
+
+### Workflow & Monitoring Endpoints
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/api/v1/health` | Overall system health probe |
+| `GET` | `/api/v1/health/liveness` | Kubernetes liveness probe (`/live`) |
+| `GET` | `/api/v1/health/readiness` | Kubernetes readiness probe (`/ready`) |
+| `POST` | `/api/v1/workflows` | Execute a multi-agent workflow |
+| `GET` | `/api/v1/workflows` | List paginated workflow runs |
+| `GET` | `/api/v1/workflows/{run_id}` | Retrieve run details with individual agent steps |
+| `GET` | `/api/v1/workflows/stats` | Aggregate dashboard KPI metrics |
+
+### Human-in-the-Loop (HITL) Approvals
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/api/v1/approvals/pending` | List workflows waiting for human review |
+| `POST` | `/api/v1/approvals/{run_id}/action` | Submit operator action (`APPROVE`, `REJECT`, `CHANGES_REQUESTED`) |
+
+### Document Management & RAG
+
+| Method | Path | Description |
+|---|---|---|
+| `POST` | `/api/v1/documents` | Upload and chunk PDF, TXT, or Markdown documents |
+| `GET` | `/api/v1/documents` | List all ingested documents and chunk counts |
+| `DELETE`| `/api/v1/documents/{doc_id}` | Delete document and remove vectors from FAISS index |
+
+### Evaluation & Benchmarking (Milestones 9A & 9B)
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/api/v1/evaluations/datasets` | List available evaluation benchmark datasets |
+| `POST` | `/api/v1/evaluations/runs` | Launch a new evaluation benchmark run |
+| `GET` | `/api/v1/evaluations/runs` | List paginated historical evaluation runs |
+| `GET` | `/api/v1/evaluations/runs/{run_id}` | Get evaluation run summary and macro scores |
+| `GET` | `/api/v1/evaluations/runs/{run_id}/cases` | Get per-case diagnostic results and fact diffs |
+| `GET` | `/api/v1/evaluations/runs/{run_id}/report`| Download full standardized JSON benchmark report |
+| `POST` | `/api/v1/evaluations/compare` | Compare candidate vs baseline run with delta report |
+
+---
+
+## 9. Multi-Agent Workflow Details
+
+The system coordinates six specialized agents across a stateful pipeline:
+
+1. **Planner Agent**:
+   - Parses the inbound prompt to identify the core objective, required domain knowledge, and whether external documents or calculations are necessary.
+   - Formulates a structured execution plan (`Plan` schema) with sequential sub-tasks.
+2. **Document Retrieval Agent**:
+   - Computes query embeddings and queries the native FAISS 1.15.1 index (`IndexFlatIP`).
+   - Retrieves top-k semantically relevant chunks above similarity threshold (0.65) and maps citation IDs to page numbers and filenames.
+3. **Data Analysis Agent (MCP)**:
+   - Evaluates analytical and quantitative queries using Model Context Protocol (MCP) tools.
+   - Executes parameterized read-only SQL queries against PostgreSQL to compute exact sums, averages, and statistical metrics.
+4. **Research Agent**:
+   - Synthesizes findings across retrieved document chunks, computed data tables, and general domain knowledge into structured observations.
+5. **Response Agent**:
+   - Drafts the final comprehensive answer, formatting key takeaways, confidence ratings, and strict inline bracket citations (e.g., `[Doc1:p2]`).
+6. **Validation & Guardrails Agent**:
+   - Verifies that all citations map to actual retrieved chunks (citation provenance).
+   - Verifies that all numerical claims match computed MCP data analysis values.
+   - Enforces format compliance and confidence thresholds.
+   - Triggers bounded self-correction (up to 2 retries) if recoverable errors are detected.
+
+---
+
+## 10. Human-in-the-Loop (HITL) Approval System
+
+```text
+Workflow Execution
+       ↓
+Validator Agent passes
+       ↓
+High-Impact Action or Policy Trigger Detected?
+       ├── No  → Finalize and return response (COMPLETED)
+       └── Yes → LangGraph interrupt()
+                     ↓
+         PostgreSQL Thread Checkpoint Saved (AsyncPostgresSaver)
+                     ↓
+         Status: waiting_for_approval
+                     ↓
+         Operator reviews in Approvals Queue
+                     ├── APPROVE → Resumes from checkpoint → COMPLETED
+                     ├── REJECT  → Marks workflow FAILED
+                     └── CHANGES_REQUESTED → Rewinds state to Planner with feedback
+```
+
+- **Checkpoint Durability**: Checkpoints are stored in PostgreSQL (`checkpoints` and `checkpoint_writes` tables). The backend server or Docker container can restart entirely, and the pending approval remains intact and resumable.
+- **Operator Actions**:
+  - `APPROVE`: Resumes execution directly from the checkpoint, returning the verified answer.
+  - `REJECT`: Terminates the workflow and records operator rejection reason in persistence history.
+  - `CHANGES_REQUESTED`: Injects operator feedback into the workflow state and routes execution back to the Planner for a bounded revision pass.
+
+---
+
+## 11. Evaluation & Benchmarking Engine
+
+The evaluation engine (M9A backend, M9B frontend console) provides deterministic grading of system performance across 35 benchmark cases (`benchmark_v1`):
+
+### Evaluated Metric Categories
+
+1. **Retrieval Performance**:
+   - `Recall@k` (k=1, 3, 5): Fraction of ground-truth relevant chunks retrieved.
+   - `Precision@k`: Fraction of retrieved chunks that are relevant.
+   - `HitRate@k`: Whether at least one relevant chunk was retrieved.
+   - `MRR` (Mean Reciprocal Rank): Position of the first relevant chunk.
+   - `MAP` (Mean Average Precision): Precision across all relevant positions.
+2. **Citation Provenance**:
+   - `Citation Precision`: Percentage of inline citations pointing to valid retrieved documents.
+   - `Citation Recall`: Percentage of factual claims supported by citations.
+   - `Grounded Claim Ratio`: Ratio of claims directly supported by evidence.
+3. **Factual Accuracy**:
+   - `Atomic Fact Coverage`: Percentage of expected benchmark facts present in the answer.
+   - `Key Fact Recall`: Presence of critical domain-specific findings.
+4. **Safety & Guardrails**:
+   - `Guardrail Accuracy`: Correct detection and handling of adversarial or ungrounded queries.
+   - `False Rejection Rate`: Rate of valid queries erroneously blocked.
+5. **Execution Latency & Performance**:
+   - End-to-end execution duration, individual agent step latency, and execution cost.
+
+### CLI Benchmark Runner
+
+Run the benchmark directly from the terminal:
+
+```powershell
+# Run benchmark in metric_only mode
+python -m backend.app.evaluation.runner --dataset benchmark_v1 --mode metric_only
+
+# Run benchmark in live integration mode (queries real FAISS index)
+python -m backend.app.evaluation.runner --dataset benchmark_v1 --mode integration --concurrency 2
 ```
 
 ---
 
-### Execute Multi-Agent Workflow
+## 12. Automated Testing & Verification Matrix
 
-```http
-POST /api/v1/workflows
-Content-Type: application/json
-```
+The platform is covered by **202 automated tests** across the backend and frontend:
 
-**Request Body:**
-```json
-{
-  "query": "Compare PostgreSQL and MongoDB for a startup SaaS application."
-}
-```
-
-**Response (`200 OK`):**
-```json
-{
-  "request_id": "766ad1ae-0c48-4cb9-b1d5-bc7551066060",
-  "run_id": "045b10c2-d427-4719-bf7e-81a8b669de33",
-  "status": "completed",
-  "answer": "Based on the analysis of your query: PostgreSQL is strongly recommended as the default database for most SaaS startups...",
-  "key_points": [
-    "PostgreSQL offers superior data integrity, relational constraints, and flexible JSONB querying.",
-    "MongoDB provides rapid prototyping for polymorphic documents and out-of-the-box horizontal scaling.",
-    "For a SaaS startup, starting with PostgreSQL reduces early schema technical debt."
-  ],
-  "confidence": 0.95,
-  "errors": []
-}
-```
-
----
-
-### List Recent Workflow Runs
-
-```http
-GET /api/v1/workflows?page=1&page_size=10
-```
-
-**Response (`200 OK`):**
-```json
-{
-  "items": [
-    {
-      "run_id": "045b10c2-d427-4719-bf7e-81a8b669de33",
-      "request_id": "766ad1ae-0c48-4cb9-b1d5-bc7551066060",
-      "query": "Compare PostgreSQL and MongoDB for a startup SaaS application.",
-      "status": "COMPLETED",
-      "started_at": "2026-10-07T12:20:38.668894Z",
-      "completed_at": "2026-10-07T12:20:38.783876Z",
-      "duration_ms": 114
-    }
-  ],
-  "page": 1,
-  "page_size": 10,
-  "total": 1
-}
-```
-
----
-
-### Get Workflow Run Details with Steps
-
-```http
-GET /api/v1/workflows/{run_id}
-```
-
-**Response (`200 OK`):**
-```json
-{
-  "run_id": "045b10c2-d427-4719-bf7e-81a8b669de33",
-  "request_id": "766ad1ae-0c48-4cb9-b1d5-bc7551066060",
-  "query": "Compare PostgreSQL and MongoDB for a startup SaaS application.",
-  "status": "COMPLETED",
-  "started_at": "2026-10-07T12:20:38.668894Z",
-  "completed_at": "2026-10-07T12:20:38.783876Z",
-  "duration_ms": 114,
-  "final_answer": "Based on the analysis of your query...",
-  "key_points": ["PostgreSQL offers superior data integrity..."],
-  "confidence": 0.95,
-  "errors": [],
-  "steps": [
-    {
-      "id": "e96c449c-aef6-4354-a957-234b655517e5",
-      "agent_name": "planner",
-      "step_order": 1,
-      "status": "COMPLETED",
-      "duration_ms": 22,
-      "output_data": { "goal": "Compare databases", "steps": ["..."] },
-      "error": null
-    },
-    {
-      "id": "c67a1881-af8a-4b20-96fc-8cb6772f6759",
-      "agent_name": "researcher",
-      "step_order": 2,
-      "status": "COMPLETED",
-      "duration_ms": 12,
-      "output_data": { "findings": ["..."] },
-      "error": null
-    },
-    {
-      "id": "8588b3e7-223d-4a20-a4ef-fb9b70c7f1c9",
-      "agent_name": "responder",
-      "step_order": 3,
-      "status": "COMPLETED",
-      "duration_ms": 12,
-      "output_data": { "answer": "...", "confidence": 0.95 },
-      "error": null
-    }
-  ]
-}
-```
-
-#### Example cURL Commands
-
-```bash
-# Execute a workflow
-curl -X POST http://localhost:8000/api/v1/workflows \
-  -H "Content-Type: application/json" \
-  -d '{"query": "Assess Kafka vs RabbitMQ for streaming architecture."}'
-
-# List recent runs
-curl -X GET "http://localhost:8000/api/v1/workflows?page=1&page_size=10"
-
-# Inspect specific run detail
-curl -X GET "http://localhost:8000/api/v1/workflows/045b10c2-d427-4719-bf7e-81a8b669de33"
-```
-
----
-
-## Running Automated Tests
-
-The test suite covers configuration, schema constraints, health check endpoints, the LLM factory, LangGraph workflow execution, SQLAlchemy persistence models, persistence lifecycle services, document ingestion, native FAISS retrieval, MCP analytics tooling, guardrails validation, Human-in-the-Loop approval loops, React dashboard APIs, production hardening probes, and the Milestone 9A/9B Evaluation Engine. All tests run deterministically without requiring external paid API keys.
-
-```bash
-# Run full backend test suite on host (189 tests)
+```powershell
+# Run backend test suite (189 tests)
 backend\.venv\Scripts\python.exe -m pytest backend/tests -q
 
-# Run full backend test suite inside Docker container (189 tests)
-docker exec workflow_backend pytest /app/backend/tests -q
-
 # Run frontend test suite (13 tests)
-cd frontend && npm test
+cd frontend
+npm test
 
 # Run frontend production build
-cd frontend && npm run build
+npm run build
 ```
 
-**Test Coverage Summary (202 Passing Tests):**
-- **Milestones 1–4 (42 tests):** LangGraph workflow transitions, LLM abstraction, document ingestion, native FAISS vector search, and MCP tools.
-- **Milestone 5 (28 tests):** Validation and guardrails engine, numerical verification, citation provenance, and bounded correction loop.
-- **Milestone 6 (30 tests):** Durable HITL review gates, `AsyncPostgresSaver` checkpointing, resume from interrupt, and revision bounds.
-- **Milestone 7 (25 tests):** Executive metrics aggregation (`/stats`), paginated search, and execution timeline visualization.
-- **Milestone 8 (20 tests):** Liveness/readiness probes, pool sizing, request correlation `X-Request-ID`, and credential sanitization.
-- **Milestones 9A & 9B Backend (44 tests):** Dataset loading, deterministic metrics (Recall@k, Precision@k, HitRate@k, MRR, MAP, Latency), citation metrics, answer metrics, guardrail matrix, evaluation runner, comparison engine, REST endpoints, and automated benchmark ground-truth audit.
-- **Milestone 9B Frontend (13 tests):** Service layer contracts, parameter serialization, error response handling, and comparison execution.
+### Verification Summary
+
+```text
+============================== Test Execution Summary ==============================
+Backend Unit & Integration Tests:     189 passed (100%)
+Frontend Service & Contract Tests:     13 passed (100%)
+Total Automated Tests:                202 passed, 0 failed, 0 skipped
+Docker Container Regression Parity:   100% verified (all 189 tests pass inside container)
+Vite Production Bundle:               50 modules transformed, zero build errors
+====================================================================================
+```
 
 ---
 
-## Real Versus Mock Provider Transparency Disclosure
+## 13. Production Readiness & Security Disclosures
 
-To ensure complete engineering integrity and portfolio credibility:
-- **Default Offline Configuration**: The platform ships configured with `LLM_PROVIDER="mock"` and `EMBEDDING_PROVIDER="mock"` to guarantee zero-cost, instant, and reproducible execution out of the box.
-- **Live Model Support**: External LLMs (OpenAI, Azure OpenAI, Ollama) can be configured simply by setting `LLM_PROVIDER`, `LLM_MODEL`, and `LLM_API_KEY` in `.env`.
-- **Real Production Infrastructure**: The system operates with **real native FAISS 1.15.1** (`IndexFlatIP`), real **PostgreSQL 16**, real **LangGraph checkpointer**, and real **FastAPI** web application.
-- **Integration Evaluation**: In `integration` evaluation mode, the evaluator queries the real, live native FAISS index and PostgreSQL metadata.
+- **Kubernetes-Ready Health Probes**: `/api/v1/health/liveness` for process heartbeat and `/api/v1/health/readiness` for dependency checks (database connection, vector store readiness).
+- **Request Tracing**: `CorrelationIdMiddleware` attaches a unique `X-Request-ID` to every HTTP request, tracing logs across all agent nodes and database operations.
+- **Safe SQL Execution**: The MCP analytical SQL server enforces strict `SELECT`-only execution, rejecting any data manipulation or schema modification commands.
+- **Credential Sanitization**: Passwords, API keys, and sensitive tokens are automatically masked in log outputs, error dumps, and API responses.
+- **Database Connection Pooling**: Configured with `pool_size=20`, `max_overflow=10`, `pool_pre_ping=True`, and `pool_recycle=3600` to prevent stale connection leaks.
 
 ---
 
-## Operations & Portfolio Presentation Guide
+## 14. Limitations & Future Roadmap
 
-### Quickstart Demo Walkthrough
-1. **Launch Containers**: `docker compose up --build -d`
-2. **Access Frontend**: Open `http://localhost:5173` in your browser.
-3. **Run Query**: Go to **⚡ Query Runner**, submit an architectural query. Notice the workflow pause in `waiting_for_approval` at the HITL gate.
-4. **Approve Workflow**: Navigate to **⏳ Approvals Queue**, review the candidate response and citation snippets, then click **Approve**. Watch the workflow resume to completion.
-5. **Inspect Timeline**: Go to **📊 Monitoring Dashboard**, select the completed run, and view the multi-agent step execution sequence.
-6. **Benchmark System**: Go to **🧪 Evaluation Console**, select `benchmark_v1`, click **Execute Benchmark Run**, inspect the 35-case diagnostics table, and compare against previous runs.
+### Current Limitations
+- In `mock` mode, the `MockChatModel` generates deterministic template responses for automated testing. To enable fluid conversational generation, configure an OpenAI or Ollama provider.
+- Document ingestion currently supports PDF, TXT, and Markdown files up to 25 MB.
+- FAISS vector storage is currently file-backed (`./data/faiss`); distributed vector databases (e.g., pgvector, Milvus) can be swapped in for multi-node deployments.
 
-See [docs/final_release_report.md](file:///d:/Projects/Multi-Agent%20AI%20Workflow%20Automation%20Platform/docs/final_release_report.md) for the complete release gate report and [docs/deployment.md](file:///d:/Projects/Multi-Agent%20AI%20Workflow%20Automation%20Platform/docs/deployment.md) for production operational guidance.
+### Future Roadmap
+- **Distributed Vector Search**: Integration with PostgreSQL `pgvector` for unified vector and relational storage.
+- **WebSocket Streaming**: Real-time token streaming from individual agent nodes to the React frontend.
+- **Asynchronous Task Workers**: Celery / Redis integration for long-running batch evaluation runs.
+- **Multi-Tenant Workspaces**: Role-based access control (RBAC) and tenant isolation for enterprise teams.
+
+---
+
+## 15. License
+
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
