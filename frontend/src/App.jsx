@@ -282,19 +282,19 @@ export function App() {
             className={`nav-tab-btn ${activeNavTab === 'dashboard' ? 'active' : ''}`}
             onClick={() => setActiveNavTab('dashboard')}
           >
-            📊 Monitoring Dashboard
+            Monitoring Dashboard
           </button>
           <button
             className={`nav-tab-btn ${activeNavTab === 'query' ? 'active' : ''}`}
             onClick={() => setActiveNavTab('query')}
           >
-            ⚡ Query Runner
+            Query Runner
           </button>
           <button
             className={`nav-tab-btn ${activeNavTab === 'approvals' ? 'active' : ''}`}
             onClick={() => setActiveNavTab('approvals')}
           >
-            ⏳ Approvals Queue
+            Approvals Queue
             {pendingApprovals.length > 0 && (
               <span className="nav-tab-badge">{pendingApprovals.length}</span>
             )}
@@ -303,7 +303,7 @@ export function App() {
             className={`nav-tab-btn ${activeNavTab === 'documents' ? 'active' : ''}`}
             onClick={() => setActiveNavTab('documents')}
           >
-            📁 Knowledge Base
+            Knowledge Base
             {documents.length > 0 && (
               <span className="nav-tab-badge-subtle">{documents.length}</span>
             )}
@@ -312,7 +312,7 @@ export function App() {
             className={`nav-tab-btn ${activeNavTab === 'evaluations' ? 'active' : ''}`}
             onClick={() => setActiveNavTab('evaluations')}
           >
-            🧪 Evaluation Console
+            Evaluation Console
           </button>
         </nav>
       </header>

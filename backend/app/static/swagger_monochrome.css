@@ -1,0 +1,528 @@
+/* ============================================================================
+   FastAPI Swagger UI — Monochrome Editorial Design System Override
+   Multi-Agent AI Workflow Automation Platform
+   White-first, Black-and-Grey Minimalist Architecture Reference
+   ============================================================================ */
+
+/* Global Surface & Body */
+body, html {
+  background-color: #ffffff !important;
+  color: #111111 !important;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+  -webkit-font-smoothing: antialiased;
+}
+
+.swagger-ui {
+  color: #111111 !important;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+}
+
+/* Hide Default Saturated Topbar Banner */
+.swagger-ui .topbar {
+  display: none !important;
+}
+
+/* Top Information Header */
+.swagger-ui .information-container {
+  padding: 40px 0 24px 0 !important;
+  border-bottom: 1px solid #e5e5e5 !important;
+  margin-bottom: 32px !important;
+}
+
+.swagger-ui .info {
+  margin: 0 !important;
+}
+
+.swagger-ui .info .title {
+  font-family: "Times New Roman", Times, "Playfair Display", "Merriweather", Georgia, serif !important;
+  font-size: 38px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.025em !important;
+  color: #111111 !important;
+  margin-bottom: 12px !important;
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 12px !important;
+}
+
+.swagger-ui .info .title small {
+  font-family: "JetBrains Mono", "SFMono-Regular", Menlo, Monaco, Consolas, monospace !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  background-color: #f7f7f7 !important;
+  color: #444444 !important;
+  border: 1px solid #d4d4d4 !important;
+  border-radius: 4px !important;
+  padding: 3px 8px !important;
+  vertical-align: middle !important;
+  letter-spacing: 0.05em !important;
+  text-transform: uppercase !important;
+}
+
+.swagger-ui .info p,
+.swagger-ui .info .description {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  font-size: 15px !important;
+  color: #666666 !important;
+  line-height: 1.6 !important;
+  max-width: 840px !important;
+  margin-bottom: 16px !important;
+}
+
+.swagger-ui .info a {
+  color: #111111 !important;
+  text-decoration: underline !important;
+  font-weight: 500 !important;
+}
+
+.swagger-ui .info a:hover {
+  color: #444444 !important;
+}
+
+/* Scheme Container / Server Selector */
+.swagger-ui .scheme-container {
+  background: #ffffff !important;
+  box-shadow: none !important;
+  border: 1px solid #e5e5e5 !important;
+  border-radius: 6px !important;
+  padding: 16px 20px !important;
+  margin-bottom: 32px !important;
+}
+
+.swagger-ui .schemes-title {
+  color: #666666 !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+}
+
+/* Endpoint Category Section Headings */
+.swagger-ui .opblock-tag-section {
+  margin-bottom: 32px !important;
+}
+
+.swagger-ui .opblock-tag {
+  font-family: "Times New Roman", Times, "Playfair Display", Georgia, serif !important;
+  font-size: 24px !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.015em !important;
+  color: #111111 !important;
+  border-bottom: 1px solid #e5e5e5 !important;
+  padding: 24px 0 12px 0 !important;
+  margin-bottom: 16px !important;
+  transition: color 0.15s ease !important;
+}
+
+.swagger-ui .opblock-tag:hover {
+  background: transparent !important;
+  color: #333333 !important;
+}
+
+.swagger-ui .opblock-tag small {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  font-size: 13px !important;
+  color: #888888 !important;
+  font-weight: 400 !important;
+  margin-left: 12px !important;
+}
+
+.swagger-ui .opblock-tag svg {
+  fill: #666666 !important;
+}
+
+/* Endpoint Rows (Operation Blocks) */
+.swagger-ui .opblock {
+  background: #ffffff !important;
+  border: 1px solid #e5e5e5 !important;
+  border-radius: 6px !important;
+  box-shadow: none !important;
+  margin: 0 0 10px 0 !important;
+  transition: border-color 0.15s ease, background-color 0.15s ease !important;
+}
+
+.swagger-ui .opblock:hover {
+  border-color: #cccccc !important;
+  background-color: #fafafa !important;
+}
+
+.swagger-ui .opblock.is-open {
+  border-color: #111111 !important;
+  background-color: #ffffff !important;
+}
+
+.swagger-ui .opblock .opblock-summary {
+  padding: 10px 16px !important;
+  border: none !important;
+  align-items: center !important;
+}
+
+/* Monochrome HTTP Method Badges */
+.swagger-ui .opblock .opblock-summary-method {
+  font-family: "JetBrains Mono", "SFMono-Regular", Menlo, Monaco, Consolas, monospace !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.05em !important;
+  border-radius: 4px !important;
+  padding: 4px 10px !important;
+  min-width: 72px !important;
+  text-align: center !important;
+  text-shadow: none !important;
+}
+
+/* GET Method */
+.swagger-ui .opblock.opblock-get {
+  border-color: #e5e5e5 !important;
+  background: #ffffff !important;
+}
+.swagger-ui .opblock.opblock-get .opblock-summary-method {
+  background-color: #f4f4f4 !important;
+  color: #111111 !important;
+  border: 1px solid #d4d4d4 !important;
+}
+
+/* POST Method */
+.swagger-ui .opblock.opblock-post {
+  border-color: #e5e5e5 !important;
+  background: #ffffff !important;
+}
+.swagger-ui .opblock.opblock-post .opblock-summary-method {
+  background-color: #111111 !important;
+  color: #ffffff !important;
+  border: 1px solid #111111 !important;
+}
+
+/* DELETE Method */
+.swagger-ui .opblock.opblock-delete {
+  border-color: #e5e5e5 !important;
+  background: #ffffff !important;
+}
+.swagger-ui .opblock.opblock-delete .opblock-summary-method {
+  background-color: #ffffff !important;
+  color: #111111 !important;
+  border: 1px dashed #888888 !important;
+}
+
+/* PUT / PATCH Method */
+.swagger-ui .opblock.opblock-put,
+.swagger-ui .opblock.opblock-patch {
+  border-color: #e5e5e5 !important;
+  background: #ffffff !important;
+}
+.swagger-ui .opblock.opblock-put .opblock-summary-method,
+.swagger-ui .opblock.opblock-patch .opblock-summary-method {
+  background-color: #ebebeb !important;
+  color: #111111 !important;
+  border: 1px solid #cccccc !important;
+}
+
+/* Path & Description */
+.swagger-ui .opblock .opblock-summary-path {
+  font-family: "JetBrains Mono", "SFMono-Regular", Menlo, Monaco, Consolas, monospace !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  color: #111111 !important;
+  text-decoration: none !important;
+}
+
+.swagger-ui .opblock .opblock-summary-path:hover {
+  color: #444444 !important;
+}
+
+.swagger-ui .opblock .opblock-summary-description {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  font-size: 13px !important;
+  color: #666666 !important;
+}
+
+/* Expanded Endpoint Panel Body */
+.swagger-ui .opblock-body {
+  background: #ffffff !important;
+  border-top: 1px solid #e5e5e5 !important;
+  padding: 24px !important;
+}
+
+.swagger-ui .opblock-description-wrapper,
+.swagger-ui .opblock-external-docs-wrapper,
+.swagger-ui .opblock-title_normal {
+  color: #111111 !important;
+  font-size: 14px !important;
+}
+
+.swagger-ui .opblock-section-header {
+  background: #f7f7f7 !important;
+  border: 1px solid #e5e5e5 !important;
+  box-shadow: none !important;
+  padding: 10px 16px !important;
+  border-radius: 4px !important;
+  margin: 16px 0 !important;
+}
+
+.swagger-ui .opblock-section-header h4 {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  color: #111111 !important;
+  letter-spacing: 0.05em !important;
+  text-transform: uppercase !important;
+}
+
+/* Parameters & Responses Tables */
+.swagger-ui table.parameters,
+.swagger-ui table.responses-table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  margin: 16px 0 !important;
+}
+
+.swagger-ui table.parameters th,
+.swagger-ui table.responses-table th {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  color: #666666 !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+  border-bottom: 1px solid #e5e5e5 !important;
+  padding: 10px 12px !important;
+  text-align: left !important;
+}
+
+.swagger-ui table.parameters td,
+.swagger-ui table.responses-table td {
+  border-bottom: 1px solid #f0f0f0 !important;
+  padding: 12px !important;
+  color: #111111 !important;
+  font-size: 13px !important;
+}
+
+.swagger-ui .parameter__name {
+  font-family: "JetBrains Mono", Consolas, monospace !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: #111111 !important;
+}
+
+.swagger-ui .parameter__name.required:after {
+  color: #111111 !important;
+  font-weight: 700 !important;
+}
+
+.swagger-ui .parameter__type {
+  font-family: "JetBrains Mono", Consolas, monospace !important;
+  font-size: 12px !important;
+  color: #888888 !important;
+}
+
+.swagger-ui .parameter__deprecated {
+  color: #888888 !important;
+}
+
+.swagger-ui .parameter__in {
+  color: #888888 !important;
+  font-size: 12px !important;
+  font-style: italic !important;
+}
+
+/* Inputs, Textareas, Selects */
+.swagger-ui input[type=text],
+.swagger-ui input[type=password],
+.swagger-ui select,
+.swagger-ui textarea {
+  background: #ffffff !important;
+  border: 1px solid #d4d4d4 !important;
+  border-radius: 4px !important;
+  color: #111111 !important;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  font-size: 13px !important;
+  padding: 8px 12px !important;
+  box-shadow: none !important;
+  transition: border-color 0.15s ease !important;
+}
+
+.swagger-ui input[type=text]:focus,
+.swagger-ui select:focus,
+.swagger-ui textarea:focus {
+  outline: none !important;
+  border-color: #111111 !important;
+  box-shadow: 0 0 0 1px #111111 !important;
+}
+
+/* Action Buttons (Try it out, Execute, Clear) */
+.swagger-ui .btn {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  border-radius: 4px !important;
+  box-shadow: none !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+
+.swagger-ui .btn.try-out__btn {
+  background: #ffffff !important;
+  border: 1px solid #d4d4d4 !important;
+  color: #111111 !important;
+  padding: 6px 14px !important;
+}
+
+.swagger-ui .btn.try-out__btn:hover {
+  background: #f7f7f7 !important;
+  border-color: #111111 !important;
+}
+
+.swagger-ui .btn.execute {
+  background: #111111 !important;
+  border: 1px solid #111111 !important;
+  color: #ffffff !important;
+  padding: 8px 24px !important;
+}
+
+.swagger-ui .btn.execute:hover {
+  background: #2b2b2b !important;
+}
+
+.swagger-ui .btn.btn-clear,
+.swagger-ui .btn.cancel {
+  background: #ffffff !important;
+  border: 1px solid #d4d4d4 !important;
+  color: #666666 !important;
+  padding: 8px 18px !important;
+}
+
+.swagger-ui .btn.btn-clear:hover,
+.swagger-ui .btn.cancel:hover {
+  background: #f7f7f7 !important;
+  color: #111111 !important;
+}
+
+.swagger-ui .btn.authorize {
+  background: #ffffff !important;
+  border: 1px solid #111111 !important;
+  color: #111111 !important;
+}
+
+.swagger-ui .btn.authorize:hover {
+  background: #f7f7f7 !important;
+}
+
+/* Code, Highlight, Preformatted Blocks */
+.swagger-ui .highlight-code,
+.swagger-ui .microlight,
+.swagger-ui pre {
+  background: #f7f7f7 !important;
+  border: 1px solid #e5e5e5 !important;
+  border-radius: 4px !important;
+  color: #111111 !important;
+  font-family: "JetBrains Mono", "SFMono-Regular", Menlo, Monaco, Consolas, monospace !important;
+  font-size: 13px !important;
+  line-height: 1.5 !important;
+  padding: 14px 16px !important;
+}
+
+.swagger-ui pre.microlight code {
+  color: #111111 !important;
+}
+
+/* Responses Table Details */
+.swagger-ui .response-col_status {
+  font-family: "JetBrains Mono", Consolas, monospace !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  color: #111111 !important;
+}
+
+.swagger-ui .response-col_description {
+  color: #444444 !important;
+  font-size: 13px !important;
+}
+
+.swagger-ui .response-col_links {
+  color: #888888 !important;
+}
+
+/* Models / Schemas Section */
+.swagger-ui section.models {
+  border: 1px solid #e5e5e5 !important;
+  border-radius: 6px !important;
+  margin: 40px 0 !important;
+  background: #ffffff !important;
+}
+
+.swagger-ui section.models h4 {
+  font-family: "Times New Roman", Times, Georgia, serif !important;
+  font-size: 20px !important;
+  font-weight: 600 !important;
+  color: #111111 !important;
+  border-bottom: 1px solid #e5e5e5 !important;
+  padding: 16px 20px !important;
+}
+
+.swagger-ui section.models .model-container {
+  background: #ffffff !important;
+  border-bottom: 1px solid #f0f0f0 !important;
+  padding: 12px 20px !important;
+}
+
+.swagger-ui .model-box {
+  background: #ffffff !important;
+}
+
+.swagger-ui .model-title {
+  font-family: "JetBrains Mono", Consolas, monospace !important;
+  font-size: 14px !important;
+  color: #111111 !important;
+}
+
+.swagger-ui .prop-type {
+  font-family: "JetBrains Mono", Consolas, monospace !important;
+  color: #666666 !important;
+  font-size: 12px !important;
+}
+
+.swagger-ui .prop-format {
+  color: #888888 !important;
+}
+
+/* Modal Dialog (Auth, Errors) */
+.swagger-ui .dialog-ux .backdrop-ux {
+  background: rgba(0, 0, 0, 0.4) !important;
+}
+
+.swagger-ui .dialog-ux .modal-ux {
+  background: #ffffff !important;
+  border: 1px solid #e5e5e5 !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1) !important;
+  border-radius: 8px !important;
+}
+
+.swagger-ui .dialog-ux .modal-ux-header {
+  border-bottom: 1px solid #e5e5e5 !important;
+  padding: 16px 20px !important;
+}
+
+.swagger-ui .dialog-ux .modal-ux-header h3 {
+  font-family: "Times New Roman", Times, Georgia, serif !important;
+  font-size: 22px !important;
+  color: #111111 !important;
+}
+
+/* Scrollbars */
+.swagger-ui ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.swagger-ui ::-webkit-scrollbar-track {
+  background: #ffffff;
+}
+
+.swagger-ui ::-webkit-scrollbar-thumb {
+  background: #d4d4d4;
+  border-radius: 4px;
+}
+
+.swagger-ui ::-webkit-scrollbar-thumb:hover {
+  background: #999999;
+}

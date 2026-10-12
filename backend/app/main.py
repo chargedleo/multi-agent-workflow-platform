@@ -7,9 +7,12 @@ import asyncio
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 import uuid
+from pathlib import Path
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.openapi.docs import get_swagger_ui_html
+from fastapi.responses import HTMLResponse, JSONResponse
+from starlette.staticfiles import StaticFiles
 
 from backend.app.api.routes.analytics import router as analytics_router
 from backend.app.api.routes.approvals import router as approvals_router
@@ -68,11 +71,15 @@ def create_app() -> FastAPI:
         title=settings.APP_NAME,
         version="0.1.0",
         description="Portfolio-grade Multi-Agent AI Workflow Automation Platform powered by LangGraph and FastAPI.",
-        docs_url="/docs" if docs_enabled else None,
+        docs_url=None,
         redoc_url="/redoc" if docs_enabled else None,
         openapi_url="/openapi.json" if docs_enabled else None,
         lifespan=lifespan,
     )
+
+    static_dir = Path(__file__).resolve().parent / "static"
+    if static_dir.exists():
+        app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
     # 1. Request correlation middleware & unhandled error barrier
     @app.middleware("http")
@@ -147,6 +154,21 @@ def create_app() -> FastAPI:
     @app.get("/ready", tags=["Root"], include_in_schema=False)
     async def root_ready():
         return await get_readiness()
+
+    if docs_enabled:
+        @app.get("/docs", include_in_schema=False)
+        async def custom_swagger_ui_html():
+            response = get_swagger_ui_html(
+                openapi_url=app.openapi_url or "/openapi.json",
+                title=f"{app.title} — API Reference",
+                swagger_js_url="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js",
+                swagger_css_url="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css",
+                swagger_favicon_url="https://fastapi.tiangolo.com/img/favicon.png",
+                oauth2_redirect_url=app.swagger_ui_oauth2_redirect_url,
+            )
+            html = response.body.decode("utf-8")
+            custom_css_link = '<link rel="stylesheet" type="text/css" href="/static/swagger_monochrome.css">\n'
+            return HTMLResponse(content=html.replace("</head>", f"{custom_css_link}</head>"), status_code=200)
 
     return app
 
